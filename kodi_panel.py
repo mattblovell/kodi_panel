@@ -110,18 +110,14 @@ def truncate_text(pil_draw, xy, text, fill, font):
 
 
 def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
-    pil_draw.ellipse((x+w,y,x+h+w,y+h),fill=bgcolor)
-    pil_draw.ellipse((x,y,x+h,y+h),fill=bgcolor)
-    pil_draw.rectangle((x+(h/2),y, x+w+(h/2), y+h),fill=bgcolor)
+    pil_draw.rectangle((x,y, x+w, y+h),fill=bgcolor)
 
     if(progress<=0):
         progress = 0.01
     if(progress>1):
         progress=1
     w = w*progress
-    pil_draw.ellipse((x+w,y,x+h+w,y+h),fill=color)
-    pil_draw.ellipse((x,y,x+h,y+h),fill=color)
-    pil_draw.rectangle((x+(h/2),y, x+w+(h/2), y+h),fill=color)
+    pil_draw.rectangle((x,y, x+w, y+h),fill=color)
 
 
 def update_display():
@@ -262,9 +258,9 @@ def update_display():
         if prog != -1:
             if info['MusicPlayer.Time'].count(":") == 2:
                 # longer bar for longer displayed time
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 160, 4, prog)
+                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 164, 4, prog)
             else:
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 100, 4, prog)
+                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 104, 4, prog)
 
         draw.text(( 148, 14), info['MusicPlayer.Time'],  fill='lightgreen', font=font7S)
 
