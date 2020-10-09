@@ -52,7 +52,7 @@ last_thumb      = ""
 # Thumbnail defaults
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
-special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')                
+special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 
 # Audio/Video codec names
@@ -199,39 +199,44 @@ def update_display():
                 image_set = True
             else:
                 last_image_path = image_path
-                payload = {
-                    "jsonrpc": "2.0",
-                    "method"  : "Files.PrepareDownload",
-                    "params"  : {"path": image_path},
-                    "id"      : 5,
-                }
-                response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                if ('details' in response['result'].keys() and
-                    'path' in response['result']['details'].keys()) :
-                    image_url = base_url + "/" + response['result']['details']['path']
-                    #print("image_url : ", image_url) # debug info
+                if image_path.startswith("http://"):
+                    image_url = image_path
+                else:
+                    payload = {
+                        "jsonrpc": "2.0",
+                        "method"  : "Files.PrepareDownload",
+                        "params"  : {"path": image_path},
+                        "id"      : 5,
+                    }
+                    response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+                    print("Response: ", json.dumps(response))
 
-                    r = requests.get(image_url, stream = True)
-                    # check that the retrieval was successful
-                    if r.status_code == 200:
-                        try:
-                            r.raw.decode_content = True
-                            cover = Image.open(io.BytesIO(r.content))
-                            # resize while maintaining aspect ratio
-                            orig_w, orig_h = cover.size[0], cover.size[1]
-                            shrink = (float(thumb_height)/orig_h)
-                            new_width = int(float(orig_h)*float(shrink))
-                            # just crop if the image turns out to be really wide
-                            if new_width > 140:
-                                thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
-                            else:
-                                thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
+                    if ('details' in response['result'].keys() and
+                        'path' in response['result']['details'].keys()) :
+                        image_url = base_url + "/" + response['result']['details']['path']
+                        #print("image_url : ", image_url) # debug info
+
+                r = requests.get(image_url, stream = True)
+                # check that the retrieval was successful
+                if r.status_code == 200:
+                    try:
+                        r.raw.decode_content = True
+                        cover = Image.open(io.BytesIO(r.content))
+                        # resize while maintaining aspect ratio
+                        orig_w, orig_h = cover.size[0], cover.size[1]
+                        shrink = (float(thumb_height)/orig_h)
+                        new_width = int(float(orig_h)*float(shrink))
+                        # just crop if the image turns out to be really wide
+                        if new_width > 140:
+                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
+                        else:
+                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
                             last_thumb = thumb
                             image_set = True
-                        except:
-                            cover = Image.open(default_thumb)
-                            last_thumb = cover
-                            image_set = True
+                    except:
+                        cover = Image.open(default_thumb)
+                        last_thumb = cover
+                        image_set = True
 
 
         if not image_set:
@@ -245,7 +250,7 @@ def update_display():
             else:
                 # default image when no artwork is available
                 last_image_path = default_thumb
-                
+
             cover = Image.open(last_image_path)
             cover.thumbnail((thumb_height, thumb_height))
             last_thumb = cover
@@ -258,9 +263,9 @@ def update_display():
         if prog != -1:
             if info['MusicPlayer.Time'].count(":") == 2:
                 # longer bar for longer displayed time
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 164, 4, prog)
+                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 164, 4, prog)
             else:
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 104, 4, prog)
+                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 104, 4, prog)
 
         draw.text(( 148, 14), info['MusicPlayer.Time'],  fill='lightgreen', font=font7S)
 

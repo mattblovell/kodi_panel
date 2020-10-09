@@ -1,18 +1,18 @@
 #
 # MIT License
-# 
+#
 # Copyright (c) 2020  Matthew Lovell
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -48,10 +48,10 @@ thumb_height = 140;
 last_image_path = ""
 last_thumb      = ""
 
-# Thumbnail defaults 
+# Thumbnail defaults
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
-special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')                
+special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Audio/Video codec names
 codec_name = {"ac3"      : "DD",
@@ -153,7 +153,7 @@ def update_display():
                                     "MusicPlayer.Property(Role.Composer)",
                                     "MusicPlayer.Codec",
                                     "MusicPlayer.Year",
-                                    "MusicPlayer.Genre",                                    
+                                    "MusicPlayer.Genre",
                                     "MusicPlayer.Cover",
                                     "Player.Art(thumb)",
             ]},
@@ -193,46 +193,49 @@ def update_display():
                 image_set = True
             else:
                 last_image_path = image_path
-                payload = {
-                    "jsonrpc": "2.0",
-                    "method"  : "Files.PrepareDownload",
-                    "params"  : {"path": image_path},
-                    "id"      : 5,
-                }
-                response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                print("Response: ", json.dumps(response))
-                
-                if ('details' in response['result'].keys() and
-                    'path' in response['result']['details'].keys()) :
-                    image_url = base_url + "/" + response['result']['details']['path']
-                    print("image_url : ", image_url) # debug info
+                if image_path.startswith("http://"):
+                    image_url = image_path
+                else:
+                    payload = {
+                        "jsonrpc": "2.0",
+                        "method"  : "Files.PrepareDownload",
+                        "params"  : {"path": image_path},
+                        "id"      : 5,
+                    }
+                    response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+                    print("Response: ", json.dumps(response))
 
-                    r = requests.get(image_url, stream = True)
-                    # check that the retrieval was successful
-                    if r.status_code == 200:
-                        try:
-                            r.raw.decode_content = True
-                            cover = Image.open(io.BytesIO(r.content))
-                            # resize while maintaining aspect ratio
-                            orig_w, orig_h = cover.size[0], cover.size[1]
-                            shrink = (float(thumb_height)/orig_h)
-                            new_width = int(float(orig_h)*float(shrink))
-                            # just crop if the image turns out to be really wide
-                            if new_width > 140:
-                                thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
-                            else:
-                                thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
+                    if ('details' in response['result'].keys() and
+                        'path' in response['result']['details'].keys()) :
+                        image_url = base_url + "/" + response['result']['details']['path']
+                        #print("image_url : ", image_url) # debug info
+
+                r = requests.get(image_url, stream = True)
+                # check that the retrieval was successful
+                if r.status_code == 200:
+                    try:
+                        r.raw.decode_content = True
+                        cover = Image.open(io.BytesIO(r.content))
+                        # resize while maintaining aspect ratio
+                        orig_w, orig_h = cover.size[0], cover.size[1]
+                        shrink = (float(thumb_height)/orig_h)
+                        new_width = int(float(orig_h)*float(shrink))
+                        # just crop if the image turns out to be really wide
+                        if new_width > 140:
+                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
+                        else:
+                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
                             last_thumb = thumb
                             image_set = True
-                        except:
-                            cover = Image.open(default_thumb)                            
-                            last_thumb = cover
-                            image_set = True
+                    except:
+                        cover = Image.open(default_thumb)
+                        last_thumb = cover
+                        image_set = True
 
 
         if not image_set:
             # default image when no artwork is available
-            last_image_path = default_thumb            
+            last_image_path = default_thumb
             # is Airplay active?
             if special_re.match(info['MusicPlayer.Cover']):
                 airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
@@ -252,9 +255,9 @@ def update_display():
         if prog != -1:
             if info['MusicPlayer.Time'].count(":") == 2:
                 # longer bar for longer displayed time
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 164, 4, prog)
+                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 164, 4, prog)
             else:
-                progress_bar(draw, 'grey', 'lightgreen', 150, 5, 104, 4, prog)
+                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 104, 4, prog)
 
         draw.text(( 148, 14), info['MusicPlayer.Time'],  fill='lightgreen', font=font7S)
 
@@ -276,14 +279,14 @@ def update_display():
         # audio info
         codec = info['MusicPlayer.Codec']
         if info['MusicPlayer.Duration'] != "":
-            draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)        
+            draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
         if codec in codec_name.keys():
             draw.text(( 230, 74), codec_name[codec], font=font_tiny)
         if info['MusicPlayer.Genre'] != "":
-            draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)            
+            draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
         if info['MusicPlayer.Year'] != "":
             draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
-            
+
     # Output to OLED/LCD display
     device.display(image)
 
@@ -300,7 +303,7 @@ def main():
         draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font)
         device.display(image)
-        
+
         while True:
             # first ensure Kodi is up and accessible
             payload = {
@@ -308,7 +311,7 @@ def main():
                 "method"  : "JSONRPC.Ping",
                 "id"      : 2,
             }
-            
+
             try:
                 response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
                 if response['result'] != 'pong':
@@ -319,7 +322,7 @@ def main():
             except:
                 time.sleep(5)
                 pass
-                
+
         print(datetime.now(), "Connected with Kodi.  Entering display loop.")
 
         while True:
@@ -336,5 +339,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(datetime.now(), "Stopping")        
+        print(datetime.now(), "Stopping")
         pass
