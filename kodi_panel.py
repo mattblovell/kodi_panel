@@ -209,7 +209,7 @@ def update_display():
                         "id"      : 5,
                     }
                     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                    print("Response: ", json.dumps(response))
+                    #print("Response: ", json.dumps(response))
 
                     if ('details' in response['result'].keys() and
                         'path' in response['result']['details'].keys()) :
