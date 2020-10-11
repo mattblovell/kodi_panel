@@ -84,6 +84,7 @@ font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
 # Font for time and track
 font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
+color7S  = 'SpringGreen'
 
 image  = Image.new('RGB', (frameSize), 'black')
 draw   = ImageDraw.Draw(image)
@@ -255,19 +256,19 @@ def update_display():
         if prog != -1:
             if info['MusicPlayer.Time'].count(":") == 2:
                 # longer bar for longer displayed time
-                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 164, 4, prog)
+                progress_bar(draw, 'dimgrey', color7S, 150, 5, 164, 4, prog)
             else:
-                progress_bar(draw, 'dimgrey', 'lightgreen', 150, 5, 104, 4, prog)
+                progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
 
-        draw.text(( 148, 14), info['MusicPlayer.Time'],  fill='lightgreen', font=font7S)
+        draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
         # track number
         if info['MusicPlayer.TrackNumber'] != "":
             draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
-            draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill='white', font=font7S)
+            draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
 
         # track title
-        truncate_text(draw, (5, 150), info['MusicPlayer.Title'],  fill='white',  font=font)
+        truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font)
 
         # other track information
         truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
@@ -332,7 +333,7 @@ def main():
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
                 break
-            time.sleep(0.9)
+            time.sleep(0.8)
 
 
 if __name__ == "__main__":
