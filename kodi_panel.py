@@ -29,8 +29,13 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
+
+import signal
+import sys
+import RPi.GPIO as GPIO
+
 import logging
 import requests
 import json
@@ -43,19 +48,35 @@ base_url = "http://localhost:8080"
 rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
 
-frameSize    = (320, 240)
-thumb_height = 140;
-
+# Image handling
+frameSize       = (320, 240)
+thumb_height    = 140;
 last_image_path = ""
 last_thumb      = ""
 
 # Thumbnail defaults
+kodi_thumb      = "./kodi_thumb.jpg"
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 
-# Audio/Video codec names
+# Track info fonts
+font      = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
+fontB     = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
+font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
+font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
+
+# Font for time and track
+font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
+font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
+color7S   = 'SpringGreen'
+
+# Pillow objects
+image  = Image.new('RGB', (frameSize), 'black')
+draw   = ImageDraw.Draw(image)
+
+# Audio/Video codec lookup
 codec_name = {"ac3"      : "DD",
               "eac3"     : "DD",
               "dtshd_ma" : "DTS-MA",
@@ -82,19 +103,13 @@ device = ili9341(serial, active_low=False, width=320, height=240,
                  bus_speed_hz=32000000
                  )
 
-# Track info fonts
-font      = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
-fontB     = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
-font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
-font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
+# GPIO assignment for screen's touch interrupt (T_IRQ),
+# using RPi.GPIO numbering
+TOUCH_INT    = 19
 
-# Font for time and track
-font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
-font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
-color7S   = 'SpringGreen'
-
-image  = Image.new('RGB', (frameSize), 'black')
-draw   = ImageDraw.Draw(image)
+screen_press   = False
+screen_on      = True
+screen_offtime = datetime.now()
 
 
 def truncate_text(pil_draw, xy, text, fill, font):
@@ -124,6 +139,10 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
 def update_display():
     global last_image_path
     global last_thumb
+    global screen_press
+    global screen_on
+    global screen_offtime
+
     draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
 
     payload = {
@@ -134,20 +153,38 @@ def update_display():
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
 
     if len(response['result']) == 0:
-        # Nothing playing
-        device.backlight(False)
-        # draw.text(( 5, 5), "Nothing playing",  fill='white', font=font)
+        # Nothing is playing, but check for screen press before proceeding
         last_image_path = ""
         last_thumb = ""
+
+        if screen_press:
+            device.backlight(True)
+            screen_on = True
+            screen_offtime = datetime.now() + timedelta(seconds=5)
+
+        if screen_on:
+            if datetime.now() < screen_offtime:
+                # Idle status screen
+                kodi_icon = Image.open(kodi_thumb)
+                image.paste(kodi_icon, (5, 5))
+                draw.text(( 145, 5), "Nothing playing",  fill='white', font=font)
+            else:
+                # screen-on time has expired
+                device.backlight(False)
+                screen_on = False
+
+
     elif response['result'][0]['type'] != 'audio':
         # Not audio
         device.backlight(False)
         #draw.text(( 5, 5), "Not audio playing",  fill='white', font=font)
         last_image_path = ""
         last_thumb = ""
+
     else:
         # Something's playing!
         device.backlight(True)
+        screen_on = True
 
         payload = {
             "jsonrpc": "2.0",
@@ -296,17 +333,32 @@ def update_display():
         if info['MusicPlayer.Year'] != "":
             draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
 
-    # Output to OLED/LCD display
+    # Output to OLED/LCD display and unconditionally
+    # clear any screen press
+    screen_press = False
     device.display(image)
+
+
+
+def touch_callback(channel):
+    global screen_press
+    screen_press = True
+    print(datetime.now(), "Touchscreen pressed")
 
 
 def main():
     print(datetime.now(), "Starting")
-
-    # Turn down verbosity from http connections
+    # turn down verbosity from http connections
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    # setup T_IRQ as a GPIO interrupt
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(TOUCH_INT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
+                          callback=touch_callback, bouncetime=300)
+
+    # main communication loop
     while True:
         device.backlight(True)
         draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
@@ -350,4 +402,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print(datetime.now(), "Stopping")
+        GPIO.cleanup()
         pass
