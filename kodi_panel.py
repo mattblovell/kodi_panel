@@ -112,8 +112,8 @@ screen_offtime = datetime.now()
 
 # Info display mode
 class PDisplay(Enum):
-    DEFAULT      = 0   # small art, elapsed time, track info
-    FULL_SCREEN  = 1   # fullscreen cover art
+    DEFAULT    = 0   # small art, elapsed time, track info
+    FULLSCREEN = 1   # fullscreen cover art
 
 display_mode = PDisplay.DEFAULT
 
@@ -186,13 +186,13 @@ def get_artwork(info, last_thumb, thumb_size):
                     cover = Image.open(io.BytesIO(r.content))
                     # resize while maintaining aspect ratio
                     orig_w, orig_h = cover.size[0], cover.size[1]
-                    shrink = (float(thumb_height)/orig_h)
+                    shrink = (float(thumb_size)/orig_h)
                     new_width = int(float(orig_h)*float(shrink))
                     # just crop if the image turns out to be really wide
-                    if new_width > thumb_height:
-                        thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
+                    if new_width > thumb_size:
+                        thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
                     else:
-                        thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
+                        thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
                         last_thumb = thumb
                         image_set = True
                 except:
@@ -229,6 +229,7 @@ def update_display():
     global screen_press
     global screen_on
     global screen_offtime
+    global display_mode
 
     draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
 
@@ -272,6 +273,15 @@ def update_display():
         # Something's playing!
         device.backlight(True)
         screen_on = True
+
+        # Change display modes upon any screen press
+        if screen_press:
+            last_image_path = None
+            last_thumb = None            
+            if display_mode == PDisplay.DEFAULT:
+                display_mode = PDisplay.FULLSCREEN
+            else:
+                display_mode = PDisplay.DEFAULT
 
         payload = {
             "jsonrpc": "2.0",
@@ -352,6 +362,12 @@ def update_display():
             if info['MusicPlayer.Year'] != "":
                 draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
 
+        elif display_mode == PDisplay.FULLSCREEN:
+            # retrieve full-screen artwork
+            last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+            if last_thumb:
+                image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+                
     # Output to OLED/LCD display and unconditionally
     # clear any screen press
     screen_press = False
@@ -372,6 +388,7 @@ def main():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     # setup T_IRQ as a GPIO interrupt
+    print(datetime.now(), "Setting up touchscreen interrupt")    
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(TOUCH_INT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
@@ -420,5 +437,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
+        print(datetime.now(), "Removing touchscreen interrupt")
+        GPIO.remove_event_detect(TOUCH_INT)
+        GPIO.cleanup()
         print(datetime.now(), "Stopping")
         pass
