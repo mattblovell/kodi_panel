@@ -35,6 +35,17 @@ The second thread provides installation steps for CoreELEC, making use
 
 
 
+Prototyping Changes
+-------------------
+
+The `luma_demo.py` script is almost a duplicate of `kodi_panel.py`.
+Taking advantage of luma.lcd's ability to use pygame as a device
+emulator, it provides a really convenient way of prototyping layout
+decisions, font choices, artwork size, etc.  See the header at the
+start of that file for how to invoke it.
+
+
+
 License
 -------
 The MIT License (MIT)
