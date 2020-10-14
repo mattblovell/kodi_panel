@@ -36,12 +36,16 @@ see these two discussions in CoreELEC's forums:
 The second thread provides installation steps for CoreELEC, making use
 `Entware <https://github.com/Entware/Entware/wiki>`_.
 
+Once the display is working, ``kodi_panel.py`` can be started.  I make use
+of Kodi's autostart file; an example file is provided.  That same
+invocation can first be used on the command line, ensuring that
+things are working.
 
 
 Prototyping Changes
 -------------------
 
-The `luma_demo.py` script is almost a duplicate of `kodi_panel.py`.
+The ``luma_demo.py`` script is almost a duplicate of ``kodi_panel.py``.
 Taking advantage of luma.lcd's ability to use pygame as a device
 emulator, it provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
