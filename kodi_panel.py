@@ -25,17 +25,17 @@ from luma.core.interface.serial import spi
 from luma.core.render import canvas
 from luma.lcd.device import ili9341
 
+import signal
+import sys
+import RPi.GPIO as GPIO
+
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
 from datetime import datetime, timedelta
+from enum import Enum
 import time
-
-import signal
-import sys
-import RPi.GPIO as GPIO
-
 import logging
 import requests
 import json
@@ -59,7 +59,6 @@ kodi_thumb      = "./kodi_thumb.jpg"
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
-
 
 # Track info fonts
 font      = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
@@ -111,6 +110,14 @@ screen_press   = False
 screen_on      = True
 screen_offtime = datetime.now()
 
+# Info display mode
+class PDisplay(Enum):
+    DEFAULT      = 0   # small art, elapsed time, track info
+    FULL_SCREEN  = 1   # fullscreen cover art
+
+display_mode = PDisplay.DEFAULT
+
+
 
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
@@ -134,6 +141,86 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
         progress=1
     w = w*progress
     pil_draw.rectangle((x,y, x+w, y+h),fill=color)
+
+
+# Retrieve cover art or a default thumbnail.  Note that details of
+# retrieval seem to differ depending upon whether Kodi playing from
+# its library, from UPnp/DLNA, or from Airplay.
+def get_artwork(info, last_thumb, thumb_size):
+    global last_image_path
+
+    image_set = False
+    if (info['MusicPlayer.Cover'] != '' and
+        info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
+        not special_re.match(info['MusicPlayer.Cover'])):
+
+        image_path = info['MusicPlayer.Cover']
+        #print("image_path : ", image_path) # debug info
+
+        if image_path == last_image_path:
+            image_set = True
+        else:
+            last_image_path = image_path
+            if image_path.startswith("http://"):
+                image_url = image_path
+            else:
+                payload = {
+                    "jsonrpc": "2.0",
+                    "method"  : "Files.PrepareDownload",
+                    "params"  : {"path": image_path},
+                    "id"      : 5,
+                }
+                response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+                #print("Response: ", json.dumps(response))
+
+            if ('details' in response['result'].keys() and
+                'path' in response['result']['details'].keys()) :
+                image_url = base_url + "/" + response['result']['details']['path']
+                #print("image_url : ", image_url) # debug info
+
+            r = requests.get(image_url, stream = True)
+            # check that the retrieval was successful
+            if r.status_code == 200:
+                try:
+                    r.raw.decode_content = True
+                    cover = Image.open(io.BytesIO(r.content))
+                    # resize while maintaining aspect ratio
+                    orig_w, orig_h = cover.size[0], cover.size[1]
+                    shrink = (float(thumb_height)/orig_h)
+                    new_width = int(float(orig_h)*float(shrink))
+                    # just crop if the image turns out to be really wide
+                    if new_width > thumb_height:
+                        thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
+                    else:
+                        thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
+                        last_thumb = thumb
+                        image_set = True
+                except:
+                    cover = Image.open(default_thumb)
+                    last_thumb = cover
+                    image_set = True
+
+    if not image_set:
+        # is Airplay active?
+        if special_re.match(info['MusicPlayer.Cover']):
+            airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
+            if os.path.isfile(airplay_thumb):
+                last_image_path = airplay_thumb
+            else:
+                last_image_path = default_airplay
+        else:
+            # default image when no artwork is available
+            last_image_path = default_thumb
+
+        cover = Image.open(last_image_path)
+        last_thumb = cover
+        image_set = True
+
+    if image_set:
+        return last_thumb
+    else:
+        return None
+
 
 
 def update_display():
@@ -205,10 +292,9 @@ def update_display():
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
-
         info = response['result']
 
-        # progress bar
+        # progress information
         payload = {
             "jsonrpc": "2.0",
             "method"  : "Player.GetProperties",
@@ -224,114 +310,47 @@ def update_display():
         else:
             prog = -1;
 
-        # retrieve cover image from Kodi, if it exists and needs a refresh
-        image_set = False
-        if (info['MusicPlayer.Cover'] != '' and
-            info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
-            not special_re.match(info['MusicPlayer.Cover'])):
+        if display_mode == PDisplay.DEFAULT:
+            # retrieve cover image from Kodi, if it exists and needs a refresh
+            last_thumb = get_artwork(info, last_thumb, thumb_height)
+            if last_thumb:
+                image.paste(last_thumb, (5, 5))
 
-            image_path = info['MusicPlayer.Cover']
-            #print("image_path : ", image_path) # debug info
-
-            if image_path == last_image_path:
-                image_set = True
-            else:
-                last_image_path = image_path
-                if image_path.startswith("http://"):
-                    image_url = image_path
+            # progress bar and elapsed time
+            if prog != -1:
+                if info['MusicPlayer.Time'].count(":") == 2:
+                    # longer bar for longer displayed time
+                    progress_bar(draw, 'dimgrey', color7S, 150, 5, 164, 4, prog)
                 else:
-                    payload = {
-                        "jsonrpc": "2.0",
-                        "method"  : "Files.PrepareDownload",
-                        "params"  : {"path": image_path},
-                        "id"      : 5,
-                    }
-                    response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                    #print("Response: ", json.dumps(response))
+                    progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
 
-                    if ('details' in response['result'].keys() and
-                        'path' in response['result']['details'].keys()) :
-                        image_url = base_url + "/" + response['result']['details']['path']
-                        #print("image_url : ", image_url) # debug info
+            draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
-                r = requests.get(image_url, stream = True)
-                # check that the retrieval was successful
-                if r.status_code == 200:
-                    try:
-                        r.raw.decode_content = True
-                        cover = Image.open(io.BytesIO(r.content))
-                        # resize while maintaining aspect ratio
-                        orig_w, orig_h = cover.size[0], cover.size[1]
-                        shrink = (float(thumb_height)/orig_h)
-                        new_width = int(float(orig_h)*float(shrink))
-                        # just crop if the image turns out to be really wide
-                        if new_width > 140:
-                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS).crop((0,0,140,thumb_height))
-                        else:
-                            thumb = cover.resize((new_width, thumb_height), Image.ANTIALIAS)
-                            last_thumb = thumb
-                            image_set = True
-                    except:
-                        cover = Image.open(default_thumb)
-                        last_thumb = cover
-                        image_set = True
+            # track number
+            if info['MusicPlayer.TrackNumber'] != "":
+                draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
+                draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
 
+            # track title
+            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font)
 
-        if not image_set:
-            # is Airplay active?
-            if special_re.match(info['MusicPlayer.Cover']):
-                airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
-                if os.path.isfile(airplay_thumb):
-                    last_image_path = airplay_thumb
-                else:
-                    last_image_path = default_airplay
-            else:
-                # default image when no artwork is available
-                last_image_path = default_thumb
+            # other track information
+            truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
+            if info['MusicPlayer.Artist'] != "":
+                truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill='yellow', font=font_sm)
+            elif info['MusicPlayer.Property(Role.Composer)'] != "":
+                truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill='yellow', font=font_sm)
 
-            cover = Image.open(last_image_path)
-            cover.thumbnail((thumb_height, thumb_height))
-            last_thumb = cover
-            image_set = True
-
-        if image_set:
-            image.paste(last_thumb, (5, 5))
-
-        # progress bar and elapsed time
-        if prog != -1:
-            if info['MusicPlayer.Time'].count(":") == 2:
-                # longer bar for longer displayed time
-                progress_bar(draw, 'dimgrey', color7S, 150, 5, 164, 4, prog)
-            else:
-                progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
-
-        draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
-
-        # track number
-        if info['MusicPlayer.TrackNumber'] != "":
-            draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
-            draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
-
-        # track title
-        truncate_text(draw, (5, 150), info['MusicPlayer.Title'],  fill='white',  font=font)
-
-        # other track information
-        truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
-        if info['MusicPlayer.Artist'] != "":
-            truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill='yellow', font=font_sm)
-        elif info['MusicPlayer.Property(Role.Composer)'] != "":
-            truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill='yellow', font=font_sm)
-
-        # audio info
-        codec = info['MusicPlayer.Codec']
-        if info['MusicPlayer.Duration'] != "":
-            draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
-        if codec in codec_name.keys():
-            draw.text(( 230, 74), codec_name[codec], font=font_tiny)
-        if info['MusicPlayer.Genre'] != "":
-            draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
-        if info['MusicPlayer.Year'] != "":
-            draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
+            # audio info
+            codec = info['MusicPlayer.Codec']
+            if info['MusicPlayer.Duration'] != "":
+                draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
+            if codec in codec_name.keys():
+                draw.text(( 230, 74), codec_name[codec], font=font_tiny)
+            if info['MusicPlayer.Genre'] != "":
+                draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
+            if info['MusicPlayer.Year'] != "":
+                draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
 
     # Output to OLED/LCD display and unconditionally
     # clear any screen press
@@ -402,5 +421,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print(datetime.now(), "Stopping")
-        GPIO.cleanup()
         pass
