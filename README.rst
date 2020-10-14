@@ -33,13 +33,13 @@ see these two discussions in CoreELEC's forums:
 - `Graphical front panel display <https://discourse.coreelec.org/t/graphical-front-panel-display/12932>`_
 - `RPi-GPIO-Odroid & Python Pillow <https://discourse.coreelec.org/t/rpi-gpio-odroid-python-pillow/13088>`_
 
-The second thread provides installation steps for CoreELEC, making use
-`Entware <https://github.com/Entware/Entware/wiki>`_.
+The second thread provides installation steps for CoreELEC, making extensive use
+of `Entware <https://github.com/Entware/Entware/wiki>`_.
 
-Once the display is working, ``kodi_panel.py`` can be started.  I make use
-of Kodi's autostart file; an example file is provided.  That same
-invocation can first be used on the command line, ensuring that
-things are working.
+Once your display is working, ``kodi_panel.py`` can be started.  I make use
+of Kodi's autostart.sh file; an example file is provided.  That same
+invocation can first be used on the command line, of course, ensuring that
+things are working.  Start things up and then trying playing some music.
 
 
 Prototyping Changes
