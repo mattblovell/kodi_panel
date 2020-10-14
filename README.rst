@@ -19,6 +19,8 @@ For Raspberry PI boards, RPi.GPIO obviously works as-is.  For Odroid
 boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
+.. image:: https://raw.github.com/mattblovell/kodi_panel/images/working_lcd.jpg
+
 Disclaimer: This project is *not* directly-associated with either
 `Kodi <https://kodi.tv/>`_ or
 `CoreELEC <https://coreelec.org/>`_.
