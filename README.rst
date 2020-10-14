@@ -29,6 +29,7 @@ luma.lcd and get your display working (using luma's examples).
 
 For Odroid boards, more details are to be documented.  For now, please
 see these two discussions in CoreELEC's forums:
+
 - `Graphical front panel display <https://discourse.coreelec.org/t/graphical-front-panel-display/12932>`_
 - `RPi-GPIO-Odroid & Python Pillow <https://discourse.coreelec.org/t/rpi-gpio-odroid-python-pillow/13088>`_
 
