@@ -44,15 +44,15 @@ import re
 import os
 
 #base_url = "http://10.0.0.188:8080"  # Odroid C4
-base_url = "http://localhost:8080"
+base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
 
 # Image handling
 frameSize       = (320, 240)
 thumb_height    = 140;
-last_image_path = ""
-last_thumb      = ""
+last_image_path = None
+last_thumb      = None
 
 # Thumbnail defaults
 kodi_thumb      = "./kodi_thumb.jpg"
@@ -64,7 +64,7 @@ special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg
 font      = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
 fontB     = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
 font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
-font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
+font_tiny = ImageFont.truetype("FreeSans.ttf", 11, encoding='unic')
 
 # Font for time and track
 font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
@@ -76,25 +76,60 @@ image  = Image.new('RGB', (frameSize), 'black')
 draw   = ImageDraw.Draw(image)
 
 # Audio/Video codec lookup
-codec_name = {"ac3"      : "DD",
-              "eac3"     : "DD",
-              "dtshd_ma" : "DTS-MA",
-              "dca"      : "DTS",
-              "truehd"   : "DD-HD",
-              "aac"      : "AAC",
-              "wmapro"   : "WMA",
-              "mp3float" : "MP3",
-              "flac"     : "FLAC",
-              "BXA"      : "BXA",
-              "alac"     : "ALAC",
-              "vorbis"   : "OggV",
-              "dsd_lsbf_planar": "DSD",
-              "aac"      : "AAC",
-              "pcm_s16be": "PCM",
-              "mp2"      : "MP2",
-              "pcm_u8"   : "PCM"}
+codec_name = {
+    "ac3"      : "DD",
+    "eac3"     : "DD",
+    "dtshd_ma" : "DTS-MA",
+    "dca"      : "DTS",
+    "truehd"   : "DD-HD",
+    "aac"      : "AAC",
+    "wmapro"   : "WMA",
+    "mp3float" : "MP3",
+    "flac"     : "FLAC",
+    "alac"     : "ALAC",
+    "vorbis"   : "OggV",
+    "aac"      : "AAC",
+    "pcm_s16be": "PCM",
+    "mp2"      : "MP2",
+    "pcm_u8"   : "PCM",
+    "BXA"      : "BXA",    # used with AirPlay
+    "dsd_lsbf_planar": "DSD",
+}
 
-# Handle to ILI9341-driven SPI panel via luma
+
+# Info display mode.  The next() function serves to switch modes in
+# response to screen touches.  The list is intended to grow, as other
+# ideas for layouts are proposed.
+
+class PDisplay(Enum):
+    DEFAULT    = 0   # small art, elapsed time, track info
+    FULLSCREEN = 1   # fullscreen cover art
+
+    def next(self):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1
+        if index >= len(members):
+            index = 0
+        return members[index]
+
+# At startup, just use the default layout for audio info.  This
+# setting, if serialized and stored someplace, could be made
+# persistent across script invocations if desired.
+display_mode = PDisplay.DEFAULT
+
+# GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
+# numbering.  Find a pin that's unused by luma.  The touchscreen chip
+# in my display has its own internal pullup resistor, so below no
+# pull-up is specified.
+TOUCH_INT      = 19
+USE_TOUCH      = True
+
+screen_press   = False
+screen_on      = False
+screen_offtime = datetime.now()
+
+# Finally, a handle to the ILI9341-driven SPI panel via luma
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
 device = ili9341(serial, active_low=False, width=320, height=240,
@@ -102,23 +137,11 @@ device = ili9341(serial, active_low=False, width=320, height=240,
                  bus_speed_hz=32000000
                  )
 
-# GPIO assignment for screen's touch interrupt (T_IRQ),
-# using RPi.GPIO numbering
-TOUCH_INT    = 19
+# ----------------------------------------------------------------------------
 
-screen_press   = False
-screen_on      = True
-screen_offtime = datetime.now()
-
-# Info display mode
-class PDisplay(Enum):
-    DEFAULT    = 0   # small art, elapsed time, track info
-    FULLSCREEN = 1   # fullscreen cover art
-
-display_mode = PDisplay.DEFAULT
-
-
-
+# Render text at the specified location, truncating characters and
+# placing final elipsis if the string is too wide to display in its
+# entirety.
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
     new_text = text
@@ -132,6 +155,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
     pil_draw.text(xy, new_text, fill, font)
 
 
+# Draw a horizontal progress bar at the specified location.
 def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
     pil_draw.rectangle((x,y, x+w, y+h),fill=bgcolor)
 
@@ -143,10 +167,20 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
     pil_draw.rectangle((x,y, x+w, y+h),fill=color)
 
 
-# Retrieve cover art or a default thumbnail.  Note that details of
-# retrieval seem to differ depending upon whether Kodi playing from
-# its library, from UPnp/DLNA, or from Airplay.
-def get_artwork(info, last_thumb, thumb_size):
+# Retrieve cover art or a default thumbnail.  Cover art gets resized
+# to the provided thumb_size, but any default images are used as-is.
+#
+# Note that details of retrieval seem to differ depending upon whether
+# Kodi playing from its library, from UPnp/DLNA, or from Airplay.
+#
+# The global last_image_path is intended to let any given image file
+# be fetched and resized just *once*.  Subsequent calls just reuse the
+# same data, provided that the caller preserves and passes in
+# prev_image.
+#
+# The info argument must be the result of an XBMC.GetInfoLabels
+# JSON-RPC call to Kodi.
+def get_artwork(info, prev_image, thumb_size):
     global last_image_path
 
     image_set = False
@@ -193,11 +227,11 @@ def get_artwork(info, last_thumb, thumb_size):
                         thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
                     else:
                         thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
-                        last_thumb = thumb
+                        prev_image = thumb
                         image_set = True
                 except:
                     cover = Image.open(default_thumb)
-                    last_thumb = cover
+                    prev_image = cover
                     image_set = True
 
     if not image_set:
@@ -213,16 +247,22 @@ def get_artwork(info, last_thumb, thumb_size):
             last_image_path = default_thumb
 
         cover = Image.open(last_image_path)
-        last_thumb = cover
+        prev_image = cover
         image_set = True
 
     if image_set:
-        return last_thumb
+        return prev_image
     else:
         return None
 
 
-
+# Kodi-polling and image rendering function
+#
+# Locations and sizes (aside from font size) are all hard-coded in
+# this function.  If anyone wanted to be ambitious and accommodate
+# some form of programmable layout, you would start here.  Otherwise,
+# just adjust to taste and desired outcome!
+#
 def update_display():
     global last_image_path
     global last_thumb
@@ -231,8 +271,15 @@ def update_display():
     global screen_offtime
     global display_mode
 
-    draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
+    # Start with a blank slate
+    draw.rectangle([(1,1), (frameSize[0]-1,frameSize[1]-1)], 'black', 'black')
 
+    # Check if the screen_on time has expired
+    if (screen_on and datetime.now() >= screen_offtime):
+        screen_on = False
+        device.backlight(False)
+
+    # Ask Kodi whether anything is playing...
     payload = {
         "jsonrpc": "2.0",
         "method"  : "Player.GetActivePlayers",
@@ -240,49 +287,41 @@ def update_display():
     }
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
 
-    if len(response['result']) == 0:
-        # Nothing is playing, but check for screen press before proceeding
-        last_image_path = ""
-        last_thumb = ""
+    if (len(response['result']) == 0 or
+        response['result'][0]['type'] != 'audio'):
+        # Nothing is playing or video is playing, but check for screen
+        # press before proceeding
+        last_image_path = None
+        last_thumb = None
 
         if screen_press:
             device.backlight(True)
             screen_on = True
-            screen_offtime = datetime.now() + timedelta(seconds=5)
+            screen_offtime = datetime.now() + timedelta(seconds=10)
 
         if screen_on:
-            if datetime.now() < screen_offtime:
-                # Idle status screen
-                kodi_icon = Image.open(kodi_thumb)
-                image.paste(kodi_icon, (5, 5))
+            # Idle status screen
+            kodi_icon = Image.open(kodi_thumb)
+            image.paste(kodi_icon, (5, 5))
+            if len(response['result']) == 0:
                 draw.text(( 145, 5), "Nothing playing",  fill='white', font=font)
-            else:
-                # screen-on time has expired
-                device.backlight(False)
-                screen_on = False
-
-
-    elif response['result'][0]['type'] != 'audio':
-        # Not audio
-        device.backlight(False)
-        #draw.text(( 5, 5), "Not audio playing",  fill='white', font=font)
-        last_image_path = ""
-        last_thumb = ""
+            elif response['result'][0]['type'] != 'audio':
+                draw.text(( 145, 5), "Video playing",  fill='white', font=font)
+        else:
+            device.backlight(False)
 
     else:
-        # Something's playing!
+        # Audio is playing!
         device.backlight(True)
-        screen_on = True
 
-        # Change display modes upon any screen press
+        # Change display modes upon any screen press, forcing
+        # a re-fetch of any artwork
         if screen_press:
+            display_mode = display_mode.next()
             last_image_path = None
-            last_thumb = None            
-            if display_mode == PDisplay.DEFAULT:
-                display_mode = PDisplay.FULLSCREEN
-            else:
-                display_mode = PDisplay.DEFAULT
+            last_thumb = None
 
+        # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
@@ -304,7 +343,8 @@ def update_display():
         #print("Response: ", json.dumps(response))
         info = response['result']
 
-        # progress information
+        # Progress information (in Kodi Leia) must be fetched separately.  This
+        # looks to be fixed in Kodi Matrix.
         payload = {
             "jsonrpc": "2.0",
             "method"  : "Player.GetProperties",
@@ -321,12 +361,12 @@ def update_display():
             prog = -1;
 
         if display_mode == PDisplay.DEFAULT:
-            # retrieve cover image from Kodi, if it exists and needs a refresh
+            # retrieve cover image from Kodi
             last_thumb = get_artwork(info, last_thumb, thumb_height)
             if last_thumb:
                 image.paste(last_thumb, (5, 5))
 
-            # progress bar and elapsed time
+            # progress bar, if percentage was available
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
                     # longer bar for longer displayed time
@@ -334,6 +374,7 @@ def update_display():
                 else:
                     progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
 
+            # elapsed time
             draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
             # track number
@@ -344,7 +385,7 @@ def update_display():
             # track title
             truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font)
 
-            # other track information
+            # album title and track artist or, if not available, composer
             truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
             if info['MusicPlayer.Artist'] != "":
                 truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill='yellow', font=font_sm)
@@ -367,14 +408,14 @@ def update_display():
             last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-                
+
     # Output to OLED/LCD display and unconditionally
     # clear any screen press
     screen_press = False
     device.display(image)
 
 
-
+# Interrupt callback target from RPi.GPIO for T_IRQ
 def touch_callback(channel):
     global screen_press
     screen_press = True
@@ -387,17 +428,18 @@ def main():
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    # setup T_IRQ as a GPIO interrupt
-    print(datetime.now(), "Setting up touchscreen interrupt")    
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(TOUCH_INT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
-                          callback=touch_callback, bouncetime=300)
+    # setup T_IRQ as a GPIO interrupt, if enabled
+    if USE_TOUCH:
+        print(datetime.now(), "Setting up touchscreen interrupt")
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(TOUCH_INT, GPIO.IN)
+        GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
+                              callback=touch_callback, bouncetime=300)
 
     # main communication loop
     while True:
         device.backlight(True)
-        draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
+        draw.rectangle([(1,1), (frameSize[0]-1,frameSize[1]-1)], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font)
         device.display(image)
 
@@ -420,7 +462,7 @@ def main():
                 time.sleep(5)
                 pass
 
-        print(datetime.now(), "Connected with Kodi.  Entering display loop.")
+        print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
         device.backlight(False)
 
         while True:
@@ -430,6 +472,8 @@ def main():
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
                 break
+            # This delay seems sufficient to have a (usually) smooth progress
+            # bar and elapsed time update.a
             time.sleep(0.92)
 
 
@@ -437,8 +481,9 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(datetime.now(), "Removing touchscreen interrupt")
-        GPIO.remove_event_detect(TOUCH_INT)
+        if USE_TOUCH:
+            print(datetime.now(), "Removing touchscreen interrupt")
+            GPIO.remove_event_detect(TOUCH_INT)
         GPIO.cleanup()
         print(datetime.now(), "Stopping")
-        pass
+        exit(0)
