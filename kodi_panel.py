@@ -303,13 +303,35 @@ def update_display():
 
         if screen_on:
             # Idle status screen
+
+            payload = {
+                "jsonrpc": "2.0",
+                "method"  : "XBMC.GetInfoLabels",
+                "params"  : {"labels": ["System.Uptime",
+                                        "System.CPUTemperature",
+                                        "System.Date",
+                                        "System.Time",
+                ]},
+                "id"      : 10,
+            }
+            status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+            #print("Response: ", json.dumps(response))
+            status = status_resp['result']
+
+            # Render screen
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
-            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='white', font=font)
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='yellow', font=font)
+            draw.text((145,32), status['System.Time'], fill='white', font=font_sm)
+
             if len(response['result']) == 0:
-                draw.text(( 145, 30), "Idle",  fill='white', font=font_sm)
+                draw.text(( 145, 56), "Idle",  fill='white', font=font_sm)
             elif response['result'][0]['type'] != 'audio':
-                draw.text(( 145, 30), "Video playing",  fill='white', font=font_sm)
+                draw.text(( 145, 56), "Video playing",  fill='white', font=font_sm)
+
+            draw.text((5, 150), status['System.Date'], fill='white', font=font_sm)
+            draw.text((5, 175), "Uptime: " + status['System.Uptime'], fill='white', font=font_sm)
+            draw.text((5, 200), "CPU: " + status['System.CPUTemperature'], fill='white', font=font_sm)
         else:
             device.backlight(False)
 
