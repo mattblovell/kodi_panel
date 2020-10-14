@@ -6,12 +6,14 @@ information front panel for Kodi via an attached LCD display.  The LCD
 is handled entirely by `luma.core <https://github.com/rm-hull/luma.oled/>`_
 and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
 depend upon `pillow <https://python-pillow.org/>`_ and `RPi.GPIO
-<https://pythonhosted.org/RPIO/>`_.
+<https://pythonhosted.org/RPIO/>`_.  Information and album cover artwork
+is retrieved from Kodi using
+`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_.
 
 The script is generally intended to run on the same SBC (single-board
 computer) on which Kodi itself is running.  That's not really
 necessary, though, provided one is willing to let the JSON-RPC calls
-to Kodi occur over the network.
+occur over the network.
 
 For Raspberry PI boards, RPi.GPIO obviously works as-is.  For Odroid
 boards, one must instead make use of
