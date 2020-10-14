@@ -20,6 +20,30 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+# ----------------------------------------------------------------------------
+#
+# This script is intended to aid in development since, using pygame as
+# a device emulator with luma.lcd, one can prototype layout choices,
+# play with different fonts, etc.
+#
+# As currently written, the script must be copied to the
+#
+#   luma.examples/examples
+#
+# directory (after cloning it from github) and executed via a command
+# like the following:
+#
+#   python luma_demo.py --display pygame --width 320 --height 240 --scale 1
+#
+# No provisions exist for emulating screen presses, so one must just
+# change default assignments below for any different display modes.
+#
+# Since this script is usually running on a desktop machine, you MUST
+# also specify the current base_url to use below.
+#
+# ----------------------------------------------------------------------------
+
 
 from demo_opts import get_device      # from luma.examples (REQUIRED FOR EMULATION)
 from luma.core.render import canvas
