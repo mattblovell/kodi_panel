@@ -6,7 +6,7 @@ information front panel for Kodi via an attached LCD display.  The LCD
 is handled entirely by `luma.core <https://github.com/rm-hull/luma.oled/>`_
 and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
 depend upon `pillow <https://python-pillow.org/>`_ and `RPi.GPIO
-<https://pythonhosted.org/RPIO/>`_.  Information and album cover artwork
+<https://pypi.org/project/RPi.GPIO/>`_.  Information and album cover artwork
 is retrieved from Kodi using
 `JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_.
 
