@@ -19,6 +19,10 @@ For Raspberry PI boards, RPi.GPIO obviously works as-is.  For Odroid
 boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
+Disclaimer: This project is *not* directly-associated with either
+`Kodi <https://kodi.tv/>`_ or
+`CoreELEC <https://coreelec.org/>`_.
+
 
 Installation
 ------------
@@ -39,7 +43,7 @@ of `Entware <https://github.com/Entware/Entware/wiki>`_.
 Once your display is working, ``kodi_panel.py`` can be started.  I make use
 of Kodi's autostart.sh file; an example file is provided.  That same
 invocation can first be used on the command line, of course, ensuring that
-things are working.  Start things up and then trying playing some music.
+things are working.  Start things up and then trying playing some music!
 
 
 Prototyping Changes

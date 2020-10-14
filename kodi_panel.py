@@ -43,7 +43,7 @@ import io
 import re
 import os
 
-PANEL_VER = "v0.6"
+PANEL_VER = "v0.61"
 
 #base_url = "http://10.0.0.188:8080"  # Odroid C4
 base_url = "http://localhost:8080"   # running on same box as Kodi
