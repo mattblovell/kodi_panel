@@ -43,6 +43,8 @@ import io
 import re
 import os
 
+PANEL_VER = "v0.6"
+
 #base_url = "http://10.0.0.188:8080"  # Odroid C4
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -55,20 +57,20 @@ last_image_path = None
 last_thumb      = None
 
 # Thumbnail defaults
-kodi_thumb      = "./kodi_thumb.jpg"
-default_thumb   = "./music_icon.png"
-default_airplay =  "./airplay_thumb.png"
+kodi_thumb      = "./images/kodi_thumb.jpg"
+default_thumb   = "./images/music_icon.png"
+default_airplay =  "./images/airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
-font      = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
-fontB     = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
-font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
-font_tiny = ImageFont.truetype("FreeSans.ttf", 11, encoding='unic')
+font      = ImageFont.truetype("fonts/FreeSans.ttf", 22, encoding='unic')
+fontB     = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
+font_sm   = ImageFont.truetype("fonts/FreeSans.ttf", 18, encoding='unic')
+font_tiny = ImageFont.truetype("fonts/FreeSans.ttf", 11, encoding='unic')
 
 # Font for time and track
-font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
-font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
+font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
+font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
 color7S   = 'SpringGreen'
 
 # Pillow objects
@@ -303,10 +305,11 @@ def update_display():
             # Idle status screen
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='white', font=font)
             if len(response['result']) == 0:
-                draw.text(( 145, 5), "Nothing playing",  fill='white', font=font)
+                draw.text(( 145, 30), "Idle",  fill='white', font=font_sm)
             elif response['result'][0]['type'] != 'audio':
-                draw.text(( 145, 5), "Video playing",  fill='white', font=font)
+                draw.text(( 145, 30), "Video playing",  fill='white', font=font_sm)
         else:
             device.backlight(False)
 
