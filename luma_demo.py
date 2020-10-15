@@ -128,7 +128,15 @@ class PDisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
 
-display_mode = PDisplay.FULLSCREEN
+    def next(self):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1
+        if index >= len(members):
+            index = 0
+        return members[index]
+
+display_mode = PDisplay.DEFAULT
 
 #-----------------------------------------------------------------------------
 
@@ -187,7 +195,7 @@ def get_artwork(info, prev_image, thumb_size):
         not special_re.match(info['MusicPlayer.Cover'])):
 
         image_path = info['MusicPlayer.Cover']
-        print("image_path : ", image_path) # debug info
+        #print("image_path : ", image_path) # debug info
 
         if (image_path == last_image_path and prev_image):
             # Fall through and just return prev_image
@@ -209,7 +217,7 @@ def get_artwork(info, prev_image, thumb_size):
             if ('details' in response['result'].keys() and
                 'path' in response['result']['details'].keys()) :
                 image_url = base_url + "/" + response['result']['details']['path']
-                print("image_url : ", image_url) # debug info
+                #print("image_url : ", image_url) # debug info
 
             r = requests.get(image_url, stream = True)
             # check that the retrieval was successful before proceeding
@@ -235,7 +243,6 @@ def get_artwork(info, prev_image, thumb_size):
                 resize_needed   = True
             else:
                 last_image_path = default_airplay
-                print("last_image_path now ", last_image_path)
         else:
             # default image when no artwork is available
             last_image_path = default_thumb
@@ -269,6 +276,7 @@ def update_display():
     global screen_press
     global screen_on
     global screen_offtime
+    global display_mode
 
     # Start with a blank slate
     draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
@@ -339,6 +347,14 @@ def update_display():
     else:
         # Something's playing!
 #        device.backlight(True)
+
+        # Change display modes upon any screen press, forcing
+        # a re-fetch of any artwork
+        if screen_press:
+            screen_press = False
+            display_mode = display_mode.next()
+            last_image_path = None
+            last_thumb = None
 
         payload = {
             "jsonrpc": "2.0",
