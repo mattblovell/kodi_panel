@@ -318,12 +318,17 @@ def update_display():
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
             draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='yellow', font=font)
-            draw.text((145,32), status['System.Time'], fill='white', font=font_sm)
 
             if len(response['result']) == 0:
-                draw.text(( 145, 56), "Idle",  fill='white', font=font_sm)
+                draw.text(( 145, 32), "Idle",  fill='white', font=font_sm)
             elif response['result'][0]['type'] != 'audio':
-                draw.text(( 145, 56), "Video playing",  fill='white', font=font_sm)
+                draw.text(( 145, 32), "Video playing",  fill='white', font=font_sm)
+
+            # time in 7-segment font
+            time_parts = status['System.Time'].split(" ")
+            time_width, time_height = draw.textsize(time_parts[0], font7S)
+            draw.text((145,73), time_parts[0], fill=color7S, font=font7S)
+            draw.text((145 + time_width + 5, 73), time_parts[1], fill=color7S, font=font7S_sm)
 
             draw.text((5, 150), status['System.Date'], fill='white', font=font_sm)
             draw.text((5, 175), "Uptime: " + status['System.Uptime'], fill='white', font=font_sm)
