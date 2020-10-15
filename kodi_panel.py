@@ -308,6 +308,7 @@ def update_display():
         last_thumb = None
 
         if screen_press:
+            screen_press = False
             device.backlight(True)
             screen_on = True
             screen_offtime = datetime.now() + timedelta(seconds=10)
@@ -353,6 +354,7 @@ def update_display():
         # Change display modes upon any screen press, forcing
         # a re-fetch of any artwork
         if screen_press:
+            screen_press = False
             display_mode = display_mode.next()
             last_image_path = None
             last_thumb = None
@@ -445,9 +447,7 @@ def update_display():
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
 
-    # Output to OLED/LCD display and unconditionally
-    # clear any screen press
-    screen_press = False
+    # Output to OLED/LCD display
     device.display(image)
 
 
