@@ -119,9 +119,11 @@ class PDisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
 
-display_mode = PDisplay.FULLSCREEN
+display_mode = PDisplay.DEFAULT
 
-
+# Render text at the specified location, truncating characters and
+# placing a final ellipsis if the string is too wide to display in its
+# entirety.
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
     new_text = text
@@ -135,6 +137,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
     pil_draw.text(xy, new_text, fill, font)
 
 
+# Draw a horizontal progress bar at the specified location.
 def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
     pil_draw.rectangle((x,y, x+w, y+h),fill=bgcolor)
 
@@ -147,22 +150,36 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
     pil_draw.rectangle((x,y, x+w, y+h),fill=color)
 
 
-
-# Retrieve cover art or a default thumbnail.  Note that details of
-# retrieval seem to differ depending upon whether Kodi playing from
-# its library, from UPnp/DLNA, or from Airplay.
-def get_artwork(info, last_thumb, thumb_size):
+# Retrieve cover art or a default thumbnail.  Cover art gets resized
+# to the provided thumb_size, but any default images are used as-is.
+#
+# Note that details of retrieval seem to differ depending upon whether
+# Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
+#
+# The global last_image_path is intended to let any given image file
+# be fetched and resized just *once*.  Subsequent calls just reuse the
+# same data, provided that the caller preserves and passes in
+# prev_image.
+#
+# The info argument must be the result of an XBMC.GetInfoLabels
+# JSON-RPC call to Kodi.
+def get_artwork(info, prev_image, thumb_size):
     global last_image_path
+    image_set     = False
+    resize_needed = False
 
-    image_set = False
+    cover = None   # retrieved artwork, original size
+    thumb = None   # resized artwork
+
     if (info['MusicPlayer.Cover'] != '' and
         info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
         not special_re.match(info['MusicPlayer.Cover'])):
-        
+
         image_path = info['MusicPlayer.Cover']
-        #print("image_path : ", image_path) # debug info
-        
-        if image_path == last_image_path:
+        print("image_path : ", image_path) # debug info
+
+        if (image_path == last_image_path and prev_image):
+            # Fall through and just return prev_image
             image_set = True
         else:
             last_image_path = image_path
@@ -176,56 +193,64 @@ def get_artwork(info, last_thumb, thumb_size):
                     "id"      : 5,
                 }
                 response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                #print("Response: ", json.dumps(response))
-                
+                #print("Response: ", json.dumps(response))  # debug info
+
             if ('details' in response['result'].keys() and
                 'path' in response['result']['details'].keys()) :
                 image_url = base_url + "/" + response['result']['details']['path']
-                #print("image_url : ", image_url) # debug info
-                
+                print("image_url : ", image_url) # debug info
+
             r = requests.get(image_url, stream = True)
-            # check that the retrieval was successful
+            # check that the retrieval was successful before proceeding
             if r.status_code == 200:
                 try:
                     r.raw.decode_content = True
                     cover = Image.open(io.BytesIO(r.content))
-                    # resize while maintaining aspect ratio
-                    orig_w, orig_h = cover.size[0], cover.size[1]
-                    shrink = (float(thumb_size)/orig_h)
-                    new_width = int(float(orig_h)*float(shrink))
-                    # just crop if the image turns out to be really wide
-                    if new_width > thumb_size:
-                        thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
-                    else:
-                        thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
-                        last_thumb = thumb
-                        image_set = True
+                    image_set     = True
+                    resize_needed = True
                 except:
                     cover = Image.open(default_thumb)
-                    last_thumb = cover
-                    image_set = True
+                    prev_image = cover
+                    image_set     = True
+                    resize_needed = False
 
+    # finally, if we still don't have anything, check if is Airplay active
     if not image_set:
-        # is Airplay active?
+        resize_needed = False
         if special_re.match(info['MusicPlayer.Cover']):
             airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
             if os.path.isfile(airplay_thumb):
                 last_image_path = airplay_thumb
-            else:
+                resize_needed   = True
+            else:                
                 last_image_path = default_airplay
+                print("last_image_path now ", last_image_path)
         else:
             # default image when no artwork is available
             last_image_path = default_thumb
-                
+
         cover = Image.open(last_image_path)
-        last_thumb = cover
-        image_set = True    
+        prev_image = cover
+        image_set  = True
+
+    # is resizing needed?
+    if (image_set and resize_needed):
+        # resize while maintaining aspect ratio, if possible
+        orig_w, orig_h = cover.size[0], cover.size[1]
+        shrink    = (float(thumb_size)/orig_h)
+        new_width = int(float(orig_h)*float(shrink))
+        # just crop if the image turns out to be really wide
+        if new_width > thumb_size:
+            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
+        else:
+            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
+        prev_image = thumb
 
     if image_set:
-        return last_thumb
+        return prev_image
     else:
         return None
-        
+    
 
 def update_display():
     global last_image_path
@@ -379,7 +404,8 @@ def main():
                 pass
 
         print(datetime.now(), "Connected with Kodi.  Entering display loop.")
-
+        #device.backlight(False)
+        
         while True:
             try:
                 update_display()

@@ -43,7 +43,7 @@ import io
 import re
 import os
 
-PANEL_VER = "v0.62"
+PANEL_VER = "v0.63"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -141,7 +141,7 @@ device = ili9341(serial, active_low=False, width=320, height=240,
 # ----------------------------------------------------------------------------
 
 # Render text at the specified location, truncating characters and
-# placing final elipsis if the string is too wide to display in its
+# placing a final ellipsis if the string is too wide to display in its
 # entirety.
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
@@ -247,6 +247,7 @@ def get_artwork(info, prev_image, thumb_size):
             last_image_path = default_thumb
 
         cover = Image.open(last_image_path)
+        prev_image = cover        
         image_set = True
 
     # is resizing needed?
