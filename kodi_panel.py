@@ -43,9 +43,8 @@ import io
 import re
 import os
 
-PANEL_VER = "v0.61"
+PANEL_VER = "v0.62"
 
-#base_url = "http://10.0.0.188:8080"  # Odroid C4
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
@@ -173,7 +172,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
 # to the provided thumb_size, but any default images are used as-is.
 #
 # Note that details of retrieval seem to differ depending upon whether
-# Kodi playing from its library, from UPnp/DLNA, or from Airplay.
+# Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
 #
 # The global last_image_path is intended to let any given image file
 # be fetched and resized just *once*.  Subsequent calls just reuse the
@@ -193,7 +192,8 @@ def get_artwork(info, prev_image, thumb_size):
         image_path = info['MusicPlayer.Cover']
         #print("image_path : ", image_path) # debug info
 
-        if image_path == last_image_path:
+        if (image_path == last_image_path and prev_image):
+            # Fall through and just return prev_image
             image_set = True
         else:
             last_image_path = image_path
@@ -229,15 +229,15 @@ def get_artwork(info, prev_image, thumb_size):
                         thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
                     else:
                         thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
-                        prev_image = thumb
-                        image_set = True
+                    prev_image = thumb
+                    image_set = True
                 except:
                     cover = Image.open(default_thumb)
                     prev_image = cover
                     image_set = True
 
+    # finally, if we still don't have anything, check if is Airplay active
     if not image_set:
-        # is Airplay active?
         if special_re.match(info['MusicPlayer.Cover']):
             airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
             if os.path.isfile(airplay_thumb):
@@ -249,7 +249,16 @@ def get_artwork(info, prev_image, thumb_size):
             last_image_path = default_thumb
 
         cover = Image.open(last_image_path)
-        prev_image = cover
+        # resize while maintaining aspect ratio
+        orig_w, orig_h = cover.size[0], cover.size[1]
+        shrink = (float(thumb_size)/orig_h)
+        new_width = int(float(orig_h)*float(shrink))
+        # just crop if the image turns out to be really wide
+        if new_width > thumb_size:
+            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
+        else:
+            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
+        prev_image = thumb        
         image_set = True
 
     if image_set:
@@ -368,7 +377,7 @@ def update_display():
         #print("Response: ", json.dumps(response))
         info = response['result']
 
-        # Progress information (in Kodi Leia) must be fetched separately.  This
+        # Progress information in Kodi Leia must be fetched separately.  This
         # looks to be fixed in Kodi Matrix.
         payload = {
             "jsonrpc": "2.0",
@@ -469,7 +478,7 @@ def main():
         device.display(image)
 
         while True:
-            # first ensure Kodi is up and accessible
+            # ensure Kodi is up and accessible
             payload = {
                 "jsonrpc": "2.0",
                 "method"  : "JSONRPC.Ping",
@@ -490,6 +499,7 @@ def main():
         print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
         device.backlight(False)
 
+        # Loop until Kodi goes away
         while True:
             try:
                 update_display()
@@ -498,7 +508,7 @@ def main():
                 print(datetime.now(), "Communication disrupted.")
                 break
             # This delay seems sufficient to have a (usually) smooth progress
-            # bar and elapsed time update.a
+            # bar and elapsed time update
             time.sleep(0.92)
 
 
