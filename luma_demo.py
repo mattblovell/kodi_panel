@@ -52,7 +52,7 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 import time
 import logging
@@ -61,6 +61,8 @@ import json
 import io
 import re
 import os
+
+PANEL_VER = "v0.63"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -74,6 +76,7 @@ last_image_path = ""
 last_thumb      = ""
 
 # Thumbnail defaults
+kodi_thumb      = "./kodi_thumb.jpg"
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
@@ -111,6 +114,12 @@ codec_name = {"ac3"      : "DD",
               "mp2"      : "MP2",
               "pcm_u8"   : "PCM"}
 
+# Touchscreen presses can somewhat be emulated by checking
+# pygame for key presses.
+screen_press   = False
+screen_on      = False
+screen_offtime = datetime.now()
+
 # Handle to pygame emulator
 device = get_device()
 
@@ -119,7 +128,9 @@ class PDisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
 
-display_mode = PDisplay.DEFAULT
+display_mode = PDisplay.FULLSCREEN
+
+#-----------------------------------------------------------------------------
 
 # Render text at the specified location, truncating characters and
 # placing a final ellipsis if the string is too wide to display in its
@@ -255,27 +266,71 @@ def get_artwork(info, prev_image, thumb_size):
 def update_display():
     global last_image_path
     global last_thumb
+    global screen_press
+    global screen_on
+    global screen_offtime
+
+    # Start with a blank slate    
     draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
 
+    # Check if the screen_on time has expired
+    if (screen_on and datetime.now() >= screen_offtime):
+        screen_on = False
+        #device.backlight(False)
+    
     payload = {
         "jsonrpc": "2.0",
         "method"  : "Player.GetActivePlayers",
         "id"      : 3,
     }
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+    
+    if (len(response['result']) == 0 or
+        response['result'][0]['type'] != 'audio'):
+        # Nothing is playing or video is playing, but check for screen
+        # press before proceeding
+        last_image_path = None
+        last_thumb = None
+        
+        if screen_press:
+            screen_press = False
+            screen_on = True
+            screen_offtime = datetime.now() + timedelta(seconds=10)
+            
+        if screen_on:
+            # Idle status screen
 
-    if len(response['result']) == 0:
-        # Nothing playing
-#        device.backlight(False)
-        draw.text(( 5, 5), "Nothing playing",  fill='white', font=font)
-        last_image_path = ""
-        last_thumb = ""
-    elif response['result'][0]['type'] != 'audio':
-        # Not audio
-#        device.backlight(False)
-        draw.text(( 5, 5), "Not audio playing",  fill='white', font=font)
-        last_image_path = ""
-        last_thumb = ""
+            payload = {
+                "jsonrpc": "2.0",
+                "method"  : "XBMC.GetInfoLabels",
+                "params"  : {"labels": ["System.Uptime",
+                                        "System.CPUTemperature",
+                                        "System.Date",
+                                        "System.Time",
+                ]},
+                "id"      : 10,
+            }
+            status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+            #print("Response: ", json.dumps(response))
+            status = status_resp['result']
+
+            # Render screen
+            kodi_icon = Image.open(kodi_thumb)
+            image.paste(kodi_icon, (5, 5))
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='yellow', font=font)
+            draw.text((145,32), status['System.Time'], fill='white', font=font_sm)
+
+            if len(response['result']) == 0:
+                draw.text(( 145, 56), "Idle",  fill='white', font=font_sm)
+            elif response['result'][0]['type'] != 'audio':
+                draw.text(( 145, 56), "Video playing",  fill='white', font=font_sm)
+
+            draw.text((5, 150), status['System.Date'], fill='white', font=font_sm)
+            draw.text((5, 175), "Uptime: " + status['System.Uptime'], fill='white', font=font_sm)
+            draw.text((5, 200), "CPU: " + status['System.CPUTemperature'], fill='white', font=font_sm)
+        else:
+            draw.text(( 5, 5), "Nothing playing",  fill='white', font=font)
+
     else:
         # Something's playing!
 #        device.backlight(True)
@@ -372,6 +427,7 @@ def update_display():
 
 
 def main():
+    global screen_press
     print(datetime.now(), "Starting")
 
     # Turn down verbosity from http connections
@@ -408,6 +464,10 @@ def main():
         
         while True:
             try:
+                keys = device._pygame.key.get_pressed()
+                if keys[device._pygame.K_SPACE]:
+                    screen_press = True
+                    print(datetime.now(), "Touchscreen pressed (emulated)")                
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
