@@ -233,7 +233,7 @@ def get_artwork(info, prev_image, thumb_size):
             if os.path.isfile(airplay_thumb):
                 last_image_path = airplay_thumb
                 resize_needed   = True
-            else:                
+            else:
                 last_image_path = default_airplay
                 print("last_image_path now ", last_image_path)
         else:
@@ -261,7 +261,7 @@ def get_artwork(info, prev_image, thumb_size):
         return prev_image
     else:
         return None
-    
+
 
 def update_display():
     global last_image_path
@@ -270,33 +270,33 @@ def update_display():
     global screen_on
     global screen_offtime
 
-    # Start with a blank slate    
+    # Start with a blank slate
     draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
 
     # Check if the screen_on time has expired
     if (screen_on and datetime.now() >= screen_offtime):
         screen_on = False
         #device.backlight(False)
-    
+
     payload = {
         "jsonrpc": "2.0",
         "method"  : "Player.GetActivePlayers",
         "id"      : 3,
     }
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-    
+
     if (len(response['result']) == 0 or
         response['result'][0]['type'] != 'audio'):
         # Nothing is playing or video is playing, but check for screen
         # press before proceeding
         last_image_path = None
         last_thumb = None
-        
+
         if screen_press:
             screen_press = False
             screen_on = True
             screen_offtime = datetime.now() + timedelta(seconds=10)
-            
+
         if screen_on:
             # Idle status screen
 
@@ -374,12 +374,12 @@ def update_display():
             prog = -1;
 
 
-        if display_mode == PDisplay.DEFAULT:            
+        if display_mode == PDisplay.DEFAULT:
             # retrieve cover image from Kodi, if it exists and needs a refresh
             last_thumb = get_artwork(info, last_thumb, thumb_height)
             if last_thumb:
                 image.paste(last_thumb, (5, 5))
-                
+
             # progress bar and elapsed time
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
@@ -387,7 +387,7 @@ def update_display():
                     progress_bar(draw, 'dimgrey', color7S, 150, 5, 164, 4, prog)
                 else:
                     progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
-                        
+
             draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
             # track number
@@ -421,7 +421,7 @@ def update_display():
             last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-                
+
     # Output to OLED/LCD display
     device.display(image)
 
@@ -461,13 +461,13 @@ def main():
 
         print(datetime.now(), "Connected with Kodi.  Entering display loop.")
         #device.backlight(False)
-        
+
         while True:
             try:
                 keys = device._pygame.key.get_pressed()
                 if keys[device._pygame.K_SPACE]:
                     screen_press = True
-                    print(datetime.now(), "Touchscreen pressed (emulated)")                
+                    print(datetime.now(), "Touchscreen pressed (emulated)")
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
@@ -480,6 +480,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(datetime.now(), "Removing touchscreen interrupt")        
+        print(datetime.now(), "Removing touchscreen interrupt")
         print(datetime.now(), "Stopping")
         pass
