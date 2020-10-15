@@ -42,6 +42,7 @@ import json
 import io
 import re
 import os
+import threading
 
 PANEL_VER = "v0.63"
 
@@ -129,6 +130,10 @@ USE_TOUCH      = True
 screen_press   = False
 screen_on      = False
 screen_offtime = datetime.now()
+
+# Provide a lock to ensure update_display() is single-threaded.  This
+# is likely unnecessary given Python's GIL, but is certainly safe.
+lock = threading.Lock()
 
 # Finally, a handle to the ILI9341-driven SPI panel via luma
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
@@ -283,6 +288,8 @@ def update_display():
     global screen_on
     global screen_offtime
     global display_mode
+
+    lock.acquire()
 
     # Start with a blank slate
     draw.rectangle([(1,1), (frameSize[0]-1,frameSize[1]-1)], 'black', 'black')
@@ -454,12 +461,14 @@ def update_display():
 
     # Output to OLED/LCD display
     device.display(image)
+    lock.release()
 
 
 # Interrupt callback target from RPi.GPIO for T_IRQ
 def touch_callback(channel):
     global screen_press
     screen_press = True
+    update_display()
     print(datetime.now(), "Touchscreen pressed")
 
 
@@ -475,7 +484,7 @@ def main():
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(TOUCH_INT, GPIO.IN)
         GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
-                              callback=touch_callback, bouncetime=300)
+                              callback=touch_callback, bouncetime=800)
 
     # main communication loop
     while True:
