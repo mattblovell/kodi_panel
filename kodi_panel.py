@@ -355,7 +355,7 @@ def update_display():
             draw.text((145 + time_width + 5, 73), time_parts[1], fill=color7S, font=font7S_sm)
 
             draw.text((5, 150), status['System.Date'], fill='white', font=font_sm)
-            draw.text((5, 175), "Uptime: " + status['System.Uptime'], fill='white', font=font_sm)
+            draw.text((5, 175), "Up: " + status['System.Uptime'], fill='white', font=font_sm)
             draw.text((5, 200), "CPU: " + status['System.CPUTemperature'], fill='white', font=font_sm)
         else:
             device.backlight(False)
