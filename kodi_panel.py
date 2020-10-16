@@ -44,7 +44,7 @@ import re
 import os
 import threading
 
-PANEL_VER = "v0.63"
+PANEL_VER = "v0.64"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -127,6 +127,7 @@ display_mode = PDisplay.DEFAULT
 TOUCH_INT      = 19
 USE_TOUCH      = True
 
+kodi_active    = False
 screen_press   = False
 screen_on      = False
 screen_offtime = datetime.now()
@@ -467,12 +468,20 @@ def update_display():
 # Interrupt callback target from RPi.GPIO for T_IRQ
 def touch_callback(channel):
     global screen_press
+    global kodi_active
     screen_press = True
-    update_display()
     print(datetime.now(), "Touchscreen pressed")
+    if kodi_active:
+        try:
+            update_display()
+        except:
+            pass
 
 
 def main():
+    global kodi_active
+    kodi_active = False
+
     print(datetime.now(), "Starting")
     # turn down verbosity from http connections
     logging.basicConfig()
@@ -516,12 +525,14 @@ def main():
         device.backlight(False)
 
         # Loop until Kodi goes away
+        kodi_active = True
         while True:
             try:
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
+                kodi_active = False
                 break
             # This delay seems sufficient to have a (usually) smooth progress
             # bar and elapsed time update
