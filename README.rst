@@ -52,15 +52,17 @@ I only have direct access to a Raspberry Pi Model B and an Odroid C4.
 As others try additional SBCs, please feel free to suggest additions or
 changes to this documentation.
 
-The first step is really to get your display of choice connected
-and working.  A prequisite is thus understanding the GPIO pinout of
-your SBC.  Be aware the GPIO pins have both *physical* numbers and
-numbers or names as assigned by whatever software one happens to be using
-to control and access them.  Since luma.lcd makes use of RPi.GPIO,
-the numbers you'll see in ``kodi_panel.py`` all correspond to
-RPi.GPIO's logical numbering scheme.  Fortunately, that scheme is
-well-documented all over the web, for instance at this
-`SparkFun GPIO <https://learn.sparkfun.com/tutorials/raspberry-gpio/gpio-pinout>`_ page.
+The first step is really to get your display of choice connected and
+working.  A prequisite is thus understanding the GPIO pinout of your
+SBC.  Be aware the GPIO pins have both *physical* numbers and numbers
+or names as assigned by whatever software one happens to be using to
+control and access them.  Since luma.lcd makes use of RPi.GPIO, the
+numbers you'll see in ``kodi_panel.py`` all correspond to RPi.GPIO's
+numbering scheme (which is derived from the Broadcom chip that drives
+the pins).  Fortunately, that scheme is well-documented all over the
+web, for instance at this `SparkFun GPIO
+<https://learn.sparkfun.com/tutorials/raspberry-gpio/gpio-pinout>`_
+page.
 
 On another note, for *all* the display modules that I tried before settling
 on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
