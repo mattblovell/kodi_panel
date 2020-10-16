@@ -100,7 +100,7 @@ That means that a typical CoreELEC installation does *not* provide ``apt``,
 or ``git``, or the tool pipeline and header files one typically uses for code development.
 All is not lost, though, for the CoreELEC developers do make it extremely
 easy to install `Entware <https://github.com/Entware/Entware/wiki>`_.  With
-that, you can just a "just enough" development environment!
+that, you can get a "just enough" development environment!
 
 The immediate goal is still the same -- get luma.lcd installed and talking
 to your display.  There are just a more steps necessary to achieve that
