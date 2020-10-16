@@ -73,10 +73,10 @@ font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
 
 # Colors
-color7S   = 'SpringGreen'
-color7S  = 'SpringGreen'   # 7-Segnment color
-prog_bg  = 'dimgrey'       # progress bar background
-prog_fg  = color7S         # progress bar foreground
+color7S       = 'SpringGreen'   # 7-Segnment color
+color_progbg  = 'dimgrey'       # progress bar background
+color_progfg  = color7S         # progress bar foreground
+color_artist  = 'yellow'        # artist name
 
 # Pillow objects
 image  = Image.new('RGB', (frameSize), 'black')
@@ -355,7 +355,7 @@ def update_display():
             # Render screen
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
-            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill='yellow', font=font)
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font)
 
             if len(response['result']) == 0:
                 draw.text(( 145, 32), "Idle",  fill='white', font=font_sm)
@@ -436,9 +436,9 @@ def update_display():
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
                     # longer bar for longer displayed time
-                    progress_bar(draw, prog_bg, prog_fg, 150, 5, 164, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 164, 4, prog)
                 else:
-                    progress_bar(draw, prog_bg, prog_fg, 150, 5, 104, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 104, 4, prog)
 
             # elapsed time
             draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
@@ -454,9 +454,9 @@ def update_display():
             # album title and track artist or, if not available, composer
             truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
             if info['MusicPlayer.Artist'] != "":
-                truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill='yellow', font=font_sm)
+                truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill=color_artist, font=font_sm)
             elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill='yellow', font=font_sm)
+                truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill=color_artist, font=font_sm)
 
             # audio info
             codec = info['MusicPlayer.Codec']
@@ -482,7 +482,7 @@ def update_display():
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
             # vertical progress bar
             if prog != -1:
-                progress_bar(draw, prog_bg, prog_fg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
+                progress_bar(draw, color_progbg, color_progfg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
 
 
     # Output to OLED/LCD display
