@@ -203,7 +203,8 @@ controller (XPT2046) was sufficiently active following power-up that
 T_IRQ, the touch interrupt, was working!  It was not necessary to send
 any command to the controller or even connect T_CLK.  The T_IRQ signal
 is by default pulled up to Vcc by an internal resistor and gets pulled
-down to ground when the screen it pressed.
+down to ground when the screen is pressed (as verified with a simple
+multimeter).
 
 This was all I needed to give it a try!
 
