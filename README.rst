@@ -178,7 +178,7 @@ as a consequence of the Entware installation.
 
 Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
-and running (it is CoreELEC, after all), one then then cd into
+and running (it is CoreELEC, after all), one can ``cd`` into
 kodi_panel's directory and invoke
 
 ::
