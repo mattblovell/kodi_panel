@@ -21,7 +21,7 @@ boards, one must instead make use of
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/working_lcd.jpg
 
-Disclaimer: This project is *not* directly associated with either
+**Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
 `CoreELEC <https://coreelec.org/>`_.
 
@@ -68,6 +68,8 @@ avoided having to worry about `level shifters <https://www.adafruit.com/product/
 Be careful wiring up your SBC; if you're not familiar with them
 generally, see the warnings documented on the RPi
 `GPIO usage <https://www.raspberrypi.org/documentation/usage/gpio/>`_ page.
+
+
 
 Raspberry Pi
 ************
@@ -193,6 +195,58 @@ I have only tried the above on an Odroid C4.  If others want to inform me of the
 attempts and what instruction changes need to be captured, please let me know.
 
 
+Touch Interrupt
+***************
+
+For the 3.2-inch ILI9341-based board that I tried, the touch
+controller (XPT2046) was sufficiently active following power-up that
+T_IRQ, the touch interrupt, was working!  It was not necessary to send
+any command to the controller or even connect T_CLK.  The T_IRQ signal
+is by default pulled up to Vcc by an internal resistor and gets pulled
+down to ground when the screen it pressed.
+
+This was all I needed to give it a try!
+
+All that was necessary was to find a GPIO pin that was free to use an
+an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
+known as Pin Number 35.
+
+The following block of code in ``kodi_panel.py`` is qualified by a USE_INT
+conditional that defaults to True:
+
+::
+
+    # setup T_IRQ as a GPIO interrupt, if enabled
+    if USE_TOUCH:
+        print(datetime.now(), "Setting up touchscreen interrupt")
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(TOUCH_INT, GPIO.IN)
+        GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
+                              callback=touch_callback, bouncetime=800)
+
+
+The ``touch_callback()`` function then sets a flag (``screen_press``) that
+gets used elsewhere.  For better responsive, the interrupt callback is also
+able to invoke ``update_display()``; without that immediate call, one has to
+wait (up to the sleep time in ``main``) for a reaction.
+
+  (It looks like the RPi.GPIO package makes of use ``pthreads`` to provide
+  for the asynchronous behavior one would expect of an external interrupt.
+  Exactly how that works given Python's `GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_
+  is beyond my current understanding.  If anyone wants to enlighten me, have
+  it at.  I nevertheless tried to code everything in a thread-safe fashion.)
+
+Doing more with the touchscreen than just taking an interrupt would
+require connecting several additional signals.  The XPT2046 controller
+is a SPI device, just like the ILI9341.  Theoretically, one should be
+able to have both devices present on the same daisy chain.  The
+luma.lcd documentation, though, explicitly notes that it doesn't
+support touch, and the C4 only has one hardware SPI interface.  If
+others want to be adventurous, though, be sure to let me know the
+results!
+
+
+
 Prototyping Changes
 -------------------
 
@@ -202,6 +256,9 @@ emulator, it provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
 start of that file for how to invoke it.
 
+Here's an example of ``luma_demo.py`` running from earlier in kodi_panel's development.
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/emulator_example.png
 
 
 License
