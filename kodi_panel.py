@@ -68,10 +68,15 @@ fontB     = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
 font_sm   = ImageFont.truetype("fonts/FreeSans.ttf", 18, encoding='unic')
 font_tiny = ImageFont.truetype("fonts/FreeSans.ttf", 11, encoding='unic')
 
-# Font for time and track
+# 7-Segment Font for time and track
 font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
+
+# Colors
 color7S   = 'SpringGreen'
+color7S  = 'SpringGreen'   # 7-Segnment color
+prog_bg  = 'dimgrey'       # progress bar background
+prog_fg  = color7S         # progress bar foreground
 
 # Pillow objects
 image  = Image.new('RGB', (frameSize), 'black')
@@ -106,6 +111,7 @@ codec_name = {
 class PDisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
+    FULL_PROG  = 2   # fullscreen art with vertical progress bar
 
     def next(self):
         cls = self.__class__
@@ -162,16 +168,23 @@ def truncate_text(pil_draw, xy, text, fill, font):
     pil_draw.text(xy, new_text, fill, font)
 
 
-# Draw a horizontal progress bar at the specified location.
-def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress):
+# Draw (by default) a horizontal progress bar at the specified
+# location, filling from left to right.  A vertical bar can be drawn
+# if specified, filling from bottom to top.
+def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False):
     pil_draw.rectangle((x,y, x+w, y+h),fill=bgcolor)
 
-    if(progress<=0):
+    if progress <= 0:
         progress = 0.01
-    if(progress>1):
-        progress=1
-    w = w*progress
-    pil_draw.rectangle((x,y, x+w, y+h),fill=color)
+    if progress >1:
+        progress = 1
+
+    if vertical:
+        dh = h*progress
+        pil_draw.rectangle((x,y+h-dh,x+w,y+h),fill=color)
+    else:
+        dw = w*progress
+        pil_draw.rectangle((x,y, x+dw, y+h),fill=color)
 
 
 # Retrieve cover art or a default thumbnail.  Cover art gets resized
@@ -411,6 +424,7 @@ def update_display():
         else:
             prog = -1;
 
+        # Default display -- all info with small artwork
         if display_mode == PDisplay.DEFAULT:
             # retrieve cover image from Kodi
             last_thumb = get_artwork(info, last_thumb, thumb_height)
@@ -421,9 +435,9 @@ def update_display():
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
                     # longer bar for longer displayed time
-                    progress_bar(draw, 'dimgrey', color7S, 150, 5, 164, 4, prog)
+                    progress_bar(draw, prog_bg, prog_fg, 150, 5, 164, 4, prog)
                 else:
-                    progress_bar(draw, 'dimgrey', color7S, 150, 5, 104, 4, prog)
+                    progress_bar(draw, prog_bg, prog_fg, 150, 5, 104, 4, prog)
 
             # elapsed time
             draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
@@ -454,11 +468,21 @@ def update_display():
             if info['MusicPlayer.Year'] != "":
                 draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
 
+        # Full-screen art
         elif display_mode == PDisplay.FULLSCREEN:
-            # retrieve full-screen artwork
             last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+
+        # Full-screen art with progress bar
+        elif display_mode == PDisplay.FULL_PROG:
+            last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+            if last_thumb:
+                image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+            # vertical progress bar
+            if prog != -1:
+                progress_bar(draw, prog_bg, prog_fg, frameSize[0]-12, 1, 10, frameSize[1]-1, prog, vertical=True)
+
 
     # Output to OLED/LCD display
     device.display(image)
