@@ -231,11 +231,11 @@ gets used elsewhere.  For better responsive, the interrupt callback is also
 able to invoke ``update_display()``; without that immediate call, one has to
 wait (up to the sleep time in ``main``) for a reaction.
 
-  (It looks like the RPi.GPIO package makes of use ``pthreads`` to provide
-  for the asynchronous behavior one would expect of an external interrupt.
-  Exactly how that works given Python's `GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_
-  is beyond my current understanding.  If anyone wants to enlighten me, have
-  it at.  I nevertheless tried to code everything in a thread-safe fashion.)
+(It looks like the RPi.GPIO package makes of use ``pthreads`` to provide
+for the asynchronous behavior one would expect of an external interrupt.
+Exactly how that works given Python's `GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_
+is beyond my current understanding.  If anyone wants to enlighten me, have
+it at.  I nevertheless tried to code everything in a thread-safe fashion.)
 
 Doing more with the touchscreen than just taking an interrupt would
 require connecting several additional signals.  The XPT2046 controller
