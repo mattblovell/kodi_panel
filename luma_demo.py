@@ -465,7 +465,7 @@ def update_display():
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
             # vertical progress bar
             if prog != -1:
-                progress_bar(draw, prog_bg, prog_fg, frameSize[0]-12, 1, 10, frameSize[1]-2, prog, vertical=True)
+                progress_bar(draw, prog_bg, prog_fg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
 
     # Output to OLED/LCD display
     device.display(image)
