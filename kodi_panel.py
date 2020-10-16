@@ -44,6 +44,7 @@ import re
 import os
 import threading
 
+# ----------------------------------------------------------------------------
 PANEL_VER = "v0.65"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
@@ -56,11 +57,13 @@ thumb_height    = 140;
 last_image_path = None
 last_thumb      = None
 
-# Thumbnail defaults
+# Thumbnail defaults (these don't get resized)
 kodi_thumb      = "./images/kodi_thumb.jpg"
 default_thumb   = "./images/music_icon.png"
 default_airplay =  "./images/airplay_thumb.png"
-special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+
+# RegEx for recognizing AirPlay images (compiled once)
+special_re = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
 font_main = ImageFont.truetype("fonts/FreeSans.ttf", 22, encoding='unic')
@@ -68,7 +71,7 @@ font_bold = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
 font_sm   = ImageFont.truetype("fonts/FreeSans.ttf", 18, encoding='unic')
 font_tiny = ImageFont.truetype("fonts/FreeSans.ttf", 11, encoding='unic')
 
-# 7-Segment Font for time and track
+# 7-Segment Font for time and track number
 font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
 

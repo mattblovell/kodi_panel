@@ -62,6 +62,7 @@ import io
 import re
 import os
 
+# ----------------------------------------------------------------------------
 PANEL_VER = "v0.65"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
@@ -75,11 +76,13 @@ thumb_height    = 140;
 last_image_path = ""
 last_thumb      = ""
 
-# Thumbnail defaults
+# Thumbnail defaults (these don't get resized)
 kodi_thumb      = "./kodi_thumb.jpg"
 default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
-special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+
+# RegEx for recognizing AirPlay images (compiled once)
+special_re = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
 font_main = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
@@ -87,7 +90,7 @@ font_bold = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
 font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
 font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
 
-# 7-Segment Font for time and track
+# 7-Segment Font for time and track number
 font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
 
@@ -95,7 +98,7 @@ font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
 color7S      = 'SpringGreen'   # 7-Segnment color
 color_progbg = 'dimgrey'       # progress bar background
 color_progfg = color7S         # progress bar foreground
-color_artist  = 'yellow'        # artist name
+color_artist  = 'yellow'       # artist name
 
 image  = Image.new('RGB', (frameSize), 'black')
 draw   = ImageDraw.Draw(image)
