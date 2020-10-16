@@ -146,7 +146,12 @@ screen_offtime = datetime.now()
 # is likely unnecessary given Python's GIL, but is certainly safe.
 lock = threading.Lock()
 
-# Finally, a handle to the ILI9341-driven SPI panel via luma
+# Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
+#
+# The backlight signal (with inline resistor NEEDED) is connected to
+# GPIO16, physical pin 12.  There seems to be an error in luma.lcd's
+# online documentation in that regard.
+#
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
 device = ili9341(serial, active_low=False, width=320, height=240,
