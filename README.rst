@@ -26,7 +26,7 @@ Disclaimer: This project is *not* directly associated with either
 `CoreELEC <https://coreelec.org/>`_.
 
 The general approach taken by this project, running separately from Kodi
-itself and retrieving all relevant state via JSON-RPC, has used by other
+itself and retrieving all relevant state via JSON-RPC, has been used by other
 projects.  The main advantage of *not* being a Kodi addon is that, at least
 with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
 script also means that one can have a separate SBC driving a "Now Playing"
