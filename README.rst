@@ -29,7 +29,7 @@ Disclaimer: This project is *not* directly associated with either
 Installation
 ------------
 
-I only have direct access to a Raspberry Pi Model B and an Odroid C4.  
+I only have direct access to a Raspberry Pi Model B and an Odroid C4.
 As others try additional SBCs, please feel free to suggest additions or
 changes to this documentation.
 
@@ -39,15 +39,15 @@ your SBC.  Be aware the GPIO pins have both *physical* numbers and
 numbers or names as assigned by whatever software one happens to be using
 to control and access them.  Since luma.lcd makes use of RPi.GPIO,
 the numbers you'll see in ``kodi_panel.py`` all correspond to
-RPi.GPIO's logical numbering scheme.  Fortunately, that scheme is 
+RPi.GPIO's logical numbering scheme.  Fortunately, that scheme is
 well-documented all over the web, for instance at this
-`SparkFun GPIO <https://learn.sparkfun.com/tutorials/raspberry-gpio/gpio-pinout>`_ page. 
+`SparkFun GPIO <https://learn.sparkfun.com/tutorials/raspberry-gpio/gpio-pinout>`_ page.
 
 On another note, for *all* the display modules that I tried before settling
 on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
 avoided having to worry about `level shifters <https://www.adafruit.com/product/1875>`_.
 Be careful wiring up your SBC; if you're not familiar with them
-generally, see the warnings documented on the RPi 
+generally, see the warnings documented on the RPi
 `GPIO <https://www.raspberrypi.org/documentation/usage/gpio/>`_ usage page.
 
 Raspberry Pi
@@ -57,17 +57,17 @@ For Raspberry Pi, follow the
 `installation directions <https://luma-lcd.readthedocs.io/en/latest/>`_ from
 luma.lcd to get your display working.  Luma's directions are thorough
 and provide suggested wiring for a number of displays.  You can make
-use of `luma.examples <https://github.com/rm-hull/luma.examples>`_ 
+use of `luma.examples <https://github.com/rm-hull/luma.examples>`_
 to test and exercise the display.  The installation directions assume
 you are running a fairly complete Linux distribution, such as
 `Raspberry Pi OS <https://www.raspberrypi.org/downloads/raspberry-pi-os/>`_.
 
 Once you have the luma.examples working, you're really about done!
 Install Kodi as well, and get it working as desired.  If kodi_panel is
-to run on the same SBC as is hosting the display, then no immediate 
+to run on the same SBC as is hosting the display, then no immediate
 editing of ``kodi_panel.py`` should be needed.  Otherwise, you will need
 to at least specify the correct IP address to use for kodi_panel's ``base_url``
-variable.  After that, try starting kodi_panel by 
+variable.  After that, try starting kodi_panel by
 changing directory to ``kodi_panel`` and invoking
 
 ::
@@ -99,15 +99,15 @@ CoreELEC's forums:
 That means that a typical CoreELEC installation does *not* provide ``apt``,
 or ``git``, or the tool pipeline and header files one typically uses for code development.
 All is not lost, though, for the CoreELEC developers do make it extremely
-easy to install `Entware <https://github.com/Entware/Entware/wiki>`_.  With 
+easy to install `Entware <https://github.com/Entware/Entware/wiki>`_.  With
 that, you can just a "just enough" development environment!
 
 The immediate goal is still the same -- get luma.lcd installed and talking
 to your display.  There are just a more steps necessary to achieve that
 goal than if you had armbian or Debian installed.  (I'm not going to describe
 how to secure-shell (ssh) into your CoreELEC SBC; you should
-be able to find details on that elsewhere on the web.) 
-Here are the steps I ended up using, as captured from the second forum thread 
+be able to find details on that elsewhere on the web.)
+Here are the steps I ended up using, as captured from the second forum thread
 above.  Note that the ``python3`` and ``pip3`` commands below are all
 expected to make use of files newly-installed out in ``/storage/opt``
 as a consequence of the Entware installation.
@@ -127,7 +127,7 @@ as a consequence of the Entware installation.
      opkg install python3 python3-dev python3-pip
 
 3. Install `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_:
-  
+
    ::
 
      git clone https://github.com/jfath/RPi.GPIO-Odroid.git
@@ -137,17 +137,17 @@ as a consequence of the Entware installation.
 
 4. Install the entware-compiled version of pillow:
 
-  ::
+   ::
 
-      opkg install python3-pillow
+     opkg install python3-pillow
 
 5. You should then be able install luma.lcd in basically the usual fashion:
-  
-  ::
+
+   ::
 
      pip3 install luma.lcd
 
-Assuming the above is all successful, you should now be able to 
+Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
 and running (it is CoreELEC, after all), one then then cd into
 kodi_panel's directory and invoke
