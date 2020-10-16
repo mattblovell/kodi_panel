@@ -162,6 +162,8 @@ To have kodi_panel start up when the Odroid is powered-on, I take advantage
 of Kodi's ``autostart.sh`` mechanism.  An example file is provided as part
 of kodi_panel.
 
+I have only tried the above on an Odroid C4.  If others want to inform me of their
+attempts and what instruction changes need to be captured, please let me know.
 
 
 Prototyping Changes
