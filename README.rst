@@ -25,6 +25,25 @@ Disclaimer: This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
 `CoreELEC <https://coreelec.org/>`_.
 
+The general approach taken by this project, running separately from Kodi
+itself and retrieving all relevant state via JSON-RPC, has used by other
+projects.  The main advantage of *not* being a Kodi addon is that, at least
+with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
+script also means that one can have a separate SBC driving a "Now Playing"
+screen anywhere one would like!  
+
+The ``kodi_panel.py`` script is also fairly short.  If you are
+familiar with reading and writing Python, and making use of the pillow
+image library, it should be straightforward to modify it to your taste
+or needs.  Using Python also lets one experiment with and inspect the
+results of the JSON-RPC calls to Kodi quite easily.  The Kodi documentation
+on
+`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_ and
+`InfoLabels <https://kodi.wiki/view/InfoLabels>`_
+should give you a complete picture of what information is available.
+(One can also change Kodi's state using JSON-RPC, something I don't even
+attempt here!)
+
 
 Installation
 ------------
@@ -48,7 +67,7 @@ on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
 avoided having to worry about `level shifters <https://www.adafruit.com/product/1875>`_.
 Be careful wiring up your SBC; if you're not familiar with them
 generally, see the warnings documented on the RPi
-`GPIO <https://www.raspberrypi.org/documentation/usage/gpio/>`_ usage page.
+`GPIO usage <https://www.raspberrypi.org/documentation/usage/gpio/>`_ page.
 
 Raspberry Pi
 ************
@@ -95,6 +114,14 @@ CoreELEC's forums:
 - `Graphical front panel display <https://discourse.coreelec.org/t/graphical-front-panel-display/12932>`_
 - `RPi-GPIO-Odroid & Python Pillow <https://discourse.coreelec.org/t/rpi-gpio-odroid-python-pillow/13088>`_
 
+Hardkernel maintains information regarding the GPIO headers for their various
+boards on the `Odroid Wiki <https://wiki.odroid.com/>`_.  I consulted
+that wiki, for instance, for the C4's
+`J2 expansion header <https://wiki.odroid.com/odroid-c4/hardware/expansion_connectors>`_ pinout.
+Each board also has an application_note section in which GPIOs are discussed further.
+Note, however, that the discussion there typically assumes that one is running a fairly
+complete Linux -- that's not exactly what CoreELEC is.
+  
 `CoreELEC <https://coreelec.org/>`_, true to its tagline, is a "just enough OS".
 That means that a typical CoreELEC installation does *not* provide ``apt``,
 or ``git``, or the tool pipeline and header files one typically uses for code development.
