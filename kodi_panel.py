@@ -99,7 +99,7 @@ codec_name = {
     "pcm_s16be": "PCM",
     "mp2"      : "MP2",
     "pcm_u8"   : "PCM",
-    "BXA"      : "BXA",    # used with AirPlay
+    "BXA"      : "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
 }
 
