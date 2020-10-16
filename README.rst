@@ -256,10 +256,19 @@ emulator, it provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
 start of that file for how to invoke it.
 
-Here's an example of ``luma_demo.py`` running from earlier in kodi_panel's development.
+Here's an example of ``luma_demo.py`` running from earlier in kodi_panel's development:
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/emulator_example.png
 
+
+In the main loop for ``luma_demo.py`` I did recently add code to use
+keypresses as emulated touchscreen presses.  The pygame key state is
+only sampled at the end of the update process, however, so one must
+hold a key and *wait* for that to occur.  The actual T_IRQ
+responsiveness ends up being far better, but this does at least give
+the emulator the ability to cycle through the display modes and show
+the status screen.
+   
 
 License
 -------
