@@ -82,9 +82,9 @@ default_airplay =  "./airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
-font     = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
-fontB    = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
-font_sm  = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
+font_main = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
+font_bold = ImageFont.truetype("FreeSansBold.ttf", 22, encoding='unic')
+font_sm   = ImageFont.truetype("FreeSans.ttf", 18, encoding='unic')
 font_tiny = ImageFont.truetype("FreeSans.ttf", 11)
 
 # 7-Segment Font for time and track
@@ -339,7 +339,7 @@ def update_display():
             # Render screen
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
-            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font)
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font_main)
 
             if len(response['result']) == 0:
                 draw.text(( 145, 32), "Idle",  fill='white', font=font_sm)
@@ -356,7 +356,7 @@ def update_display():
             draw.text((5, 175), "Up: " + status['System.Uptime'], fill='white', font=font_sm)
             draw.text((5, 200), "CPU: " + status['System.CPUTemperature'], fill='white', font=font_sm)
         else:
-            draw.text(( 5, 5), "Nothing playing",  fill='white', font=font)
+            draw.text(( 5, 5), "Nothing playing",  fill='white', font=font_main)
 
     else:
         # Something's playing!
@@ -432,7 +432,7 @@ def update_display():
                 draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
 
             # track title
-            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font)
+            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font_main)
 
             # other track information
             truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
@@ -483,7 +483,7 @@ def main():
     while True:
         #device.backlight(True)
         draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
-        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font)
+        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
 
         while True:

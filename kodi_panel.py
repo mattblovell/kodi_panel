@@ -63,8 +63,8 @@ default_airplay =  "./images/airplay_thumb.png"
 special_re      = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
-font      = ImageFont.truetype("fonts/FreeSans.ttf", 22, encoding='unic')
-fontB     = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
+font_main = ImageFont.truetype("fonts/FreeSans.ttf", 22, encoding='unic')
+font_bold = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
 font_sm   = ImageFont.truetype("fonts/FreeSans.ttf", 18, encoding='unic')
 font_tiny = ImageFont.truetype("fonts/FreeSans.ttf", 11, encoding='unic')
 
@@ -355,7 +355,7 @@ def update_display():
             # Render screen
             kodi_icon = Image.open(kodi_thumb)
             image.paste(kodi_icon, (5, 5))
-            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font)
+            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font_main)
 
             if len(response['result']) == 0:
                 draw.text(( 145, 32), "Idle",  fill='white', font=font_sm)
@@ -449,7 +449,7 @@ def update_display():
                 draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
 
             # track title
-            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font)
+            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font_main)
 
             # album title and track artist or, if not available, composer
             truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
@@ -524,7 +524,7 @@ def main():
     while True:
         device.backlight(True)
         draw.rectangle([(1,1), (frameSize[0]-1,frameSize[1]-1)], 'black', 'black')
-        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font)
+        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
 
         while True:
