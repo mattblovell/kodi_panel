@@ -132,7 +132,7 @@ easy to install `Entware <https://github.com/Entware/Entware/wiki>`_.  With
 that, you can get a "just enough" development environment!
 
 The immediate goal is still the same -- get luma.lcd installed and talking
-to your display.  There are just a more steps necessary to achieve that
+to your display.  There are just a few more steps necessary to achieve that
 goal than if you had armbian or Debian installed.  (I'm not going to describe
 how to secure-shell (ssh) into your CoreELEC SBC; you should
 be able to find details on that elsewhere on the web.)
