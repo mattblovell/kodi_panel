@@ -136,6 +136,7 @@ USE_TOUCH      = True
 kodi_active    = False
 screen_press   = False
 screen_on      = False
+screen_wake    = 15    # status screen waketime, in seconds
 screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  This
@@ -332,7 +333,7 @@ def update_display():
             screen_press = False
             device.backlight(True)
             screen_on = True
-            screen_offtime = datetime.now() + timedelta(seconds=10)
+            screen_offtime = datetime.now() + timedelta(seconds=screen_wake)
 
         if screen_on:
             # Idle status screen

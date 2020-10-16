@@ -123,6 +123,7 @@ codec_name = {"ac3"      : "DD",
 # pygame for key presses.
 screen_press   = False
 screen_on      = False
+screen_wake    = 15    # status screen waketime, in seconds
 screen_offtime = datetime.now()
 
 # Handle to pygame emulator
@@ -316,7 +317,7 @@ def update_display():
         if screen_press:
             screen_press = False
             screen_on = True
-            screen_offtime = datetime.now() + timedelta(seconds=10)
+            screen_offtime = datetime.now() + timedelta(seconds=screen_wake)
 
         if screen_on:
             # Idle status screen
