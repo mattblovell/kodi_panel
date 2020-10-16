@@ -130,7 +130,7 @@ as a consequence of the Entware installation.
 
    ::
 
-     git clone https://github.com/jfath/RPi.GPIO-Odroid.git
+     git clone https://github.com/awesometic/RPi.GPIO-Odroid.git
      cd RPi.GPIO-Odroid/
      python3 setup.py build
      python3 setup.py install
