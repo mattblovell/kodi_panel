@@ -149,8 +149,23 @@ lock = threading.Lock()
 # Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
 #
 # The backlight signal (with inline resistor NEEDED) is connected to
-# GPIO16, physical pin 12.  There seems to be an error in luma.lcd's
-# online documentation in that regard.
+# GPIO18, physical pin 12.  Recall that the GPIOx number is using
+# RPi.GPIO's scheme!
+#
+# As of Oct 2020, here's what luma.lcd's online documentation
+# recommended, all of which is per RPi.GPIO pin naming:
+#
+#   LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
+#   ------------|------------------|-----------------
+#   VCC         |  3V3             |  1 or 17
+#   GND         |  GND             |  9 or 25 or 39
+#   CS          |  GPIO8           |  24
+#   RST / RESET |  GPIO24          |  18
+#   DC          |  GPIO23          |  16
+#   MOSI        |  GPIO10 (MOSI)   |  19
+#   SCLK / CLK  |  GPIO11 (SCLK)   |  23
+#   LED         |  GPIO18          |  12
+#   ------------|------------------|-----------------
 #
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
