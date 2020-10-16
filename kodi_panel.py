@@ -44,7 +44,7 @@ import re
 import os
 import threading
 
-PANEL_VER = "v0.64"
+PANEL_VER = "v0.65"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
