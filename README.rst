@@ -104,6 +104,7 @@ certainly possible that you'll have to add additional (pure Python) packages
 via ``pip``, such as 
 
 ::
+
   pip3 install requests
 
 Ideally, you'll then see the start of kodi_panel's log-style standard output:
