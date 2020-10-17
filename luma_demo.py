@@ -89,7 +89,7 @@ default_thumb   = "./music_icon.png"
 default_airplay =  "./airplay_thumb.png"
 
 # RegEx for recognizing AirPlay images (compiled once)
-special_re = re.compile('^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+special_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Track info fonts
 font_main = ImageFont.truetype("FreeSans.ttf", 22, encoding='unic')
