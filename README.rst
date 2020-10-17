@@ -231,8 +231,9 @@ All that was necessary was to find a GPIO pin that was free to use an
 an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
 known as Pin Number 35.
 
-The following block of code in ``kodi_panel.py`` is qualified by a USE_INT
-conditional that defaults to True:
+The following block of code in ``kodi_panel.py`` is qualified by a USE_TOUCH
+boolean that is set to True at the start of the script.  If you are *not*
+using the touch interrupt, just set USE_TOUCH to False.
 
 ::
 
@@ -245,7 +246,7 @@ conditional that defaults to True:
                               callback=touch_callback, bouncetime=800)
 
 
-The ``touch_callback()`` function then sets a flag (``screen_press``) that
+The ``touch_callback()`` function then sets a flag, ``screen_press``, that
 gets used elsewhere.  For better responsiveness, the interrupt callback is also
 able to invoke ``update_display()`` directly; without that immediate call, one has to
 wait (up to the sleep time in ``main``) for a reaction.
