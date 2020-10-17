@@ -53,7 +53,7 @@ headers  = {'content-type': 'application/json'}
 
 # Image handling
 frameSize       = (320, 240)
-thumb_height    = 140;
+thumb_height    = 140
 last_image_path = None
 last_thumb      = None
 
@@ -446,7 +446,7 @@ def update_display():
         if 'percentage' in response['result'].keys():
             prog = float(response['result']['percentage']) / 100.0
         else:
-            prog = -1;
+            prog = -1
 
         # Default display -- all info with small artwork
         if display_mode == PDisplay.DEFAULT:
