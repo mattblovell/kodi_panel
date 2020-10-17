@@ -60,7 +60,7 @@ last_thumb      = None
 # Thumbnail defaults (these don't get resized)
 kodi_thumb      = "./images/kodi_thumb.jpg"
 default_thumb   = "./images/music_icon.png"
-default_airplay =  "./images/airplay_thumb.png"
+default_airplay = "./images/airplay_thumb.png"
 
 # RegEx for recognizing AirPlay images (compiled once)
 special_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
@@ -134,8 +134,9 @@ display_mode = PDisplay.DEFAULT
 # in my display has its own internal pullup resistor, so below no
 # pull-up is specified.
 TOUCH_INT      = 19
-USE_TOUCH      = True
+USE_TOUCH      = True   # Set False to not use interrupt at all
 
+# Internal state variables used to manage screen presses
 kodi_active    = False
 screen_press   = False
 screen_on      = False
@@ -167,10 +168,14 @@ lock = threading.Lock()
 #   LED         |  GPIO18          |  12
 #   ------------|------------------|-----------------
 #
+# Originally, the constructor for ili9341 also included a
+# framebuffer="full_frame" argument.  That proved unnecessary
+# once non-zero reset hold and release times were specified
+# for the device.
+#
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
 device = ili9341(serial, active_low=False, width=320, height=240,
-#                 framebuffer="full_frame",
                  bus_speed_hz=32000000
                  )
 
