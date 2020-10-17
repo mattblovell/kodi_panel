@@ -36,8 +36,15 @@
 #
 #   python luma_demo.py --display pygame --width 320 --height 240 --scale 1
 #
-# No provisions exist for emulating screen presses, so one must just
-# change default assignments below for any different display modes.
+# The font and image paths below are also "flat", with no subdirectory
+# referenced.  So, those resources should also be copied into the
+# luma.examples/examples directory, residing next to the script.
+# We can change that if people actually start using this for
+# prototyping and get annoyed by the extra step. 
+#
+# Screen touches are somewhat emulated below by checking for a pressed
+# key via pygame's state.  The state is polled only once per update
+# loop, though, so one must hold the button for a bit.
 #
 # Since this script is usually running on a desktop machine, you MUST
 # also specify the current base_url to use below.
