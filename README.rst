@@ -15,7 +15,7 @@ computer) on which Kodi itself is running.  That's not really
 necessary, though, provided one is willing to let the JSON-RPC calls
 occur over the network.
 
-For Raspberry PI boards, RPi.GPIO obviously works as-is.  For Odroid
+For Raspberry Pi boards, RPi.GPIO obviously works as-is.  For Odroid
 boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
@@ -97,6 +97,14 @@ changing directory to ``kodi_panel`` and invoking
 
   python3 kodi_panel.py
 
+
+At the moment, I have forgotten whether some of the additional packages
+used in ``kodi_panel.py`` come with Python or have to be installed.  It is
+certainly possible that you'll have to add additional (pure Python) packages
+via ``pip``, such as 
+
+::
+  pip3 install requests
 
 Ideally, you'll then see the start of kodi_panel's log-style standard output:
 
@@ -189,6 +197,14 @@ kodi_panel's directory and invoke
 
 Now, try playing something!
 
+As with the RPi steps above, it is possible that some additional 
+(pure Python) packages are needed by kodi_panel, such that you'll
+find yourself adding them with commands such as:
+
+::
+
+  /opt/bin/pip3 install requests  
+
 To have kodi_panel start up when the Odroid is powered-on, I take advantage
 of Kodi's ``autostart.sh`` mechanism.  An example file is provided as part
 of kodi_panel.
@@ -208,7 +224,7 @@ is by default pulled up to Vcc by an internal resistor and gets pulled
 down to ground when the screen is pressed (as verified with a simple
 multimeter).
 
-This was all I needed to give it a try!
+This was the motivation I needed to give it a try!
 
 All that was necessary was to find a GPIO pin that was free to use an
 an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
@@ -229,8 +245,8 @@ conditional that defaults to True:
 
 
 The ``touch_callback()`` function then sets a flag (``screen_press``) that
-gets used elsewhere.  For better responsive, the interrupt callback is also
-able to invoke ``update_display()``; without that immediate call, one has to
+gets used elsewhere.  For better responsiveness, the interrupt callback is also
+able to invoke ``update_display()`` directly; without that immediate call, one has to
 wait (up to the sleep time in ``main``) for a reaction.
 
 (It looks like the RPi.GPIO package makes of use ``pthreads`` to provide
