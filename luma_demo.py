@@ -70,7 +70,7 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.67"
+PANEL_VER = "v0.68"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4

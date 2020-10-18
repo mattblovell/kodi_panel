@@ -45,7 +45,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.67"
+PANEL_VER = "v0.68"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -545,7 +545,7 @@ def main():
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(TOUCH_INT, GPIO.IN)
         GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
-                              callback=touch_callback, bouncetime=800)
+                              callback=touch_callback, bouncetime=950)
 
     # main communication loop
     while True:
