@@ -92,7 +92,6 @@ codec_name = {
     "dtshd_ma" : "DTS-MA",
     "dca"      : "DTS",
     "truehd"   : "DD-HD",
-    "aac"      : "AAC",
     "wmapro"   : "WMA",
     "mp3float" : "MP3",
     "flac"     : "FLAC",
