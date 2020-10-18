@@ -291,6 +291,17 @@ the emulator the ability to cycle through the display modes and show
 the status screen.
    
 
+Finished Design
+---------------
+
+I also have a 3D-printable "case" design to fit the 3.2-inch screen.  Here are two photos
+of the finished product.
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case1.png
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case2.png
+
+
 License
 -------
 The MIT License (MIT)
