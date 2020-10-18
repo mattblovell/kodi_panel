@@ -297,9 +297,9 @@ Finished Design
 I also have a 3D-printable "case" design to fit the 3.2-inch screen.  Here are two photos
 of the finished product.
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case1.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case1.jpg
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case2.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case2.jpg
 
 
 License
