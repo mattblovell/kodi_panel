@@ -40,7 +40,7 @@
 # referenced.  So, those resources should also be copied into the
 # luma.examples/examples directory, residing next to the script.
 # We can change that if people actually start using this for
-# prototyping and get annoyed by the extra step. 
+# prototyping and get annoyed by the extra step.
 #
 # Screen touches are somewhat emulated below by checking for a pressed
 # key via pygame's state.  The state is polled only once per update
@@ -429,11 +429,11 @@ def update_display():
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
                     # longer bar for longer displayed time
-                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 164, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 164, 8, prog)
                 else:
-                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 104, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 104, 8, prog)
 
-            draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
+            draw.text(( 148, 20), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
             # track number
             if info['MusicPlayer.TrackNumber'] != "":

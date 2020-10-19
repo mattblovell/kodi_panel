@@ -410,6 +410,7 @@ def update_display():
         if screen_press:
             screen_press = False
             display_mode = display_mode.next()
+            print(datetime.now(), "Touchscreen pressed -- audio display mode now", display_mode.name)
             last_image_path = None
             last_thumb = None
 
@@ -463,12 +464,12 @@ def update_display():
             if prog != -1:
                 if info['MusicPlayer.Time'].count(":") == 2:
                     # longer bar for longer displayed time
-                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 164, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 164, 8, prog)
                 else:
-                    progress_bar(draw, color_progbg, color_progfg, 150, 5, 104, 4, prog)
+                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 104, 8, prog)
 
             # elapsed time
-            draw.text(( 148, 14), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
+            draw.text(( 148, 20), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
 
             # track number
             if info['MusicPlayer.TrackNumber'] != "":
@@ -522,7 +523,7 @@ def touch_callback(channel):
     global screen_press
     global kodi_active
     screen_press = True
-    print(datetime.now(), "Touchscreen pressed")
+    #print(datetime.now(), "Touchscreen pressed")
     if kodi_active:
         try:
             update_display()
@@ -532,6 +533,7 @@ def touch_callback(channel):
 
 def main():
     global kodi_active
+    global screen_press
     kodi_active = False
 
     print(datetime.now(), "Starting")
@@ -578,6 +580,7 @@ def main():
 
         # Loop until Kodi goes away
         kodi_active = True
+        screen_press = False
         while True:
             try:
                 update_display()
