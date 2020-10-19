@@ -19,7 +19,7 @@ For Raspberry Pi boards, RPi.GPIO obviously works as-is.  For Odroid
 boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/working_lcd.jpg
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
 **Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
@@ -279,7 +279,7 @@ start of that file for how to invoke it.
 
 Here's an example of ``luma_demo.py`` running from earlier in kodi_panel's development:
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/emulator_example.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_example.png
 
 
 In the main loop for ``luma_demo.py`` I did recently add code to use
@@ -294,12 +294,14 @@ the status screen.
 Finished Design
 ---------------
 
-I also have a 3D-printable "case" design to fit the 3.2-inch screen.  Here are two photos
-of the finished product.
+I also have a 3D-printable "case" design to fit the 3.2-inch screen.  The design
+files are available on `Thingiverse <https://www.thingiverse.com/thing:4627423>`_.
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case1.jpg
+Here are two photos of the finished product (or at least its first revision):
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/images/assembled_case2.jpg
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case1.jpg
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case2.jpg
 
 
 License
