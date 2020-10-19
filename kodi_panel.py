@@ -45,7 +45,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.70"
+PANEL_VER = "v0.71"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -341,6 +341,79 @@ def status_screen(draw, kodi_status, summary_string):
     draw.text((5, 200), "CPU: " + kodi_status['System.CPUTemperature'], fill='white', font=font_sm)
 
 
+# Audio info screens (shown when music is playing)
+#
+# For the moment, the two full-screen variants are short enough that all 3 modes
+# are handled here in this function.
+#
+# First two arguments are Pillow Image and ImageDraw objects.
+# Third argument is a dictionary loaded from Kodi with relevant track fields.
+# Fourth argument is a float representing progress through the track.
+def audio_screens(image, draw, info, prog):
+    global audio_dmode
+    global last_thumb
+    global last_image_path
+
+    # Default display -- all info with small artwork
+    if audio_dmode == ADisplay.DEFAULT:
+        # retrieve cover image from Kodi, if it exists and needs a refresh
+        last_thumb = get_artwork(info, last_thumb, thumb_height)
+        if last_thumb:
+            image.paste(last_thumb, (5, 5))
+
+        # progress bar and elapsed time
+        if prog != -1:
+            if info['MusicPlayer.Time'].count(":") == 2:
+                # longer bar for longer displayed time
+                progress_bar(draw, color_progbg, color_progfg, 150, 7, 164, 8, prog)
+            else:
+                progress_bar(draw, color_progbg, color_progfg, 150, 7, 104, 8, prog)
+
+        draw.text(( 148, 20), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
+
+        # track number
+        if info['MusicPlayer.TrackNumber'] != "":
+            draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
+            draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
+
+        # track title
+        truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font_main)
+
+        # other track information
+        truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
+        if info['MusicPlayer.Artist'] != "":
+            truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill=color_artist, font=font_sm)
+        elif info['MusicPlayer.Property(Role.Composer)'] != "":
+            truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill=color_artist, font=font_sm)
+
+        # audio info
+        codec = info['MusicPlayer.Codec']
+        if info['MusicPlayer.Duration'] != "":
+            draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
+        if codec in codec_name.keys():
+            draw.text(( 230, 74), codec_name[codec], font=font_tiny)
+        if info['MusicPlayer.Genre'] != "":
+            draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
+        if info['MusicPlayer.Year'] != "":
+            draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
+
+    # Full-screen art
+    elif audio_dmode == ADisplay.FULLSCREEN:
+        # retrieve full-screen artwork
+        last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+        if last_thumb:
+            image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+
+    # Full-screen art with progress bar
+    elif audio_dmode == ADisplay.FULL_PROG:
+        last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+        if last_thumb:
+            image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+        # vertical progress bar
+        if prog != -1:
+            progress_bar(draw, color_progbg, color_progfg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
+
+
 # Kodi-polling and image rendering function
 #
 # Locations and sizes (aside from font size) are all hard-coded in
@@ -442,7 +515,7 @@ def update_display():
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
-        info = response['result']
+        track_info = response['result']
 
         # Progress information in Kodi Leia must be fetched separately.  This
         # looks to be fixed in Kodi Matrix.
@@ -461,65 +534,8 @@ def update_display():
         else:
             prog = -1
 
-        # Default display -- all info with small artwork
-        if audio_dmode == ADisplay.DEFAULT:
-            # retrieve cover image from Kodi
-            last_thumb = get_artwork(info, last_thumb, thumb_height)
-            if last_thumb:
-                image.paste(last_thumb, (5, 5))
-
-            # progress bar, if percentage was available
-            if prog != -1:
-                if info['MusicPlayer.Time'].count(":") == 2:
-                    # longer bar for longer displayed time
-                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 164, 8, prog)
-                else:
-                    progress_bar(draw, color_progbg, color_progfg, 150, 7, 104, 8, prog)
-
-            # elapsed time
-            draw.text(( 148, 20), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
-
-            # track number
-            if info['MusicPlayer.TrackNumber'] != "":
-                draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
-                draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
-
-            # track title
-            truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font_main)
-
-            # album title and track artist or, if not available, composer
-            truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
-            if info['MusicPlayer.Artist'] != "":
-                truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill=color_artist, font=font_sm)
-            elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill=color_artist, font=font_sm)
-
-            # audio info
-            codec = info['MusicPlayer.Codec']
-            if info['MusicPlayer.Duration'] != "":
-                draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
-            if codec in codec_name.keys():
-                draw.text(( 230, 74), codec_name[codec], font=font_tiny)
-            if info['MusicPlayer.Genre'] != "":
-                draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
-            if info['MusicPlayer.Year'] != "":
-                draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
-
-        # Full-screen art
-        elif audio_dmode == ADisplay.FULLSCREEN:
-            last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
-            if last_thumb:
-                image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-
-        # Full-screen art with progress bar
-        elif audio_dmode == ADisplay.FULL_PROG:
-            last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
-            if last_thumb:
-                image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-            # vertical progress bar
-            if prog != -1:
-                progress_bar(draw, color_progbg, color_progfg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
-
+        # Audio info
+        audio_screens(image, draw, track_info, prog)
 
     # Output to OLED/LCD display
     device.display(image)
