@@ -284,11 +284,11 @@ start of that file for how to invoke it.
 Here are some examples from the emulator, which also serve to show several
 of kodi_panel's available "modes":
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_status.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_status.PNG
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_default.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_default.PNG
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_full_prog.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_full_prog.PNG
 
 
 In the main loop for ``luma_demo.py`` I did recently add code to use
