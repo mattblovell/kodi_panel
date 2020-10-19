@@ -449,7 +449,7 @@ def update_display():
 
     if (len(response['result']) == 0 or
         response['result'][0]['type'] != 'audio'):
-        # Nothing is playing or video is playing, but check for screen
+        # Nothing is playing or non-audio is playing, but check for screen
         # press before proceeding
         last_image_path = None
         last_thumb = None
@@ -464,8 +464,10 @@ def update_display():
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
-            elif response['result'][0]['type'] != 'audio':
+            elif response['result'][0]['type'] == 'video':
                 summary = "Video playing"
+            elif response['result'][0]['type'] == 'picture':
+                summary = "Photo viewing"
 
             payload = {
                 "jsonrpc": "2.0",

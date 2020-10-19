@@ -415,6 +415,9 @@ def update_display():
         "id"      : 3,
     }
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+    print("Active Response: ", json.dumps(response))
+    if (len(response['result']) != 0):
+        print("Type = ", response['result'][0]['type'])
 
     if (len(response['result']) == 0 or
         response['result'][0]['type'] != 'audio'):
@@ -432,8 +435,10 @@ def update_display():
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
-            elif response['result'][0]['type'] != 'audio':
+            elif response['result'][0]['type'] == 'video':
                 summary = "Video playing"
+            elif response['result'][0]['type'] == 'picture':
+                summary = "Photo viewing"
 
             payload = {
                 "jsonrpc": "2.0",
