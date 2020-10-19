@@ -615,7 +615,7 @@ def main():
                 break
             # This delay seems sufficient to have a (usually) smooth progress
             # bar and elapsed time update
-            time.sleep(0.92)
+            time.sleep(0.87)
 
 
 if __name__ == "__main__":
