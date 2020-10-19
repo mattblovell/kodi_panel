@@ -281,9 +281,14 @@ emulator, it provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
 start of that file for how to invoke it.
 
-Here's an example of ``luma_demo.py`` running from earlier in kodi_panel's development:
+Here are some examples from the emulator, which also serve to show several
+of kodi_panel's available "modes":
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_example.png
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_status.png
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_default.png
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_full_prog.png
 
 
 In the main loop for ``luma_demo.py`` I did recently add code to use
