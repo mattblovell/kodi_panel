@@ -44,6 +44,10 @@ should give you a complete picture of what information is available.
 (One can also change Kodi's state using JSON-RPC, something I don't even
 attempt here!)
 
+On an Odroid C4, kodi_panel appears to take ~0.5% of CPU time when idle
+and about ~2.5% when music playback is occurring.  Kodi itself, for
+comparison, takes 3% CPU when idle and 8% when busy (for ALAC playback).
+
 
 Installation
 ------------
