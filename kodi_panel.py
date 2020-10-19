@@ -45,7 +45,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.68"
+PANEL_VER = "v0.70"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -106,11 +106,10 @@ codec_name = {
 }
 
 
-# Info display mode.  The next() function serves to switch modes in
+# Audio info display mode.  The next() function serves to switch modes in
 # response to screen touches.  The list is intended to grow, as other
 # ideas for layouts are proposed.
-
-class PDisplay(Enum):
+class ADisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
     FULL_PROG  = 2   # fullscreen art with vertical progress bar
@@ -126,7 +125,7 @@ class PDisplay(Enum):
 # At startup, just use the default layout for audio info.  This
 # setting, if serialized and stored someplace, could be made
 # persistent across script invocations if desired.
-display_mode = PDisplay.DEFAULT
+audio_dmode = ADisplay.DEFAULT
 
 # GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.  Find a pin that's unused by luma.  The touchscreen chip
@@ -316,6 +315,32 @@ def get_artwork(info, prev_image, thumb_size):
         return None
 
 
+# Idle status screen (shown upon a screen press)
+#
+# First argument is a Pillow ImageDraw object.
+# Second argument is a dictionary loaded from Kodi system status fields.
+# This argument is the string to use for current state of the system
+#
+def status_screen(draw, kodi_status, summary_string):
+    # Render screen
+    kodi_icon = Image.open(kodi_thumb)
+    image.paste(kodi_icon, (5, 5))
+    draw.text(( 145, 8), "kodi_panel " + PANEL_VER, fill=color_artist, font=font_main)
+
+    # pithy summary status
+    draw.text(( 145, 35), summary_string,  fill='white', font=font_sm)
+
+    # time in 7-segment font
+    time_parts = kodi_status['System.Time'].split(" ")
+    time_width, time_height = draw.textsize(time_parts[0], font7S)
+    draw.text((145,73), time_parts[0], fill=color7S, font=font7S)
+    draw.text((145 + time_width + 5, 73), time_parts[1], fill=color7S, font=font7S_sm)
+
+    draw.text((5, 150), kodi_status['System.Date'], fill='white', font=font_sm)
+    draw.text((5, 175), "Up: " + kodi_status['System.Uptime'], fill='white', font=font_sm)
+    draw.text((5, 200), "CPU: " + kodi_status['System.CPUTemperature'], fill='white', font=font_sm)
+
+
 # Kodi-polling and image rendering function
 #
 # Locations and sizes (aside from font size) are all hard-coded in
@@ -329,7 +354,7 @@ def update_display():
     global screen_press
     global screen_on
     global screen_offtime
-    global display_mode
+    global audio_dmode
 
     lock.acquire()
 
@@ -364,6 +389,10 @@ def update_display():
 
         if screen_on:
             # Idle status screen
+            if len(response['result']) == 0:
+                summary = "Idle"
+            elif response['result'][0]['type'] != 'audio':
+                summary = "Video playing"
 
             payload = {
                 "jsonrpc": "2.0",
@@ -376,28 +405,7 @@ def update_display():
                 "id"      : 10,
             }
             status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-            #print("Response: ", json.dumps(response))
-            status = status_resp['result']
-
-            # Render screen
-            kodi_icon = Image.open(kodi_thumb)
-            image.paste(kodi_icon, (5, 5))
-            draw.text(( 145, 5), "kodi_panel " + PANEL_VER, fill=color_artist, font=font_main)
-
-            if len(response['result']) == 0:
-                draw.text(( 145, 32), "Idle",  fill='white', font=font_sm)
-            elif response['result'][0]['type'] != 'audio':
-                draw.text(( 145, 32), "Video playing",  fill='white', font=font_sm)
-
-            # time in 7-segment font
-            time_parts = status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(time_parts[0], font7S)
-            draw.text((145,73), time_parts[0], fill=color7S, font=font7S)
-            draw.text((145 + time_width + 5, 73), time_parts[1], fill=color7S, font=font7S_sm)
-
-            draw.text((5, 150), status['System.Date'], fill='white', font=font_sm)
-            draw.text((5, 175), "Up: " + status['System.Uptime'], fill='white', font=font_sm)
-            draw.text((5, 200), "CPU: " + status['System.CPUTemperature'], fill='white', font=font_sm)
+            status_screen(draw, status_resp['result'], summary)
         else:
             device.backlight(False)
 
@@ -409,8 +417,8 @@ def update_display():
         # a re-fetch of any artwork
         if screen_press:
             screen_press = False
-            display_mode = display_mode.next()
-            print(datetime.now(), "Touchscreen pressed -- audio display mode now", display_mode.name)
+            audio_dmode = audio_dmode.next()
+            print(datetime.now(), "Touchscreen pressed -- audio display mode now", audio_dmode.name)
             last_image_path = None
             last_thumb = None
 
@@ -447,14 +455,14 @@ def update_display():
             },
             "id"      : "prog",
         }
-        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        if 'percentage' in response['result'].keys():
-            prog = float(response['result']['percentage']) / 100.0
+        prog_response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+        if 'percentage' in prog_response['result'].keys():
+            prog = float(prog_response['result']['percentage']) / 100.0
         else:
             prog = -1
 
         # Default display -- all info with small artwork
-        if display_mode == PDisplay.DEFAULT:
+        if audio_dmode == ADisplay.DEFAULT:
             # retrieve cover image from Kodi
             last_thumb = get_artwork(info, last_thumb, thumb_height)
             if last_thumb:
@@ -498,13 +506,13 @@ def update_display():
                 draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
 
         # Full-screen art
-        elif display_mode == PDisplay.FULLSCREEN:
+        elif audio_dmode == ADisplay.FULLSCREEN:
             last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
 
         # Full-screen art with progress bar
-        elif display_mode == PDisplay.FULL_PROG:
+        elif audio_dmode == ADisplay.FULL_PROG:
             last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
             if last_thumb:
                 image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
