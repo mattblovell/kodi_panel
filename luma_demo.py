@@ -79,7 +79,6 @@ headers  = {'content-type': 'application/json'}
 
 # Image handling
 frameSize       = (320, 240)
-thumb_height    = 140
 last_image_path = ""
 last_thumb      = ""
 
@@ -154,6 +153,60 @@ class ADisplay(Enum):
 
 audio_dmode = ADisplay.DEFAULT
 
+
+# Screen layout details
+LAYOUT = \
+{ ADisplay.DEFAULT : 
+  {
+    # artwork position and size
+    "thumb" : { "pos": (5, 5), "size": 140 },
+
+    # progress bar.  Two versions are possible, short and long,
+    # depending upon the MusicPlayer.Time string
+    "prog" : { "pos": (150, 7),
+               "short_len": 104,  "long_len": 164,
+               "height": 8 },
+
+    # all other text fields, including any labels
+    "fields" : 
+    [
+        { "name": "MusicPlayer.Time",          "pos": (148, 20), "font": font7S, "fill":color7S },
+        
+        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 73),  "font": font7S,     "fill": color7S,
+          "label": "Track",                   "lpos": (148, 60), "lfont": font_tiny, "lfill": "white" },
+        
+        { "name": "MusicPlayer.Duration", "pos": (230, 60), "font": font_tiny, "fill": "white" },
+        { "name": "codec",                "pos": (230, 74), "font": font_tiny, "fill": "white" },
+        { "name": "MusicPlayer.Genre",    "pos": (230, 88), "font": font_tiny, "fill": "white", "trunc":1 },
+        { "name": "MusicPlayer.Year",     "pos": (230,102), "font": font_tiny, "fill": "white" },
+        
+        { "name": "MusicPlayer.Title",    "pos": (5, 152),  "font": font_main, "fill": "white", "trunc":1},
+        { "name": "MusicPlayer.Album",    "pos": (5, 180),  "font": font_sm,   "fill": "white", "trunc":1 },
+        { "name": "MusicPlayer.Artist",   "pos": (5, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },          
+    ]
+  },
+
+  ADisplay.FULLSCREEN :
+  {
+    # artwork size, position is determined by centering
+    "thumb"   : { "size": frameSize[1]-5 },      
+  },
+
+  ADisplay.FULL_PROG :
+  {
+    # artwork size, position is determined by centering      
+    "thumb" : { "size": frameSize[1]-5 },
+      
+    # vertical progress bar
+    "prog" : { "pos": (frameSize[0]-12, 1),
+               "len": 10,
+               "height": frameSize[1]-4 },
+  },
+  
+}
+
+
+
 #-----------------------------------------------------------------------------
 
 # Render text at the specified location, truncating characters and
@@ -163,7 +216,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
     new_text = text
     t_width, t_height = pil_draw.textsize(new_text, font)
-    while t_width > (frameSize[0] - 20):
+    while (xy[0] + t_width) > (frameSize[0] - 8):
         truncating = 1
         new_text = new_text[:-1]
         t_width, t_height = pil_draw.textsize(new_text, font)
@@ -334,63 +387,96 @@ def audio_screens(image, draw, info, prog):
 
     # Default display -- all info with small artwork
     if audio_dmode == ADisplay.DEFAULT:
+        layout = LAYOUT[audio_dmode]
+        
         # retrieve cover image from Kodi, if it exists and needs a refresh
-        last_thumb = get_artwork(info, last_thumb, thumb_height)
+        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
         if last_thumb:
-            image.paste(last_thumb, (5, 5))
+            image.paste(last_thumb, layout["thumb"]["pos"])
 
-        # progress bar and elapsed time
+        # progress bar
         if prog != -1:
             if info['MusicPlayer.Time'].count(":") == 2:
                 # longer bar for longer displayed time
-                progress_bar(draw, color_progbg, color_progfg, 150, 7, 164, 8, prog)
+                progress_bar(draw, color_progbg, color_progfg,
+                             layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+                             layout["prog"]["long_len"], layout["prog"]["height"],
+                             prog)
             else:
-                progress_bar(draw, color_progbg, color_progfg, 150, 7, 104, 8, prog)
+                progress_bar(draw, color_progbg, color_progfg,
+                             layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+                             layout["prog"]["short_len"], layout["prog"]["height"],
+                             prog)
 
-        draw.text(( 148, 20), info['MusicPlayer.Time'],  fill=color7S, font=font7S)
+        # text fields
+        txt_field = layout["fields"]
+        for index in range(len(txt_field)):
 
-        # track number
-        if info['MusicPlayer.TrackNumber'] != "":
-            draw.text(( 148, 60), "Track", fill='white', font=font_tiny)
-            draw.text(( 148, 73), info['MusicPlayer.TrackNumber'],  fill=color7S, font=font7S)
+            # special treatment for codec, which gets a lookup
+            if txt_field[index]["name"] == "codec":
+                if info['MusicPlayer.Codec'] in codec_name.keys():
+                    draw.text(txt_field[index]["pos"],
+                              codec_name[info['MusicPlayer.Codec']],
+                              fill=txt_field[index]["fill"],
+                              font=txt_field[index]["font"])
 
-        # track title
-        truncate_text(draw, (5, 152), info['MusicPlayer.Title'],  fill='white',  font=font_main)
+            # special treatment for MusicPlayer.Artist
+            elif txt_field[index]["name"] == "artist":
+                if info['MusicPlayer.Artist'] != "":
+                    truncate_text(draw, txt_field[index]["pos"],
+                                  info['MusicPlayer.Artist'],
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])
+                elif info['MusicPlayer.Property(Role.Composer)'] != "":
+                    truncate_text(draw, txt_field[index]["pos"],
+                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])                    
 
-        # other track information
-        truncate_text(draw, (5, 180), info['MusicPlayer.Album'],  fill='white',  font=font_sm)
-        if info['MusicPlayer.Artist'] != "":
-            truncate_text(draw, (5, 205), info['MusicPlayer.Artist'], fill=color_artist, font=font_sm)
-        elif info['MusicPlayer.Property(Role.Composer)'] != "":
-            truncate_text(draw, (5, 205), "(" + info['MusicPlayer.Property(Role.Composer)'] + ")", fill=color_artist, font=font_sm)
-
-        # audio info
-        codec = info['MusicPlayer.Codec']
-        if info['MusicPlayer.Duration'] != "":
-            draw.text(( 230, 60), info['MusicPlayer.Duration'], font=font_tiny)
-        if codec in codec_name.keys():
-            draw.text(( 230, 74), codec_name[codec], font=font_tiny)
-        if info['MusicPlayer.Genre'] != "":
-            draw.text(( 230, 88), info['MusicPlayer.Genre'][:15], font=font_tiny)
-        if info['MusicPlayer.Year'] != "":
-            draw.text(( 230, 102), info['MusicPlayer.Year'], font=font_tiny)
-
+            # all other fields
+            else:
+                if (txt_field[index]["name"] in info.keys() and
+                    info[txt_field[index]["name"]] != ""):
+                    # ender any label first
+                    if "label" in txt_field[index]:
+                        draw.text(txt_field[index]["lpos"], txt_field[index]["label"],
+                                  fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                    # now render the field itself
+                    if "trunc" in txt_field[index].keys():
+                        truncate_text(draw, txt_field[index]["pos"],
+                                      info[txt_field[index]["name"]],
+                                      fill=txt_field[index]["fill"],
+                                      font=txt_field[index]["font"])
+                    else:
+                        draw.text(txt_field[index]["pos"],
+                                  info[txt_field[index]["name"]],
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])
+                
     # Full-screen art
     elif audio_dmode == ADisplay.FULLSCREEN:
-        # retrieve full-screen artwork
-        last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+        layout = LAYOUT[audio_dmode]
+        # retrieve cover image from Kodi, if it exists and needs a refresh
+        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
         if last_thumb:
             image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+
 
     # Full-screen art with progress bar
     elif audio_dmode == ADisplay.FULL_PROG:
-        last_thumb = get_artwork(info, last_thumb, frameSize[1]-5)
+        layout = LAYOUT[audio_dmode]
+        # retrieve cover image from Kodi, if it exists and needs a refresh
+        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
         if last_thumb:
             image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
+
         # vertical progress bar
         if prog != -1:
-            progress_bar(draw, color_progbg, color_progfg, frameSize[0]-12, 1, 10, frameSize[1]-4, prog, vertical=True)
-
+            progress_bar(draw, color_progbg, color_progfg,
+                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+                         layout["prog"]["len"],
+                         layout["prog"]["height"],
+                         prog, vertical=True)
 
 
 def update_display():
@@ -402,7 +488,7 @@ def update_display():
     global last_thumb
 
     # Start with a blank slate
-    draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
+    draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
 
     # Check if the screen_on time has expired
     if (screen_on and datetime.now() >= screen_offtime):
@@ -520,7 +606,7 @@ def main():
 
     while True:
         #device.backlight(True)
-        draw.rectangle([(1,1), (frameSize[0]-2,frameSize[1]-2)], 'black', 'black')
+        draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
 
