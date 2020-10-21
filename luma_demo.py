@@ -70,7 +70,7 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.78"
+PANEL_VER = "v0.79"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -691,7 +691,7 @@ def update_display():
             "id"      : "prog",
         }
         prog_response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        if 'percentage' in prog_response['result'].keys():
+        if ('result' in prog_response.keys() and 'percentage' in prog_response['result'].keys()):
             prog = float(prog_response['result']['percentage']) / 100.0
         else:
             prog = -1

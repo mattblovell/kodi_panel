@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.78"
+PANEL_VER = "v0.79"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -719,7 +719,7 @@ def update_display():
             "id"      : "prog",
         }
         prog_response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        if 'percentage' in prog_response['result'].keys():
+        if ('result' in prog_response.keys() and 'percentage' in prog_response['result'].keys()):
             prog = float(prog_response['result']['percentage']) / 100.0
         else:
             prog = -1
