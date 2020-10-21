@@ -45,7 +45,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.71"
+PANEL_VER = "v0.75"
 
 base_url = "http://localhost:8080"   # running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -53,7 +53,6 @@ headers  = {'content-type': 'application/json'}
 
 # Image handling
 frameSize       = (320, 240)
-thumb_height    = 140
 last_image_path = None
 last_thumb      = None
 
@@ -106,9 +105,11 @@ codec_name = {
 }
 
 
-# Audio info display mode.  The next() function serves to switch modes in
-# response to screen touches.  The list is intended to grow, as other
-# ideas for layouts are proposed.
+# Audio screen enumeration
+#
+# The next() function serves to switch modes in response to screen
+# touches.  The list is intended to grow, as other ideas for layouts
+# are proposed.
 class ADisplay(Enum):
     DEFAULT    = 0   # small art, elapsed time, track info
     FULLSCREEN = 1   # fullscreen cover art
@@ -128,12 +129,12 @@ class ADisplay(Enum):
 audio_dmode = ADisplay.DEFAULT
 
 
-# Screen layout details
-LAYOUT = \
+# Audio screen layouts
+AUDIO_LAYOUT = \
 { ADisplay.DEFAULT :
   {
     # Artwork position and size
-    "thumb" : { "pos": (5, 5), "size": thumb_height },
+    "thumb" : { "pos": (5, 5), "size": 140 },
 
     # Progress bar.  Two versions are possible, short and long,
     # depending upon the MusicPlayer.Time string.
@@ -163,18 +164,20 @@ LAYOUT = \
   ADisplay.FULLSCREEN :
   {
     # artwork size, position is determined by centering
-    "thumb"   : { "size": frameSize[1]-5 },      
+    "thumb"   : { "center": 1, "size": frameSize[1]-5 },      
   },
 
   ADisplay.FULL_PROG :
   {
     # artwork size, position is determined by centering      
-    "thumb" : { "size": frameSize[1]-5 },
+    "thumb" : { "center": 1, "size": frameSize[1]-5 },
       
     # vertical progress bar
     "prog" : { "pos": (frameSize[0]-12, 1),
                "len": 10,
-               "height": frameSize[1]-4 },
+               "height": frameSize[1]-4,
+               "vertical": 1
+    },
   },  
 
 }
@@ -396,121 +399,108 @@ def status_screen(draw, kodi_status, summary_string):
     draw.text((5, 200), "CPU: " + kodi_status['System.CPUTemperature'], fill='white', font=font_sm)
 
 
-# Audio info screens (shown when music is playing)
-#
-# For the moment, the two full-screen variants are short enough that all 3 modes
-# are handled here in this function.
+# Audio info screens (shown when music is playing).  With the
+# introduction of the AUDIO_LAYOUT data structure, all 3 modes are
+# handled here in this function.
 #
 # First two arguments are Pillow Image and ImageDraw objects.
 # Third argument is a dictionary loaded from Kodi with relevant track fields.
 # Fourth argument is a float representing progress through the track.
+#
 def audio_screens(image, draw, info, prog):
     global audio_dmode
     global last_thumb
     global last_image_path
 
-    # Default display -- all info with small artwork
-    if audio_dmode == ADisplay.DEFAULT:
-        layout = LAYOUT[audio_dmode]
-
-        # retrieve cover image from Kodi, if it exists and needs a refresh
+    # Get layout details for this mode
+    layout = AUDIO_LAYOUT[audio_dmode]
+    
+    # retrieve cover image from Kodi, if it exists and needs a refresh
+    if "thumb" in layout.keys():
         last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
         if last_thumb:
-            image.paste(last_thumb, layout["thumb"]["pos"])
-
-        # progress bar
-        if prog != -1:
-            if info['MusicPlayer.Time'].count(":") == 2:
-                # longer bar for longer displayed time
-                progress_bar(draw, color_progbg, color_progfg,
-                             layout["prog"]["pos"][0], layout["prog"]["pos"][1],
-                             layout["prog"]["long_len"], layout["prog"]["height"],
-                             prog)
+            if "center" in layout["thumb"].keys():
+                image.paste(last_thumb,
+                            (int((frameSize[0]-last_thumb.width)/2),
+                             int((frameSize[1]-last_thumb.height)/2)))
             else:
-                progress_bar(draw, color_progbg, color_progfg,
-                             layout["prog"]["pos"][0], layout["prog"]["pos"][1],
-                             layout["prog"]["short_len"], layout["prog"]["height"],
-                             prog)
-
-        # text fields
-        txt_field = layout["fields"]
-        for index in range(len(txt_field)):
-
-            # special treatment for codec, which gets a lookup
-            if txt_field[index]["name"] == "codec":
-                if info['MusicPlayer.Codec'] in codec_name.keys():
-                    draw.text(txt_field[index]["pos"],
-                              codec_name[info['MusicPlayer.Codec']],
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
-
-            # special treatment for MusicPlayer.Artist
-            elif txt_field[index]["name"] == "artist":
-                if info['MusicPlayer.Artist'] != "":
-                    truncate_text(draw, txt_field[index]["pos"],
-                                  info['MusicPlayer.Artist'],
-                                  fill=txt_field[index]["fill"],
-                                  font=txt_field[index]["font"])
-                elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                    truncate_text(draw, txt_field[index]["pos"],
-                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
-                                  fill=txt_field[index]["fill"],
-                                  font=txt_field[index]["font"])
-
-            # all other fields
-            else:
-                if (txt_field[index]["name"] in info.keys() and
-                    info[txt_field[index]["name"]] != ""):
-                    # ender any label first
-                    if "label" in txt_field[index]:
-                        draw.text(txt_field[index]["lpos"], txt_field[index]["label"],
-                                  fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
-                    # now render the field itself
-                    if "trunc" in txt_field[index].keys():
-                        truncate_text(draw, txt_field[index]["pos"],
-                                      info[txt_field[index]["name"]],
-                                      fill=txt_field[index]["fill"],
-                                      font=txt_field[index]["font"])
-                    else:
-                        draw.text(txt_field[index]["pos"],
-                                  info[txt_field[index]["name"]],
-                                  fill=txt_field[index]["fill"],
-                                  font=txt_field[index]["font"])
-
-
-    # Full-screen art
-    elif audio_dmode == ADisplay.FULLSCREEN:
-        layout = LAYOUT[audio_dmode]
-        # retrieve cover image from Kodi, if it exists and needs a refresh
-        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
-        if last_thumb:
-            image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-
-
-    # Full-screen art with progress bar
-    elif audio_dmode == ADisplay.FULL_PROG:
-        layout = LAYOUT[audio_dmode]
-        # retrieve cover image from Kodi, if it exists and needs a refresh
-        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
-        if last_thumb:
-            image.paste(last_thumb, (int((frameSize[0]-last_thumb.width)/2), int((frameSize[1]-last_thumb.height)/2)))
-
-        # vertical progress bar
-        if prog != -1:
+                image.paste(last_thumb, layout["thumb"]["pos"])
+    else:
+        last_thumb = None
+                
+    # progress bar
+    if (prog != -1 and "prog" in layout.keys()):
+        if "vertical" in layout["prog"].keys():
             progress_bar(draw, color_progbg, color_progfg,
                          layout["prog"]["pos"][0], layout["prog"]["pos"][1],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
-                         prog, vertical=True)
+                         prog, vertical=True)                
+        elif info['MusicPlayer.Time'].count(":") == 2:
+            # longer bar for longer displayed time
+            progress_bar(draw, color_progbg, color_progfg,
+                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+                         layout["prog"]["long_len"], layout["prog"]["height"],
+                         prog)
+        else:
+            progress_bar(draw, color_progbg, color_progfg,
+                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+                         layout["prog"]["short_len"], layout["prog"]["height"],
+                         prog)
+
+    # text fields, if there are any
+    if "fields" not in layout.keys():
+        return
+    
+    txt_field = layout["fields"]
+    for index in range(len(txt_field)):
+
+        # special treatment for codec, which gets a lookup
+        if txt_field[index]["name"] == "codec":
+            if info['MusicPlayer.Codec'] in codec_name.keys():
+                draw.text(txt_field[index]["pos"],
+                          codec_name[info['MusicPlayer.Codec']],
+                          fill=txt_field[index]["fill"],
+                          font=txt_field[index]["font"])
+
+        # special treatment for MusicPlayer.Artist
+        elif txt_field[index]["name"] == "artist":
+            if info['MusicPlayer.Artist'] != "":
+                truncate_text(draw, txt_field[index]["pos"],
+                              info['MusicPlayer.Artist'],
+                              fill=txt_field[index]["fill"],
+                              font=txt_field[index]["font"])
+            elif info['MusicPlayer.Property(Role.Composer)'] != "":
+                truncate_text(draw, txt_field[index]["pos"],
+                              "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
+                              fill=txt_field[index]["fill"],
+                              font=txt_field[index]["font"])                    
+
+        # all other fields
+        else:
+            if (txt_field[index]["name"] in info.keys() and
+                info[txt_field[index]["name"]] != ""):
+                # ender any label first
+                if "label" in txt_field[index]:
+                    draw.text(txt_field[index]["lpos"], txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                # now render the field itself
+                if "trunc" in txt_field[index].keys():
+                    truncate_text(draw, txt_field[index]["pos"],
+                                  info[txt_field[index]["name"]],
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])
+                else:
+                    draw.text(txt_field[index]["pos"],
+                              info[txt_field[index]["name"]],
+                              fill=txt_field[index]["fill"],
+                              font=txt_field[index]["font"])
 
 
 # Kodi-polling and image rendering function
 #
-# Locations and sizes (aside from font size) are all hard-coded in
-# this function.  If anyone wanted to be ambitious and accommodate
-# some form of programmable layout, you would start here.  Otherwise,
-# just adjust to taste and desired outcome!
-#
+# Determine Kodi state and, if something of interest is playing,
+# retrieve all the relevant information and get it drawn.
 def update_display():
     global last_image_path
     global last_thumb
@@ -707,7 +697,7 @@ def main():
                 break
             # This delay seems sufficient to have a (usually) smooth progress
             # bar and elapsed time update
-            time.sleep(0.91)
+            time.sleep(0.90)
 
 
 if __name__ == "__main__":
