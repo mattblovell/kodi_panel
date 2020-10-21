@@ -70,7 +70,7 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.77"
+PANEL_VER = "v0.78"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -235,7 +235,7 @@ STATUS_LAYOUT = \
     # then the JSON-RPC call made in update_display() likely needs to
     # be augmented first.
     #
-    # Special treatment exists for several fields    
+    # Special treatment exists for several fields
     "fields" :
     [
         { "name": "version",       "pos": (145,  8), "font": font_main, "fill": color_artist },
@@ -251,23 +251,60 @@ STATUS_LAYOUT = \
 
 #-----------------------------------------------------------------------------
 
-# Render text at the specified location, truncating characters and
-# placing a final ellipsis if the string is too wide to display in its
-# entirety.
-#
-# In its present form, this function essentially only checks for
-# extensions past the right-hand side of the screen.
+# Maintain a short list of the most recently-truncated strings,
+# for use by truncate_text()
+last_trunc = []
+
+
 def truncate_text(pil_draw, xy, text, fill, font):
+    global last_trunc
     truncating = 0
-    new_text = text
+
+    # Assume an upper bound on how many characters are even
+    # possible to display
+    new_text = text[0:59];
+
+    # Check if we've already truncated this string
+    for index in range(len(last_trunc)):
+        if (new_text == last_trunc[index]["str"] and
+            font == last_trunc[index]["font"]):
+            new_text = last_trunc[index]["short_str"]
+            if last_trunc[index]["truncating"]:
+                new_text += "\u2026"
+            pil_draw.text(xy, new_text, fill, font)
+            return
+
+    # Otherwise, try an initial rendering
     t_width, t_height = pil_draw.textsize(new_text, font)
-    while (xy[0] + t_width) > (frame_size[0] - 8):
+
+    # Form an initial estimate for how many characters will fit
+    avg_char = len(new_text) / t_width
+    avail_width = frame_size[0] - 10
+    num_chars = int( (avail_width + 20) / avg_char )
+    new_text = new_text[0:num_chars]
+
+    # Now perform naive truncation.  A binary search would
+    # be faster, if further speed is needed
+    t_width, t_height = pil_draw.textsize(new_text, font)
+    while (xy[0] + t_width) > avail_width:
         truncating = 1
         new_text = new_text[:-1]
         t_width, t_height = pil_draw.textsize(new_text, font)
+
+    disp_text = new_text
     if truncating:
-        new_text += "\u2026"
-    pil_draw.text(xy, new_text, fill, font)
+        disp_text += "\u2026"
+    pil_draw.text(xy, disp_text, fill, font)
+
+    # Store results for later consultation
+    new_result = {
+        "str"        : text[0:59],
+        "short_str"  : disp_text,
+        "truncating" : truncating,
+        "font"       : font
+        }
+    last_trunc.insert(0, new_result)
+    last_trunc = last_trunc[:9]
 
 
 # Draw (by default) a horizontal progress bar at the specified
@@ -426,7 +463,7 @@ def status_screen(draw, kodi_status, summary_string):
         elif txt_field[index]["name"] == "summary":
             draw.text(txt_field[index]["pos"], summary_string,
                       txt_field[index]["fill"], txt_field[index]["font"])
-            
+
         elif txt_field[index]["name"] == "time_hrmin":
             # time, in 7-segment font by default
             time_parts = kodi_status['System.Time'].split(" ")

@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.77"
+PANEL_VER = "v0.78"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -266,23 +266,69 @@ device = ili9341(serial, active_low=False, width=320, height=240,
 
 # ----------------------------------------------------------------------------
 
+# Maintain a short list of the most recently-truncated strings,
+# for use by truncate_text()
+last_trunc = []
+
+
 # Render text at the specified location, truncating characters and
 # placing a final ellipsis if the string is too wide to display in its
 # entirety.
 #
 # In its present form, this function essentially only checks for
-# extensions past the right-hand side of the screen.
+# extensions past the right-hand side of the screen.  That could
+# be remedied, if needed, by passing in a maximum permitted width
+# and using it.
 def truncate_text(pil_draw, xy, text, fill, font):
+    global last_trunc
     truncating = 0
-    new_text = text
+
+    # Assume an upper bound on how many characters are even
+    # possible to display
+    new_text = text[0:59];
+
+    # Check if we've already truncated this string
+    for index in range(len(last_trunc)):
+        if (new_text == last_trunc[index]["str"] and
+            font == last_trunc[index]["font"]):
+            new_text = last_trunc[index]["short_str"]
+            if last_trunc[index]["truncating"]:
+                new_text += "\u2026"
+            pil_draw.text(xy, new_text, fill, font)
+            return
+
+    # Otherwise, try an initial rendering
     t_width, t_height = pil_draw.textsize(new_text, font)
-    while (xy[0] + t_width) > (frame_size[0] - 8):
+
+    # Form an initial estimate for how many characters will fit
+    avg_char = len(new_text) / t_width
+    avail_width = frame_size[0] - 10
+    num_chars = int( (avail_width + 20) / avg_char )
+    new_text = new_text[0:num_chars]
+
+    # Now perform naive truncation.  A binary search would
+    # be faster, if further speed is needed
+    t_width, t_height = pil_draw.textsize(new_text, font)
+    while (xy[0] + t_width) > avail_width:
         truncating = 1
         new_text = new_text[:-1]
         t_width, t_height = pil_draw.textsize(new_text, font)
+
+    disp_text = new_text
     if truncating:
-        new_text += "\u2026"
-    pil_draw.text(xy, new_text, fill, font)
+        disp_text += "\u2026"
+    pil_draw.text(xy, disp_text, fill, font)
+
+    # Store results for later consultation
+    new_result = {
+        "str"        : text[0:59],
+        "short_str"  : disp_text,
+        "truncating" : truncating,
+        "font"       : font
+        }
+    last_trunc.insert(0, new_result)
+    last_trunc = last_trunc[:9]
+
 
 
 # Draw a horizontal (by default) progress bar at the specified
@@ -440,7 +486,7 @@ def status_screen(draw, kodi_status, summary_string):
         elif txt_field[index]["name"] == "summary":
             draw.text(txt_field[index]["pos"], summary_string,
                       txt_field[index]["fill"], txt_field[index]["font"])
-            
+
         elif txt_field[index]["name"] == "time_hrmin":
             # time, in 7-segment font by default
             time_parts = kodi_status['System.Time'].split(" ")
@@ -459,7 +505,7 @@ def status_screen(draw, kodi_status, summary_string):
             draw.text(txt_field[index]["pos"], display_string,
                       txt_field[index]["fill"], txt_field[index]["font"])
 
-    
+
 
 # Audio info screens (shown when music is playing).  With the
 # introduction of the AUDIO_LAYOUT data structure, all 3 modes are
@@ -758,9 +804,20 @@ def main():
                 print(datetime.now(), "Communication disrupted.")
                 kodi_active = False
                 break
-            # This delay seems sufficient to have a (usually) smooth progress
-            # bar and elapsed time update
-            time.sleep(0.90)
+
+            # This delay seems sufficient to have a (usually) smooth
+            # progress bar and elapsed time update.  The goal is to
+            # wake up once a second, but this is effectively running
+            # open-loop.  An occassional hiccup is somewhat
+            # unavoidable.
+            #
+            # An alternative would be to maintain our own elapsed time
+            # counter.  Keeping that counter accurate, though, would
+            # then require notifications regarding pauses, seeks, or
+            # faster-than 1x playback.  This is a potential reason to
+            # explore using WebSocket as the JSON-RPC transport
+            # mechanism.
+            time.sleep(0.91)
 
 
 if __name__ == "__main__":
