@@ -240,7 +240,7 @@ STATUS_LAYOUT = \
     [
         { "name": "version",       "pos": (145,  8), "font": font_main, "fill": color_artist },
         { "name": "summary",       "pos": (145, 35), "font": font_sm,   "fill": "white" },
-        { "name": "time_hrmin",    "pos": (145, 73), "font": font7S,    "fill": color7S,  "smfont": font_tiny },
+        { "name": "time_hrmin",    "pos": (145, 73), "font": font7S,    "fill": color7S,  "smfont": font7S_sm },
 
         { "name": "System.Date",           "pos": (  5,150), "font": font_sm,   "fill": "white" },
         { "name": "System.Uptime",         "pos": (  5,175), "font": font_sm,   "fill": "white" },
