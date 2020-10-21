@@ -158,59 +158,95 @@ class ADisplay(Enum):
 audio_dmode = ADisplay.DEFAULT
 
 
-# Audio screen layouts
+# Audio screen layouts, used by audio_screens()
 AUDIO_LAYOUT = \
-{ ADisplay.DEFAULT : 
+{ ADisplay.DEFAULT :
   {
-    # artwork position and size
+    # Artwork position and size
     "thumb" : { "pos": (5, 5), "size": 140 },
 
-    # progress bar.  Two versions are possible, short and long,
+    # Progress bar.  Two versions are possible, short and long,
     # depending upon the MusicPlayer.Time string
     "prog" : { "pos": (150, 7),
                "short_len": 104,  "long_len": 164,
                "height": 8 },
 
-    # all other text fields, including any labels
-    "fields" : 
+    # All other text fields, including any labels
+    #
+    # Removing fields can be accomplished just by commenting out the
+    # corresponding entry in this array.  If a new field is desired,
+    # then the JSON-RPC call made in update_display() likely needs to
+    # be augmented first.
+    #
+    # Special treatment exists for 'codec' and 'artist'.
+    #
+    "fields" :
     [
         { "name": "MusicPlayer.Time",          "pos": (148, 20), "font": font7S, "fill":color7S },
-        
+
         { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 73),  "font": font7S,     "fill": color7S,
           "label": "Track",                   "lpos": (148, 60), "lfont": font_tiny, "lfill": "white" },
-        
+
         { "name": "MusicPlayer.Duration", "pos": (230, 60), "font": font_tiny, "fill": "white" },
         { "name": "codec",                "pos": (230, 74), "font": font_tiny, "fill": "white" },
         { "name": "MusicPlayer.Genre",    "pos": (230, 88), "font": font_tiny, "fill": "white", "trunc":1 },
         { "name": "MusicPlayer.Year",     "pos": (230,102), "font": font_tiny, "fill": "white" },
-        
+
         { "name": "MusicPlayer.Title",    "pos": (5, 152),  "font": font_main, "fill": "white", "trunc":1},
         { "name": "MusicPlayer.Album",    "pos": (5, 180),  "font": font_sm,   "fill": "white", "trunc":1 },
-        { "name": "MusicPlayer.Artist",   "pos": (5, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },          
+        { "name": "MusicPlayer.Artist",   "pos": (5, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },
     ]
   },
 
   ADisplay.FULLSCREEN :
   {
-    # artwork size, position is determined by centering
-    "thumb"   : { "center": 1 , "size": frameSize[1]-6 },      
+    # Artwork size, position is determined by centering
+    "thumb"   : { "center": 1 , "size": frameSize[1]-6 },
   },
 
   ADisplay.FULL_PROG :
   {
-    # artwork size, position is determined by centering      
+    # Artwork size, position is determined by centering
     "thumb" : { "center": 1, "size": frameSize[1]-6 },
-      
-    # vertical progress bar
+
+    # Vertical progress bar
     "prog" : { "pos": (frameSize[0]-12, 1),
                "len": 10,
                "height": frameSize[1]-4 ,
                "vertical": 1
     }
   },
-  
+
 }
 
+
+# Layout control for status screen, used by status_screen()
+STATUS_LAYOUT = \
+{
+    # Kodi logo.  Since Image.thumbnail() is used for resizing, the
+    # image cannot be made larger than its original size.  It can be
+    # reduced in size if needed, though.
+    "thumb" : { "pos": (5, 5), "size": 128 },
+
+    # All other text fields
+    #
+    # Removing fields can be accomplished just by commenting out the
+    # corresponding entry in this array.  If a new field is desired,
+    # then the JSON-RPC call made in update_display() likely needs to
+    # be augmented first.
+    #
+    # Special treatment exists for several fields    
+    "fields" :
+    [
+        { "name": "version",       "pos": (145,  8), "font": font_main, "fill": color_artist },
+        { "name": "summary",       "pos": (145, 35), "font": font_sm,   "fill": "white" },
+        { "name": "time_hrmin",    "pos": (145, 73), "font": font7S,    "fill": color7S,  "smfont": font_tiny },
+
+        { "name": "System.Date",           "pos": (  5,150), "font": font_sm,   "fill": "white" },
+        { "name": "System.Uptime",         "pos": (  5,175), "font": font_sm,   "fill": "white" },
+        { "name": "System.CPUTemperature", "pos": (  5,200), "font": font_sm,   "fill": "white" },
+    ]
+}
 
 
 #-----------------------------------------------------------------------------
@@ -359,23 +395,53 @@ def get_artwork(info, prev_image, thumb_size):
 # This argument is the string to use for current state of the system
 #
 def status_screen(draw, kodi_status, summary_string):
-    # Render screen
-    kodi_icon = Image.open(kodi_thumb)
-    image.paste(kodi_icon, (5, 5))
-    draw.text(( 145, 8), "kodi_panel " + PANEL_VER, fill=color_artist, font=font_main)
+    layout = STATUS_LAYOUT
 
-    # pithy summary status
-    draw.text(( 145, 35), summary_string,  fill='white', font=font_sm)
+    str_prefix = {
+        "System.Date"           : "",
+        "System.Uptime"         : "Up: ",
+        "System.CPUTemperature" : "CPU: ",
+    }
 
-    # time in 7-segment font
-    time_parts = kodi_status['System.Time'].split(" ")
-    time_width, time_height = draw.textsize(time_parts[0], font7S)
-    draw.text((145,73), time_parts[0], fill=color7S, font=font7S)
-    draw.text((145 + time_width + 5, 73), time_parts[1], fill=color7S, font=font7S_sm)
+    # kodi logo, if desired
+    if "thumb" in layout.keys():
+        kodi_icon = Image.open(kodi_thumb)
+        kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
+        image.paste(kodi_icon, layout["thumb"]["pos"])
 
-    draw.text((5, 150), kodi_status['System.Date'], fill='white', font=font_sm)
-    draw.text((5, 175), "Up: " + kodi_status['System.Uptime'], fill='white', font=font_sm)
-    draw.text((5, 200), "CPU: " + kodi_status['System.CPUTemperature'], fill='white', font=font_sm)
+    # go through all the text fields, if any
+    if "fields" not in layout.keys():
+        return
+
+    txt_field = layout["fields"]
+
+    for index in range(len(txt_field)):
+        if txt_field[index]["name"] == "version":
+            draw.text(txt_field[index]["pos"], "kodi_panel " + PANEL_VER,
+                      txt_field[index]["fill"], txt_field[index]["font"])
+
+        elif txt_field[index]["name"] == "summary":
+            draw.text(txt_field[index]["pos"], summary_string,
+                      txt_field[index]["fill"], txt_field[index]["font"])
+            
+        elif txt_field[index]["name"] == "time_hrmin":
+            # time, in 7-segment font by default
+            time_parts = kodi_status['System.Time'].split(" ")
+            time_width, time_height = draw.textsize(time_parts[0], font7S)
+            draw.text(txt_field[index]["pos"], time_parts[0],
+                      txt_field[index]["fill"], txt_field[index]["font"])
+            draw.text((txt_field[index]["pos"][0] + time_width + 5, txt_field[index]["pos"][1]),
+                      time_parts[1],
+                      txt_field[index]["fill"], txt_field[index]["smfont"])
+
+        else:
+            display_string = kodi_status[txt_field[index]["name"]]
+            if txt_field[index]["name"] in str_prefix.keys():
+                display_string = str_prefix[txt_field[index]["name"]] + display_string
+
+            draw.text(txt_field[index]["pos"], display_string,
+                      txt_field[index]["fill"], txt_field[index]["font"])
+
 
 
 # Audio info screens (shown when music is playing).  With the
@@ -393,7 +459,7 @@ def audio_screens(image, draw, info, prog):
 
     # Get layout details for this mode
     layout = AUDIO_LAYOUT[audio_dmode]
-    
+
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
         last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
@@ -406,7 +472,7 @@ def audio_screens(image, draw, info, prog):
                 image.paste(last_thumb, layout["thumb"]["pos"])
     else:
         last_thumb = None
-                
+
     # progress bar
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
@@ -414,7 +480,7 @@ def audio_screens(image, draw, info, prog):
                          layout["prog"]["pos"][0], layout["prog"]["pos"][1],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
-                         prog, vertical=True)                
+                         prog, vertical=True)
         elif info['MusicPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
             progress_bar(draw, color_progbg, color_progfg,
@@ -430,7 +496,7 @@ def audio_screens(image, draw, info, prog):
     # text fields, if there are any
     if "fields" not in layout.keys():
         return
-    
+
     txt_field = layout["fields"]
     for index in range(len(txt_field)):
 
@@ -453,7 +519,7 @@ def audio_screens(image, draw, info, prog):
                 truncate_text(draw, txt_field[index]["pos"],
                               "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
                               fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])                    
+                              font=txt_field[index]["font"])
 
         # all other fields
         else:
@@ -474,7 +540,7 @@ def audio_screens(image, draw, info, prog):
                               info[txt_field[index]["name"]],
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
-            
+
 
 # Kodi-polling and image rendering function
 #
