@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.75"
+PANEL_VER = "v0.77"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -635,7 +635,7 @@ def update_display():
         if screen_press:
             screen_press = False
             audio_dmode = audio_dmode.next()
-            print(datetime.now(), "Touchscreen pressed -- audio display mode now", audio_dmode.name)
+            print(datetime.now(), "audio display mode now", audio_dmode.name)
             last_image_path = None
             last_thumb = None
 
@@ -690,11 +690,12 @@ def update_display():
 def touch_callback(channel):
     global screen_press
     global kodi_active
-    screen_press = True
+    screen_press = kodi_active
     #print(datetime.now(), "Touchscreen pressed")
     if kodi_active:
         try:
             update_display()
+            screen_press = False
         except:
             pass
 
