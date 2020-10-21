@@ -78,7 +78,7 @@ rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
 
 # Image handling
-frameSize       = (320, 240)
+frame_size      = (320, 240)
 last_image_path = ""
 last_thumb      = ""
 
@@ -104,9 +104,9 @@ font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
 color7S      = 'SpringGreen'   # 7-Segment color
 color_progbg = 'dimgrey'       # progress bar background
 color_progfg = color7S         # progress bar foreground
-color_artist = 'yellow'       # artist name
+color_artist = 'yellow'        # artist name
 
-image  = Image.new('RGB', (frameSize), 'black')
+image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
 
 # Audio/Video codec lookup
@@ -143,8 +143,8 @@ device = get_device()
 # touches.  The list is intended to grow, as other ideas for layouts
 # are proposed.
 class ADisplay(Enum):
-    DEFAULT    = 0   # small art, elapsed time, track info
-    FULLSCREEN = 1   # fullscreen cover art
+    DEFAULT    = 0   # small artwork, elapsed time, track info
+    FULLSCREEN = 1   # fullscreen cover artwork
     FULL_PROG  = 2   # fullscreen art with vertical progress bar
 
     def next(self):
@@ -201,18 +201,18 @@ AUDIO_LAYOUT = \
   ADisplay.FULLSCREEN :
   {
     # Artwork size, position is determined by centering
-    "thumb"   : { "center": 1 , "size": frameSize[1]-6 },
+    "thumb"   : { "center": 1 , "size": frame_size[1]-6 },
   },
 
   ADisplay.FULL_PROG :
   {
     # Artwork size, position is determined by centering
-    "thumb" : { "center": 1, "size": frameSize[1]-6 },
+    "thumb" : { "center": 1, "size": frame_size[1]-6 },
 
     # Vertical progress bar
-    "prog" : { "pos": (frameSize[0]-12, 1),
+    "prog" : { "pos": (frame_size[0]-12, 1),
                "len": 10,
-               "height": frameSize[1]-4 ,
+               "height": frame_size[1]-4 ,
                "vertical": 1
     }
   },
@@ -254,11 +254,14 @@ STATUS_LAYOUT = \
 # Render text at the specified location, truncating characters and
 # placing a final ellipsis if the string is too wide to display in its
 # entirety.
+#
+# In its present form, this function essentially only checks for
+# extensions past the right-hand side of the screen.
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
     new_text = text
     t_width, t_height = pil_draw.textsize(new_text, font)
-    while (xy[0] + t_width) > (frameSize[0] - 8):
+    while (xy[0] + t_width) > (frame_size[0] - 8):
         truncating = 1
         new_text = new_text[:-1]
         t_width, t_height = pil_draw.textsize(new_text, font)
@@ -466,8 +469,8 @@ def audio_screens(image, draw, info, prog):
         if last_thumb:
             if "center" in layout["thumb"].keys():
                 image.paste(last_thumb,
-                            (int((frameSize[0]-last_thumb.width)/2),
-                             int((frameSize[1]-last_thumb.height)/2)))
+                            (int((frame_size[0]-last_thumb.width)/2),
+                             int((frame_size[1]-last_thumb.height)/2)))
             else:
                 image.paste(last_thumb, layout["thumb"]["pos"])
     else:
@@ -555,7 +558,7 @@ def update_display():
     global last_thumb
 
     # Start with a blank slate
-    draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
+    draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
 
     # Check if the screen_on time has expired
     if (screen_on and datetime.now() >= screen_offtime):
@@ -673,7 +676,7 @@ def main():
 
     while True:
         #device.backlight(True)
-        draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
+        draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
 

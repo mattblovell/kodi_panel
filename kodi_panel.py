@@ -25,7 +25,6 @@ from luma.core.interface.serial import spi
 from luma.core.render import canvas
 from luma.lcd.device import ili9341
 
-import signal
 import sys
 import RPi.GPIO as GPIO
 
@@ -47,12 +46,12 @@ import threading
 # ----------------------------------------------------------------------------
 PANEL_VER = "v0.75"
 
-base_url = "http://localhost:8080"   # running on same box as Kodi
+base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
 
 # Image handling
-frameSize       = (320, 240)
+frame_size      = (320, 240)
 last_image_path = None
 last_thumb      = None
 
@@ -81,7 +80,7 @@ color_progfg  = color7S         # progress bar foreground
 color_artist  = 'yellow'        # artist name
 
 # Pillow objects
-image  = Image.new('RGB', (frameSize), 'black')
+image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
 
 # Audio/Video codec lookup
@@ -111,8 +110,8 @@ codec_name = {
 # touches.  The list is intended to grow, as other ideas for layouts
 # are proposed.
 class ADisplay(Enum):
-    DEFAULT    = 0   # small art, elapsed time, track info
-    FULLSCREEN = 1   # fullscreen cover art
+    DEFAULT    = 0   # small artwork, elapsed time, track info
+    FULLSCREEN = 1   # fullscreen cover artwork
     FULL_PROG  = 2   # fullscreen art with vertical progress bar
 
     def next(self):
@@ -172,18 +171,18 @@ AUDIO_LAYOUT = \
   ADisplay.FULLSCREEN :
   {
     # artwork size, position is determined by centering
-    "thumb"   : { "center": 1, "size": frameSize[1]-5 },
+    "thumb"   : { "center": 1, "size": frame_size[1]-5 },
   },
 
   ADisplay.FULL_PROG :
   {
     # artwork size, position is determined by centering
-    "thumb" : { "center": 1, "size": frameSize[1]-5 },
+    "thumb" : { "center": 1, "size": frame_size[1]-5 },
 
     # vertical progress bar
-    "prog" : { "pos": (frameSize[0]-12, 1),
+    "prog" : { "pos": (frame_size[0]-12, 1),
                "len": 10,
-               "height": frameSize[1]-4,
+               "height": frame_size[1]-4,
                "vertical": 1
     },
   },
@@ -213,12 +212,14 @@ STATUS_LAYOUT = \
 }
 
 
+# ----------------------------------------------------------------------------
+
 # GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.  Find a pin that's unused by luma.  The touchscreen chip
 # in my display has its own internal pullup resistor, so below no
-# pull-up is specified.
+# pullup is specified.
 TOUCH_INT      = 19
-USE_TOUCH      = True   # Set False to not use interrupt at all
+USE_TOUCH      = True   # Set False to disable interrupt use
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
@@ -227,8 +228,8 @@ screen_on      = False
 screen_wake    = 15    # status screen waketime, in seconds
 screen_offtime = datetime.now()
 
-# Provide a lock to ensure update_display() is single-threaded.  This
-# is likely unnecessary given Python's GIL, but is certainly safe.
+# Provide a lock to ensure update_display() is single-threaded.  (This
+# is perhaps unnecessary given Python's GIL, but is certainly safe.)
 lock = threading.Lock()
 
 # Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
@@ -268,11 +269,14 @@ device = ili9341(serial, active_low=False, width=320, height=240,
 # Render text at the specified location, truncating characters and
 # placing a final ellipsis if the string is too wide to display in its
 # entirety.
+#
+# In its present form, this function essentially only checks for
+# extensions past the right-hand side of the screen.
 def truncate_text(pil_draw, xy, text, fill, font):
     truncating = 0
     new_text = text
     t_width, t_height = pil_draw.textsize(new_text, font)
-    while t_width > (frameSize[0] - 20):
+    while (xy[0] + t_width) > (frame_size[0] - 8):
         truncating = 1
         new_text = new_text[:-1]
         t_width, t_height = pil_draw.textsize(new_text, font)
@@ -281,7 +285,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
     pil_draw.text(xy, new_text, fill, font)
 
 
-# Draw (by default) a horizontal progress bar at the specified
+# Draw a horizontal (by default) progress bar at the specified
 # location, filling from left to right.  A vertical bar can be drawn
 # if specified, filling from bottom to top.
 def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False):
@@ -416,13 +420,13 @@ def status_screen(draw, kodi_status, summary_string):
         "System.CPUTemperature" : "CPU: ",
     }
 
-    # kodi logo, if desired
+    # Kodi logo, if desired
     if "thumb" in layout.keys():
         kodi_icon = Image.open(kodi_thumb)
         kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
         image.paste(kodi_icon, layout["thumb"]["pos"])
 
-    # go through all the text fields, if any
+    # go through all text fields, if any
     if "fields" not in layout.keys():
         return
 
@@ -479,8 +483,8 @@ def audio_screens(image, draw, info, prog):
         if last_thumb:
             if "center" in layout["thumb"].keys():
                 image.paste(last_thumb,
-                            (int((frameSize[0]-last_thumb.width)/2),
-                             int((frameSize[1]-last_thumb.height)/2)))
+                            (int((frame_size[0]-last_thumb.width)/2),
+                             int((frame_size[1]-last_thumb.height)/2)))
             else:
                 image.paste(last_thumb, layout["thumb"]["pos"])
     else:
@@ -570,7 +574,7 @@ def update_display():
     lock.acquire()
 
     # Start with a blank slate
-    draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
+    draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
 
     # Check if the screen_on time has expired
     if (screen_on and datetime.now() >= screen_offtime):
@@ -716,7 +720,7 @@ def main():
     # main communication loop
     while True:
         device.backlight(True)
-        draw.rectangle([(0,0), (frameSize[0],frameSize[1])], 'black', 'black')
+        draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
 
