@@ -255,7 +255,14 @@ STATUS_LAYOUT = \
 # for use by truncate_text()
 last_trunc = []
 
-
+# Render text at the specified location, truncating characters and
+# placing a final ellipsis if the string is too wide to display in its
+# entirety.
+#
+# In its present form, this function essentially only checks for
+# extensions past the right-hand side of the screen.  That could
+# be remedied, if needed, by passing in a maximum permitted width
+# and using it.
 def truncate_text(pil_draw, xy, text, fill, font):
     global last_trunc
     truncating = 0
