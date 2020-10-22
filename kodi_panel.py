@@ -252,7 +252,7 @@ lock = threading.Lock()
 #   VCC         |  3V3             |  1 or 17
 #   GND         |  GND             |  9 or 25 or 39
 #   CS          |  GPIO8           |  24
-#   RST / RESET |  GPIO25          |  2
+#   RST / RESET |  GPIO25          |  22
 #   DC          |  GPIO24          |  18
 #   MOSI        |  GPIO10 (MOSI)   |  19
 #   SCLK / CLK  |  GPIO11 (SCLK)   |  23
