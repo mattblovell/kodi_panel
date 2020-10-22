@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.79"
+PANEL_VER = "v0.80"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -218,19 +218,31 @@ STATUS_LAYOUT = \
 # numbering.  Find a pin that's unused by luma.  The touchscreen chip
 # in my display has its own internal pullup resistor, so below no
 # pullup is specified.
-TOUCH_INT      = 19
 USE_TOUCH      = True   # Set False to disable interrupt use
+TOUCH_INT      = 19
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
 screen_press   = False
-screen_on      = False
+screen_active      = False
 screen_wake    = 15    # status screen waketime, in seconds
 screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  (This
 # is perhaps unnecessary given Python's GIL, but is certainly safe.)
 lock = threading.Lock()
+
+# Additional screen controls.  Note that RPi.GPIO's PWM control, even
+# the Odroid variant (?), uses software to control the signal, which
+# can result in flickering.
+#
+# I have not yet found a way to take advantage of the C4's hardware
+# PWM simultaneous with using luma.lcd.
+USE_BACKLIGHT = True
+USE_PWM       = False
+PWM_FREQ      = 362      # frequency, presumably in Hz
+PWM_LEVEL     = 75.0     # float value between 0 and 100
+
 
 # Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
 #
@@ -256,7 +268,7 @@ lock = threading.Lock()
 #   DC          |  GPIO24          |  18
 #   MOSI        |  GPIO10 (MOSI)   |  19
 #   SCLK / CLK  |  GPIO11 (SCLK)   |  23
-#   LED         |  GPIO18          |  12
+#   LED         |  GPIO18          |  12 (a.k.a. PWM_E)
 #   ------------|------------------|-----------------
 #
 # Originally, the constructor for ili9341 also included a
@@ -266,9 +278,18 @@ lock = threading.Lock()
 #
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
-device = ili9341(serial, active_low=False, width=320, height=240,
-                 bus_speed_hz=32000000
-                 )
+
+if USE_PWM:
+    device = ili9341(serial, active_low=False, width=320, height=240,
+                     bus_speed_hz=32000000,
+                     gpio_LIGHT=18,
+                     pwm_frequency=PWM_FREQ
+    )
+else:
+    device = ili9341(serial, active_low=False, width=320, height=240,
+                     bus_speed_hz=32000000,
+                     gpio_LIGHT=18
+    )
 
 # ----------------------------------------------------------------------------
 
@@ -611,6 +632,23 @@ def audio_screens(image, draw, info, prog):
                               font=txt_field[index]["font"])
 
 
+
+def screen_on():
+    if not USE_BACKLIGHT:
+        return
+    if USE_PWM:
+        device.backlight(PWM_LEVEL)
+    else:
+        device.backlight(True)
+
+def screen_off():
+    if not USE_BACKLIGHT:
+        return;
+    if USE_PWM:
+        device.backlight(0)
+    device.backlight(False)
+
+
 # Kodi-polling and image rendering function
 #
 # Determine Kodi state and, if something of interest is playing,
@@ -619,7 +657,7 @@ def update_display():
     global last_image_path
     global last_thumb
     global screen_press
-    global screen_on
+    global screen_active
     global screen_offtime
     global audio_dmode
 
@@ -628,10 +666,10 @@ def update_display():
     # Start with a blank slate
     draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
 
-    # Check if the screen_on time has expired
-    if (screen_on and datetime.now() >= screen_offtime):
-        screen_on = False
-        device.backlight(False)
+    # Check if the screen_active time has expired
+    if (screen_active and datetime.now() >= screen_offtime):
+        screen_active = False
+        screen_off()
 
     # Ask Kodi whether anything is playing...
     payload = {
@@ -650,11 +688,11 @@ def update_display():
 
         if screen_press:
             screen_press = False
-            device.backlight(True)
-            screen_on = True
+            screen_on()
+            screen_active = True
             screen_offtime = datetime.now() + timedelta(seconds=screen_wake)
 
-        if screen_on:
+        if screen_active:
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
@@ -676,11 +714,11 @@ def update_display():
             status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
             status_screen(draw, status_resp['result'], summary)
         else:
-            device.backlight(False)
+            screen_off()
 
     else:
         # Audio is playing!
-        device.backlight(True)
+        screen_on()
 
         # Change display modes upon any screen press, forcing
         # a re-fetch of any artwork
@@ -772,7 +810,7 @@ def main():
 
     # main communication loop
     while True:
-        device.backlight(True)
+        screen_on()
         draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
         device.display(image)
@@ -797,7 +835,7 @@ def main():
                 pass
 
         print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
-        device.backlight(False)
+        screen_off()
 
         # Loop until Kodi goes away
         kodi_active = True
