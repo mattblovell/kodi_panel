@@ -238,16 +238,22 @@ lock = threading.Lock()
 # GPIO18, physical pin 12.  Recall that the GPIOx number is using
 # RPi.GPIO's scheme!
 #
-# As of Oct 2020, here's what luma.lcd's online documentation
-# recommended, all of which is per RPi.GPIO pin naming:
+# Below is how I've connected the ILI9341, which is *close* to the
+# recommended wiring in luma.lcd's online documentation.  Again,
+# recall the distinction between RPi.GPIO pin naming and physical pin
+# numbers.
+#
+# As you can provide RPi.GPIO numbers as arguments to the spi()
+# constructor, you do have some flexibility.
+#
 #
 #   LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
 #   ------------|------------------|-----------------
 #   VCC         |  3V3             |  1 or 17
 #   GND         |  GND             |  9 or 25 or 39
 #   CS          |  GPIO8           |  24
-#   RST / RESET |  GPIO24          |  18
-#   DC          |  GPIO23          |  16
+#   RST / RESET |  GPIO25          |  2
+#   DC          |  GPIO24          |  18
 #   MOSI        |  GPIO10 (MOSI)   |  19
 #   SCLK / CLK  |  GPIO11 (SCLK)   |  23
 #   LED         |  GPIO18          |  12
