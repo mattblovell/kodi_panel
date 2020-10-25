@@ -74,10 +74,10 @@ font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
 
 # Colors
-color7S       = 'SpringGreen'   # 7-Segment color
-color_progbg  = 'dimgrey'       # progress bar background
-color_progfg  = color7S         # progress bar foreground
-color_artist  = 'yellow'        # artist name
+color7S       = '#00FF66'    # 7-Segment color (used 'SpringGreen' for a while)
+color_progbg  = '#505050'    # progress bar background (used 'dimgrey' for a while)
+color_progfg  = color7S      # progress bar foreground
+color_artist  = 'yellow'     # artist name
 
 # Pillow objects
 image  = Image.new('RGB', (frame_size), 'black')
