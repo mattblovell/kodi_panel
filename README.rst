@@ -318,18 +318,22 @@ Here are two photos of the finished product:
 
 
 
-Brightness
-**********
+LCD Brightness
+**************
 
-An LCD panel in a darkened room can be *very* bright.  That was one of my reasons for
-focusing primarily on a music now-playing screen initially.
+An LCD panel in a darkened room can be *very* bright.  That was one of
+my reasons for focusing initially on a music now-playing screen
+initially.
 
-There is some code present to try using luma.lcd's PWM feature for the backlight.
-Unfortunately, as of Oct 2020 anyway, RPi.GPIO (even the Odroid version) is using
-a pthreads-based software PWM.  Since exact scheduling cannot be guaranteed with
-Linux, the screen's brightness can flicker.
+There is some code present to try using luma.lcd's PWM feature for the
+backlight.  Unfortunately (as of Oct 2020) RPi.GPIO (even the Odroid
+version) uses software to control the PWM (via pthreads).  Since exact
+scheduling cannot be guaranteed with Linux, the screen's brightness
+can flicker.  I've not yet found a way to make use of the C4's
+available hardware PWM together with luma.lcd.
 
-I ended up soldering a 10 kΩ trimpot inline with the LED wire.  
+I ended up soldering a 10 kΩ trimpot inline with the LED wire.  With
+that I could at least adjust the brightness down.
 	   
 
 License
