@@ -233,7 +233,7 @@ This was the motivation I needed to give it a try!
 
 All that was necessary was to find a GPIO pin that was free to use an
 an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
-known as Pin Number 35.
+known as Pin Number 35.  On the RPi3, GPIO16 (physical Pin 36) worked.
 
 The following block of code in ``kodi_panel.py`` is qualified by a USE_TOUCH
 boolean that is set to True at the start of the script.  If you are *not*
@@ -298,20 +298,39 @@ hold a key and *wait* for that to occur.  The actual T_IRQ
 responsiveness ends up being far better, but this does at least give
 the emulator the ability to cycle through the display modes and show
 the status screen.
-   
 
-Finished Design
----------------
 
-I also have a 3D-printable "case" design to fit the 3.2-inch screen.  The design
+
+Other Details
+-------------
+
+Case
+^^^^
+
+I adapted a 3D-printable "case" design to fit the 3.2-inch screen.  The design
 files are available on `Thingiverse <https://www.thingiverse.com/thing:4627423>`_.
 
-Here are two photos of the finished product (or at least its first revision):
+Here are two photos of the finished product:
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case1.jpg
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case2.jpg
 
+
+
+Brightness
+^^^^^^^^^^
+
+An LCD panel in a darkened room can be *very* bright.  That was one of my reasons for
+focusing primarily on a music now-playing screen initially.
+
+There is some code present to try using luma.lcd's PWM feature for the backlight.
+Unfortunately, as of Oct 2020 anyway, RPi.GPIO (even the Odroid version) is using
+a pthreads-based software PWM.  Since exact scheduling cannot be guaranteed with
+Linux, the screen's brightness can flicker.
+
+I ended up soldering a 10 kΩ trimpot inline with the LED wire.  
+	   
 
 License
 -------
