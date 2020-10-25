@@ -51,7 +51,6 @@
 #
 # ----------------------------------------------------------------------------
 
-
 from demo_opts import get_device      # from luma.examples (REQUIRED FOR EMULATION)
 from luma.core.render import canvas
 
@@ -70,7 +69,10 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.79"
+PANEL_VER = "v0.80"
+
+# The IP address used below need to be edited to match your
+# target device on your network.
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -85,7 +87,7 @@ last_thumb      = ""
 # Thumbnail defaults (these don't get resized)
 kodi_thumb      = "./kodi_thumb.jpg"
 default_thumb   = "./music_icon.png"
-default_airplay =  "./airplay_thumb.png"
+default_airplay = "./airplay_thumb.png"
 
 # RegEx for recognizing AirPlay images (compiled once)
 special_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')

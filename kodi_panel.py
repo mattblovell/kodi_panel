@@ -216,15 +216,21 @@ STATUS_LAYOUT = \
 
 # GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.  Find a pin that's unused by luma.  The touchscreen chip
-# in my display has its own internal pullup resistor, so below no
-# pullup is specified.
+# in my display has its own internal pullup resistor, so further below
+# no pullup is specified.
+#
+# I found the following pins to work on the two SBCs.
+#
+#   Odroid C4:  GPIO19 (physical Pin 35)
+#   RPi 3:      GPIO16 (physical Pin 36)
+#
 USE_TOUCH      = True   # Set False to disable interrupt use
 TOUCH_INT      = 19
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
 screen_press   = False
-screen_active      = False
+screen_active  = False
 screen_wake    = 15    # status screen waketime, in seconds
 screen_offtime = datetime.now()
 
@@ -233,11 +239,17 @@ screen_offtime = datetime.now()
 lock = threading.Lock()
 
 # Additional screen controls.  Note that RPi.GPIO's PWM control, even
-# the Odroid variant (?), uses software to control the signal, which
-# can result in flickering.
+# the Odroid variant, uses software (pthreads) to control the signal,
+# which can result in flickering.  At present (Oct 2020), I cannot
+# recommend it.  
 #
 # I have not yet found a way to take advantage of the C4's hardware
 # PWM simultaneous with using luma.lcd.
+#
+# The USE_BACKLIGHT variable controls whether calls are made to
+# luma.lcd at all to change backlight state.  Uses with OLED displays
+# should set it to False.
+#
 USE_BACKLIGHT = True
 USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
