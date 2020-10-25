@@ -305,7 +305,7 @@ Other Details
 -------------
 
 Case
-^^^^
+****
 
 I adapted a 3D-printable "case" design to fit the 3.2-inch screen.  The design
 files are available on `Thingiverse <https://www.thingiverse.com/thing:4627423>`_.
@@ -319,7 +319,7 @@ Here are two photos of the finished product:
 
 
 Brightness
-^^^^^^^^^^
+**********
 
 An LCD panel in a darkened room can be *very* bright.  That was one of my reasons for
 focusing primarily on a music now-playing screen initially.
