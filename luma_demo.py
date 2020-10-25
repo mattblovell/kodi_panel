@@ -51,6 +51,7 @@
 #
 # ----------------------------------------------------------------------------
 
+
 from demo_opts import get_device      # from luma.examples (REQUIRED FOR EMULATION)
 from luma.core.render import canvas
 
@@ -69,10 +70,7 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.80"
-
-# The IP address used below need to be edited to match your
-# target device on your network.
+PANEL_VER = "v0.81"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -103,10 +101,10 @@ font7S    = ImageFont.truetype("DSEG14Classic-Regular.ttf", 32)
 font7S_sm = ImageFont.truetype("DSEG14Classic-Regular.ttf", 11)
 
 # Colors
-color7S      = 'SpringGreen'   # 7-Segment color
-color_progbg = 'dimgrey'       # progress bar background
-color_progfg = color7S         # progress bar foreground
-color_artist = 'yellow'        # artist name
+color7S       = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while)
+color_progbg  = '#424242'    # progress bar background (used 'dimgrey' for a while)
+color_progfg = color7S       # progress bar foreground
+color_artist = 'yellow'      # artist name
 
 image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
@@ -184,15 +182,15 @@ AUDIO_LAYOUT = \
     #
     "fields" :
     [
-        { "name": "MusicPlayer.Time",          "pos": (148, 20), "font": font7S, "fill":color7S },
+        { "name": "MusicPlayer.Time",          "pos": (148, 21), "font": font7S, "fill":color7S },
 
-        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 73),  "font": font7S,     "fill": color7S,
-          "label": "Track",                   "lpos": (148, 60), "lfont": font_tiny, "lfill": "white" },
+        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 79),  "font": font7S,     "fill": color7S,
+          "label": "Track",                   "lpos": (148, 65), "lfont": font_tiny, "lfill": "white" },
 
-        { "name": "MusicPlayer.Duration", "pos": (230, 60), "font": font_tiny, "fill": "white" },
-        { "name": "codec",                "pos": (230, 74), "font": font_tiny, "fill": "white" },
-        { "name": "MusicPlayer.Genre",    "pos": (230, 88), "font": font_tiny, "fill": "white", "trunc":1 },
-        { "name": "MusicPlayer.Year",     "pos": (230,102), "font": font_tiny, "fill": "white" },
+        { "name": "MusicPlayer.Duration", "pos": (230, 65), "font": font_tiny, "fill": "white" },
+        { "name": "codec",                "pos": (230, 79), "font": font_tiny, "fill": "white" },
+        { "name": "MusicPlayer.Genre",    "pos": (230, 93), "font": font_tiny, "fill": "white", "trunc":1 },
+        { "name": "MusicPlayer.Year",     "pos": (230,107), "font": font_tiny, "fill": "white" },
 
         { "name": "MusicPlayer.Title",    "pos": (5, 152),  "font": font_main, "fill": "white", "trunc":1},
         { "name": "MusicPlayer.Album",    "pos": (5, 180),  "font": font_sm,   "fill": "white", "trunc":1 },

@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.80"
+PANEL_VER = "v0.81"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -152,15 +152,15 @@ AUDIO_LAYOUT = \
     #
     "fields" :
     [
-        { "name": "MusicPlayer.Time",          "pos": (148, 20), "font": font7S, "fill":color7S },
+        { "name": "MusicPlayer.Time",          "pos": (148, 21), "font": font7S, "fill":color7S },
 
-        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 73),  "font": font7S,     "fill": color7S,
-          "label": "Track",                   "lpos": (148, 60), "lfont": font_tiny, "lfill": "white" },
+        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 79),  "font": font7S,     "fill": color7S,
+          "label": "Track",                   "lpos": (148, 65), "lfont": font_tiny, "lfill": "white" },
 
-        { "name": "MusicPlayer.Duration", "pos": (230, 60), "font": font_tiny, "fill": "white" },
-        { "name": "codec",                "pos": (230, 74), "font": font_tiny, "fill": "white" },
-        { "name": "MusicPlayer.Genre",    "pos": (230, 88), "font": font_tiny, "fill": "white", "trunc":1 },
-        { "name": "MusicPlayer.Year",     "pos": (230,102), "font": font_tiny, "fill": "white" },
+        { "name": "MusicPlayer.Duration", "pos": (230, 65), "font": font_tiny, "fill": "white" },
+        { "name": "codec",                "pos": (230, 79), "font": font_tiny, "fill": "white" },
+        { "name": "MusicPlayer.Genre",    "pos": (230, 93), "font": font_tiny, "fill": "white", "trunc":1 },
+        { "name": "MusicPlayer.Year",     "pos": (230,107), "font": font_tiny, "fill": "white" },
 
         { "name": "MusicPlayer.Title",    "pos": (5, 152),  "font": font_main, "fill": "white",      "trunc":1 },
         { "name": "MusicPlayer.Album",    "pos": (5, 180),  "font": font_sm,   "fill": "white",      "trunc":1 },
