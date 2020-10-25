@@ -75,7 +75,7 @@ font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
 
 # Colors
 color7S       = '#00FF66'    # 7-Segment color (used 'SpringGreen' for a while)
-color_progbg  = '#404040'    # progress bar background (used 'dimgrey' for a while)
+color_progbg  = '#484848'    # progress bar background (used 'dimgrey' for a while)
 color_progfg  = color7S      # progress bar foreground
 color_artist  = 'yellow'     # artist name
 
