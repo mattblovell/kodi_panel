@@ -322,7 +322,7 @@ LCD Brightness
 **************
 
 An LCD panel in a darkened room can be *very* bright.  That was one of
-my reasons for focusing initially on just  music now-playing screen.
+my reasons for focusing initially on just a music now-playing screen.
 
 There is some code present to try using luma.lcd's PWM feature for the
 backlight.  Unfortunately (as of Oct 2020) RPi.GPIO (even the Odroid
