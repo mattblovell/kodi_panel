@@ -52,7 +52,7 @@ comparison, takes 3% CPU when idle and 8% when busy (for ALAC playback).
 Installation
 ------------
 
-I only have direct access to a Raspberry Pi Model B and an Odroid C4.
+I only have direct access to a Raspberry Pi 3 Model B and an Odroid C4.
 As others try additional SBCs, please feel free to suggest additions or
 changes to this documentation.
 
@@ -80,7 +80,7 @@ generally, see the warnings documented on the RPi
 Raspberry Pi
 ************
 
-For Raspberry Pi, follow the
+For Raspberry Pi boards, follow the
 `installation directions <https://luma-lcd.readthedocs.io/en/latest/>`_ from
 luma.lcd to get your display working.  Luma's directions are thorough
 and provide suggested wiring for a number of displays.  You can make
