@@ -133,7 +133,7 @@ AUDIO_LAYOUT = \
 { ADisplay.DEFAULT :
   {
     # Artwork position and size
-    "thumb" : { "pos": (5, 5), "size": 140 },
+    "thumb" : { "pos": (5, 7), "size": 140 },
 
     # Progress bar.  Two versions are possible, short and long,
     # depending upon the MusicPlayer.Time string.
