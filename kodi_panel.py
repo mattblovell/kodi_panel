@@ -324,7 +324,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
 
     # Assume an upper bound on how many characters are even
     # possible to display
-    new_text = text[0:59];
+    new_text = text[0:59]
 
     # Check if we've already truncated this string
     for index in range(len(last_trunc)):
@@ -655,7 +655,7 @@ def screen_on():
 
 def screen_off():
     if not USE_BACKLIGHT:
-        return;
+        return
     if USE_PWM:
         device.backlight(0)
     device.backlight(False)
