@@ -44,7 +44,7 @@ import os
 import threading
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.81"
+PANEL_VER = "v0.82"
 
 base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
 rpc_url  = base_url + "/jsonrpc"
@@ -241,7 +241,7 @@ lock = threading.Lock()
 # Additional screen controls.  Note that RPi.GPIO's PWM control, even
 # the Odroid variant, uses software (pthreads) to control the signal,
 # which can result in flickering.  At present (Oct 2020), I cannot
-# recommend it.  
+# recommend it.
 #
 # I have not yet found a way to take advantage of the C4's hardware
 # PWM simultaneous with using luma.lcd.
@@ -473,16 +473,10 @@ def get_artwork(info, prev_image, thumb_size):
 
     # is resizing needed?
     if (image_set and resize_needed):
-        # resize while maintaining aspect ratio, if possible
-        orig_w, orig_h = cover.size[0], cover.size[1]
-        shrink    = (float(thumb_size)/orig_h)
-        new_width = int(float(orig_h)*float(shrink))
-        # just crop if the image turns out to be really wide
-        if new_width > thumb_size:
-            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
-        else:
-            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
-        prev_image = thumb
+        # resize while maintaining aspect ratio, which should
+        # be precisely what thumbnail accomplishes
+        cover.thumbnail((thumb_size, thumb_size))
+        prev_image = cover
 
     if image_set:
         return prev_image
@@ -612,14 +606,21 @@ def audio_screens(image, draw, info, prog):
 
         # special treatment for MusicPlayer.Artist
         elif txt_field[index]["name"] == "artist":
+            display_string = None
             if info['MusicPlayer.Artist'] != "":
-                truncate_text(draw, txt_field[index]["pos"],
-                              info['MusicPlayer.Artist'],
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                display_string = info['MusicPlayer.Artist']
             elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                truncate_text(draw, txt_field[index]["pos"],
-                              "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
+                display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
+
+            if display_string:
+                if "trunc" in txt_field[index].keys():
+                    truncate_text(draw, txt_field[index]["pos"],
+                                  display_string,
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])
+                else:
+                    draw.text(txt_field[index]["pos"],
+                              display_string,
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
 
