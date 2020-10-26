@@ -5,7 +5,7 @@ Kodi_panel is a standalone Python 3 script that provides an
 information front panel for Kodi via an attached LCD display.  The LCD
 is handled entirely by `luma.core <https://github.com/rm-hull/luma.core/>`_
 and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
-depend upon `pillow <https://python-pillow.org/>`_ and `RPi.GPIO
+depend upon `Pillow <https://python-pillow.org/>`_ and `RPi.GPIO
 <https://pypi.org/project/RPi.GPIO/>`_.  Information and album cover artwork
 is retrieved from Kodi using
 `JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_.
@@ -33,7 +33,7 @@ script also means that one can have a separate SBC driving a "Now Playing"
 screen anywhere one would like!  
 
 The ``kodi_panel.py`` script is also fairly short.  If you are
-familiar with reading and writing Python, and making use of the pillow
+familiar with reading and writing Python, and making use of the Pillow
 image library, it should be straightforward to modify it to your taste
 or needs.  Using Python also lets one experiment with and inspect the
 results of the JSON-RPC calls to Kodi quite easily.  The Kodi documentation
@@ -179,7 +179,7 @@ as a consequence of the Entware installation.
      python3 setup.py build
      python3 setup.py install
 
-4. Install the entware-compiled version of pillow:
+4. Install the entware-compiled version of Pillow:
 
    ::
 
