@@ -163,7 +163,7 @@ AUDIO_LAYOUT = \
 { ADisplay.DEFAULT :
   {
     # Artwork position and size
-    "thumb" : { "pos": (5, 7), "size": 140 },
+    "thumb" : { "pos": (4, 7), "size": 140 },
 
     # Progress bar.  Two versions are possible, short and long,
     # depending upon the MusicPlayer.Time string
@@ -192,9 +192,9 @@ AUDIO_LAYOUT = \
         { "name": "MusicPlayer.Genre",    "pos": (230, 93), "font": font_tiny, "fill": "white", "trunc":1 },
         { "name": "MusicPlayer.Year",     "pos": (230,107), "font": font_tiny, "fill": "white" },
 
-        { "name": "MusicPlayer.Title",    "pos": (5, 152),  "font": font_main, "fill": "white", "trunc":1},
-        { "name": "MusicPlayer.Album",    "pos": (5, 180),  "font": font_sm,   "fill": "white", "trunc":1 },
-        { "name": "MusicPlayer.Artist",   "pos": (5, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },
+        { "name": "MusicPlayer.Title",    "pos": (4, 152),  "font": font_main, "fill": "white", "trunc":1},
+        { "name": "MusicPlayer.Album",    "pos": (4, 180),  "font": font_sm,   "fill": "white", "trunc":1 },
+        { "name": "MusicPlayer.Artist",   "pos": (4, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },
     ]
   },
 
