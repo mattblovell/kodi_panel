@@ -331,9 +331,14 @@ scheduling cannot be guaranteed with Linux, the screen's brightness
 can flicker.  I've not yet found a way to make use of the C4's
 available hardware PWM together with luma.lcd.
 
-I ended up soldering a 10 kΩ trimpot inline with the LED wire.  With
-that I could at least adjust the brightness down.
-	   
+I ended up soldering a 10 kΩ trimpot inline with the LED wire.  Unfortunately,
+I think the GPIO signal just goes to a transistor that then controls
+the backlight LEDs.  So, brightness can only be controlled via
+PWM.  (This 
+`post <https://forum.pjrc.com/threads/28106-Display_ili9341?p=76835&viewfull=1#post76835>`_,
+concerning the Teensy color display, which I think is the same as the
+3.2-inch display I'm using, has a user-generated schematic.)
+ 
 
 License
 -------
