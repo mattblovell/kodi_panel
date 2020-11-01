@@ -255,6 +255,9 @@ USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
 PWM_LEVEL     = 75.0     # float value between 0 and 100
 
+# Issue new gamma values to the ILI9341 controller?
+# Users of other displays should set this to False.
+CHANGE_GAMMA = True
 
 # Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
 #
@@ -812,6 +815,16 @@ def main():
     # turn down verbosity from http connections
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    if CHANGE_GAMMA:
+        # Use the gamma settings from Linux's mi0283qt.c driver
+        device.command(0xe0,                                # Set Gamma (+ polarity)
+            0x1f, 0x1a, 0x18, 0x0a, 0x0f, 0x06, 0x45, 0x87,
+            0x32, 0x0a, 0x07, 0x02, 0x07, 0x05, 0x00)
+        device.command(0xe1,                                # Set Gamma (- polarity)
+            0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3a, 0x78,
+            0x4d, 0x05, 0x18, 0x0d, 0x38, 0x3a, 0x1f)
+
 
     # setup T_IRQ as a GPIO interrupt, if enabled
     if USE_TOUCH:
