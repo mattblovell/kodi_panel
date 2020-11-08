@@ -70,7 +70,7 @@ import re
 import os
 
 # ----------------------------------------------------------------------------
-PANEL_VER = "v0.82"
+PANEL_VER = "v0.85"
 
 #base_url = "http://10.0.0.231:8080" # Raspberry Pi
 base_url = "http://10.0.0.188:8080"  # Odroid C4
@@ -182,7 +182,7 @@ AUDIO_LAYOUT = \
     #
     "fields" :
     [
-        { "name": "MusicPlayer.Time",          "pos": (148, 21), "font": font7S, "fill":color7S },
+        { "name": "MusicPlayer.Time",          "pos": (148, 23), "font": font7S, "fill":color7S },
 
         { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 79),  "font": font7S,     "fill": color7S,
           "label": "Track",                   "lpos": (148, 65), "lfont": font_tiny, "lfill": "white" },
