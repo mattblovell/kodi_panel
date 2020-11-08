@@ -21,6 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ----------------------------------------------------------------------------
+#
+# This file is a variant of kodi_panel.py that copies the Pillow image
+# to a framebuffer, rather than making use of luma.lcd.  
+#
+
 import sys
 import RPi.GPIO as GPIO
 
