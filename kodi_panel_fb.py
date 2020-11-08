@@ -217,10 +217,15 @@ STATUS_LAYOUT = \
 # in my display has its own internal pullup resistor, so further below
 # no pullup is specified.
 #
-# I found the following pins to work on the two SBCs.
+# I found the following pins to work on the two SBCs I have:
 #
 #   Odroid C4:  GPIO19 (physical Pin 35)
 #   RPi 3:      GPIO16 (physical Pin 36)
+#
+# If using a dtoverlay, particularly the one in the peer other/
+# directory, it may be necessary to comment out the section dealing
+# with the touchscreen controller, in order to keep the GPIO pin
+# available for use by RPi.GPIO.
 #
 USE_TOUCH      = True   # Set False to disable interrupt use
 TOUCH_INT      = 16
