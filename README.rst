@@ -156,10 +156,10 @@ these commands:
 
 Next, create the file ``/etc/modules-load.d/spi.conf`` such that it contains these two lines:
 
-  ::
-  
-    spidev
-    spi_meson_spicc
+::
+
+  spidev
+  spi_meson_spicc
 
 and reboot.  After the reboot, the device file ``/dev/spidev0.0`` should exist.
 
