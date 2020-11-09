@@ -156,6 +156,8 @@ these commands:
 
 Next, create the file ``/etc/modules-load.d/spi.conf`` such that it contains these two lines:
 
+  ::
+  
     spidev
     spi_meson_spicc
 
