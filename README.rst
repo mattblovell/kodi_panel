@@ -146,10 +146,25 @@ All is not lost, though, for the CoreELEC developers do make it extremely
 easy to install `Entware <https://github.com/Entware/Entware/wiki>`_.  With
 that, you can get a "just enough" development environment!
 
-The immediate goal is still the same -- get luma.lcd installed and talking
-to your display.  There are just a few more steps necessary to achieve that
-goal than if you had armbian or Debian installed.  (I'm not going to describe
-how to secure-shell (ssh) into your CoreELEC SBC; you should
+It may be necessary to enable the SPI bus in CoreELEC's kernel.  That can be accomplished
+by activating the relevant entries that exist within the Device Tree, by executing
+these commands:
+
+1. ``mount -o remount,rw /flash``
+2. ``fdtput -t s /flash/dtb.img /soc/cbus@ffd00000/spi@13000/spidev@0 status "okay"``
+3. ``fdtput -t s /flash/dtb.img /soc/cbus@ffd00000/spi@13000 status "okay"``
+
+Next, create the file ``/etc/modules-load.d/spi.conf`` such that it contains these two lines:
+
+    spidev
+    spi_meson_spicc
+
+and reboot.  After the reboot, the device file ``/dev/spidev0.0`` should exist.
+
+The next immediate goal is still the same as it was on the RPi -- get luma.lcd 
+installed and talking to your display.  There are just a few more steps necessary to 
+achieve that goal than if you had armbian or Debian installed.  (I'm not going to 
+describe how to secure-shell (ssh) into your CoreELEC SBC; you should
 be able to find details on that elsewhere on the web.)
 Here are the steps I ended up using, as captured from the second forum thread
 above.  Note that the ``python3`` and ``pip3`` commands below are all
