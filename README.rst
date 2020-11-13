@@ -80,6 +80,10 @@ generally, see the warnings documented on the RPi
 Raspberry Pi
 ************
 
+The directions below were tried on an RPi3 Model B v1.2 using Raspberry Pi OS
+with Linux kernel 5.4.51-v7+ in late 2020.  (I've *not* tried getting
+the display going with LibreELEC.)
+
 For Raspberry Pi boards, follow the
 `installation directions <https://luma-lcd.readthedocs.io/en/latest/>`_ from
 luma.lcd to get your display working.  Luma's directions are thorough
@@ -124,6 +128,7 @@ Ideally, you'll then see the start of kodi_panel's log-style standard output:
 Odroid Boards
 *************
 
+The instructions below worked for CoreELEC 9.2.x (Kodi 18, Linux 4.9.113) on an Odroid C4.  
 For Odroid boards, if you're interested in learning the (short) development
 history of kodi_panel, you can read through these two discussions in
 CoreELEC's forums:
