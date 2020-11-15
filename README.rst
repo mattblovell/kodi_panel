@@ -82,7 +82,7 @@ Raspberry Pi
 
 The directions below were tried on an RPi3 Model B v1.2 using Raspberry Pi OS
 with Linux kernel 5.4.51-v7+ in late 2020.  (I've *not* tried getting
-the display going with LibreELEC.)
+the display working with LibreELEC.)
 
 For Raspberry Pi boards, follow the
 `installation directions <https://luma-lcd.readthedocs.io/en/latest/>`_ from
@@ -158,6 +158,9 @@ these commands:
 1. ``mount -o remount,rw /flash``
 2. ``fdtput -t s /flash/dtb.img /soc/cbus@ffd00000/spi@13000/spidev@0 status "okay"``
 3. ``fdtput -t s /flash/dtb.img /soc/cbus@ffd00000/spi@13000 status "okay"``
+
+Note that the above steps must be repeated anytime CoreELEC is upgraded in-place.
+(The rest of the installation appears to be left untouched by such an upgrade.)
 
 Next, create the file ``/etc/modules-load.d/spi.conf`` such that it contains these two lines:
 
