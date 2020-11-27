@@ -24,8 +24,17 @@
 # ----------------------------------------------------------------------------
 #
 # This file is a variant of kodi_panel.py that copies the Pillow image
-# to a framebuffer, rather than making use of luma.lcd.  
+# to a framebuffer, rather than making use of luma.lcd.
 #
+# The first version of this file make use of Pytorinox's
+# framebuffer.py.  However, the 2.0.0 release of luma.core includes a
+# new linux_framebuffer class.  Using it permits for fewer changes.
+#
+# In late Nov 2020, I did open an issue on luma.core inquiring whether
+# it would be possible to use its diff_to_previous algorithm to
+# improve the fbdev update speed.
+#
+from luma.core import device
 
 import sys
 import RPi.GPIO as GPIO
@@ -33,8 +42,6 @@ import RPi.GPIO as GPIO
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
-
-from framebuffer import Framebuffer # pytorinox
 
 from datetime import datetime, timedelta
 from enum import Enum
@@ -84,7 +91,7 @@ color_progfg  = color7S      # progress bar foreground
 color_artist  = 'yellow'     # artist name
 
 # Pillow objects
-image  = Image.new('RGBA', (frame_size), 'black')
+image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
 
 # Audio/Video codec lookup
@@ -223,18 +230,13 @@ STATUS_LAYOUT = \
 # in my display has its own internal pullup resistor, so further below
 # no pullup is specified.
 #
-# I found the following pins to work on the two SBCs I have:
+# I found the following pins to work on the two SBCs.
 #
 #   Odroid C4:  GPIO19 (physical Pin 35)
 #   RPi 3:      GPIO16 (physical Pin 36)
 #
-# If using a dtoverlay, particularly the one in the peer other/
-# directory, it may be necessary to comment out the section dealing
-# with the touchscreen controller, in order to keep the GPIO pin
-# available for use by RPi.GPIO.
-#
 USE_TOUCH      = True   # Set False to disable interrupt use
-TOUCH_INT      = 16
+TOUCH_INT      = 19
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
@@ -250,7 +252,7 @@ lock = threading.Lock()
 # Additional screen controls.  Note that RPi.GPIO's PWM control, even
 # the Odroid variant, uses software (pthreads) to control the signal,
 # which can result in flickering.  At present (Oct 2020), I cannot
-# recommend it.  
+# recommend it.
 #
 # I have not yet found a way to take advantage of the C4's hardware
 # PWM simultaneous with using luma.lcd.
@@ -259,23 +261,17 @@ lock = threading.Lock()
 # luma.lcd at all to change backlight state.  Uses with OLED displays
 # should set it to False.
 #
-USE_BACKLIGHT = True 
-LED_PIN       = 18       # GPIO bin for LED backlight
-
+USE_BACKLIGHT = False
 USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
 PWM_LEVEL     = 75.0     # float value between 0 and 100
 
-# Rather than creating handles to a SPI interface and ili9341 display
-# via luma.lcd, we just need a Framebuffer object from Pytorinox.
-#
-# See https://github.com/robertmuth/Pytorinox 
-#
-# Pytorinox's framebuffer.py should be installed alongside
-# kodi_panel_fb.py. 
-#
-fb = Framebuffer(1)
+# Issue new gamma values to the ILI9341 controller?
+# Users of other displays should set this to False.
+CHANGE_GAMMA = False
 
+# Use a Linux framebuffer via luma.core.device
+device = device.linux_framebuffer("/dev/fb1")
 
 # ----------------------------------------------------------------------------
 
@@ -447,16 +443,10 @@ def get_artwork(info, prev_image, thumb_size):
 
     # is resizing needed?
     if (image_set and resize_needed):
-        # resize while maintaining aspect ratio, if possible
-        orig_w, orig_h = cover.size[0], cover.size[1]
-        shrink    = (float(thumb_size)/orig_h)
-        new_width = int(float(orig_h)*float(shrink))
-        # just crop if the image turns out to be really wide
-        if new_width > thumb_size:
-            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS).crop((0,0,140,thumb_size))
-        else:
-            thumb = cover.resize((new_width, thumb_size), Image.ANTIALIAS)
-        prev_image = thumb
+        # resize while maintaining aspect ratio, which should
+        # be precisely what thumbnail accomplishes
+        cover.thumbnail((thumb_size, thumb_size))
+        prev_image = cover
 
     if image_set:
         return prev_image
@@ -586,14 +576,21 @@ def audio_screens(image, draw, info, prog):
 
         # special treatment for MusicPlayer.Artist
         elif txt_field[index]["name"] == "artist":
+            display_string = None
             if info['MusicPlayer.Artist'] != "":
-                truncate_text(draw, txt_field[index]["pos"],
-                              info['MusicPlayer.Artist'],
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                display_string = info['MusicPlayer.Artist']
             elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                truncate_text(draw, txt_field[index]["pos"],
-                              "(" + info['MusicPlayer.Property(Role.Composer)'] + ")",
+                display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
+
+            if display_string:
+                if "trunc" in txt_field[index].keys():
+                    truncate_text(draw, txt_field[index]["pos"],
+                                  display_string,
+                                  fill=txt_field[index]["fill"],
+                                  font=txt_field[index]["font"])
+                else:
+                    draw.text(txt_field[index]["pos"],
+                              display_string,
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
 
@@ -622,21 +619,17 @@ def audio_screens(image, draw, info, prog):
 def screen_on():
     if not USE_BACKLIGHT:
         return
-    GPIO.output(LED_PIN, GPIO.HIGH)
-    # TODO: Investigate using PWM on RPi
-    #if USE_PWM:
-    #    device.backlight(PWM_LEVEL)
-    #else:
-    #    device.backlight(True)
+    if USE_PWM:
+        device.backlight(PWM_LEVEL)
+    else:
+        device.backlight(True)
 
 def screen_off():
     if not USE_BACKLIGHT:
-        return;
-    GPIO.output(LED_PIN, GPIO.LOW)
-    # TODO: Investigate using PWM on RPi    
-    #if USE_PWM:
-    #    device.backlight(0)
-    #device.backlight(False)
+        return
+    if USE_PWM:
+        device.backlight(0)
+    device.backlight(False)
 
 
 # Kodi-polling and image rendering function
@@ -762,7 +755,7 @@ def update_display():
         audio_screens(image, draw, track_info, prog)
 
     # Output to OLED/LCD display
-    fb.show(image)
+    device.display(image)
     lock.release()
 
 
@@ -790,8 +783,16 @@ def main():
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    print(datetime.now(), "fb = ", fb);
-    
+    if CHANGE_GAMMA:
+        # Use the gamma settings from Linux's mi0283qt.c driver
+        device.command(0xe0,                                # Set Gamma (+ polarity)
+            0x1f, 0x1a, 0x18, 0x0a, 0x0f, 0x06, 0x45, 0x87,
+            0x32, 0x0a, 0x07, 0x02, 0x07, 0x05, 0x00)
+        device.command(0xe1,                                # Set Gamma (- polarity)
+            0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3a, 0x78,
+            0x4d, 0x05, 0x18, 0x0d, 0x38, 0x3a, 0x1f)
+
+
     # setup T_IRQ as a GPIO interrupt, if enabled
     if USE_TOUCH:
         print(datetime.now(), "Setting up touchscreen interrupt")
@@ -800,16 +801,13 @@ def main():
         GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
                               callback=touch_callback, bouncetime=950)
 
-    if USE_BACKLIGHT:
-        GPIO.setup(LED_PIN, GPIO.OUT)
-        
     # main communication loop
     while True:
         screen_on()
         draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
         draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
-        fb.show(image)
-        
+        device.display(image)
+
         while True:
             # ensure Kodi is up and accessible
             payload = {
@@ -832,7 +830,6 @@ def main():
         print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
         screen_off()
 
-        
         # Loop until Kodi goes away
         kodi_active = True
         screen_press = False
@@ -857,7 +854,7 @@ def main():
             # faster-than 1x playback.  This is a potential reason to
             # explore using WebSocket as the JSON-RPC transport
             # mechanism.
-            time.sleep(0.91)
+            time.sleep(0.65)   # compensate for fbdev update
 
 
 if __name__ == "__main__":
