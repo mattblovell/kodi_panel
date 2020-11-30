@@ -236,7 +236,7 @@ STATUS_LAYOUT = \
 #   RPi 3:      GPIO16 (physical Pin 36)
 #
 USE_TOUCH      = True   # Set False to disable interrupt use
-TOUCH_INT      = 19
+TOUCH_INT      = 16
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
@@ -835,7 +835,9 @@ def main():
         screen_press = False
         while True:
             try:
+                #start_time = datetime.now()
                 update_display()
+                #print(datetime.now(), "update_display() took ", datetime.now() - start_time)
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
@@ -854,7 +856,12 @@ def main():
             # faster-than 1x playback.  This is a potential reason to
             # explore using WebSocket as the JSON-RPC transport
             # mechanism.
-            time.sleep(0.65)   # compensate for fbdev update
+
+            # With a late Nov 2002 update to luma.core for its
+            # linux_framebuffer device (namely, using a diff-to-
+            # previous update algorithm for the fb), we can bump the
+            # sleep time back up.
+            time.sleep(0.86)
 
 
 if __name__ == "__main__":
