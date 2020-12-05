@@ -234,6 +234,7 @@ as a consequence of the Entware installation.
 6. Install additional Python modules:
 
    ::
+      
      pip3 install toml aenum
 
 7. In the `kodi_panel/` directory, copy and rename `example_setup_320x240.toml`
