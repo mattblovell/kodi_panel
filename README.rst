@@ -98,6 +98,7 @@ Install Kodi as well, and get it working as desired.  Two additional
 Python modules are needed:
 
 ::
+   
    pip3 install toml aenum
 
 
