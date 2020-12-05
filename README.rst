@@ -237,10 +237,11 @@ as a consequence of the Entware installation.
       
      pip3 install toml aenum
 
-7. In the `kodi_panel/` directory, copy and rename `example_setup_320x240.toml`
-   to `setup.toml`.  Open the file for editing, checking that at least
-   `BASE_URL` and display size are correct.  (Additional example files
-   at other resolutions will hopefully get populated.)
+7. In the ``kodi_panel/`` directory, copy and rename
+   ``example_setup_320x240.toml`` to ``setup.toml``.  Open the file
+   for editing, checking that at least ``BASE_URL`` and display width
+   and height are correct.  (Additional example files at other
+   resolutions will hopefully get populated.)
      
 Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
