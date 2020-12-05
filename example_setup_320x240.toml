@@ -1,0 +1,348 @@
+# --------------------------------------------------------------------
+# Setup file for kodi_panel using 320x240 resolution
+#
+#   For documentation regarding TOML (Tom's Obvious Minimal Language),
+#   see references at https://toml.io/en/
+#
+# --------------------------------------------------------------------
+
+# Specify the Kodi instance to query.  Use localhost if running on
+# the same box as Kodi, otherwise specify a resolvable machine name or
+# IP address.
+BASE_URL = "http://localhost:8080"
+
+
+# --------------------------------------------------------------------
+#
+# GPIO setup, display options
+#
+
+# Specify the size of the display in pixels.  These values get stored
+# into a tuple within kodi_panel.
+DISPLAY_WIDTH  = 320
+DISPLAY_HEIGHT = 240
+
+# GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
+# numbering.
+#
+# Assuming your display has a touchscreen with an active-low
+# interrupt, find a pin that's unused by luma.  The touchscreen chip
+# in my display has its own internal pullup resistor, so no GPIO
+# pullup is needed.
+#
+# I found the following pins to work on the two SBCs.
+#
+#   Odroid C4:  GPIO19 (physical Pin 35)
+#   RPi 3:      GPIO16 (physical Pin 36)
+#
+USE_TOUCH = true   # Set false to disable interrupt use
+TOUCH_INT = 19
+
+# The USE_BACKLIGHT boolean controls whether calls are made to
+# luma.lcd at all to change backlight state.  Users with OLED displays
+# should set it to false.
+USE_BACKLIGHT = true
+
+
+# PWM options not yet production-worthy in kodi_panel
+
+
+# --------------------------------------------------------------------
+#
+# Display rendering
+#
+
+# Paths to default thumbnails.  These do NOT get resized, so they
+# should be created at the desired size.
+KODI_THUMB      = "images/kodi_thumb.jpg"     # Kodi icon
+DEFAULT_THUMB   = "images/music_icon.png"     # standard music file w/o artwork
+DEFAULT_AIRPLAY = "images/airplay_thumb.png"  # Airplay file w/o artwork
+
+
+# Audio Layout Names
+#
+#   Specify the names of layouts that are available when playing an
+#   audio file.  The strings used must correspond to those used within
+#   the ALAYOUT dictionary defined below.
+#
+ALAYOUT_NAMES = [
+	"A_DEFAULT",     # small artwork, elapsed time, track info
+	"A_FULLSCREEN",  # fullscreen cover only
+	"A_FULL_PROG"    # fullscreen cover with vertical progress bar
+]
+
+# Initial mode upon startup
+ALAYOUT_INITIAL = "A_DEFAULT"
+
+
+# Colors
+#
+#   Specify color names to use elsewhere.  To know whether this
+#   dictionary needs to be consulted, all names MUST begin with
+#   "color_".  Color references without those initial characters just
+#   get passed through, without a lookup in this dictionary.
+#
+#   The two color_progbg and color_progfg colors MUST be defined.
+#
+[COLORS]
+ color_progbg = '#424242'    # progress bar background (used 'dimgrey' for a while)
+ color_progfg = '#00FF78'    # progress bar foreground / active portion
+ color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while) 
+ color_artist = 'yellow'     # artist name
+
+
+# Font list
+#
+#   These entries create an array that kodi_panel processes at startup
+#   time, pulling the fonts into Pillow.  The font name that is
+#   assigned must match those that get used further below in the
+#   layouts.
+#
+#   A "font_main" MUST be defined and successfully loaded.
+#
+
+# Standard fonts
+[[fonts]]
+  name = "font_main"
+  path = "fonts/FreeSans.ttf"
+  size = 22
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_bold"
+  path = "fonts/FreeSansBold.ttf"
+  size = 22
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_sm"
+  path = "fonts/FreeSans.ttf"
+  size = 18
+  encoding = 'unic'  
+
+[[fonts]]
+  name = "font_tiny"
+  path = "fonts/FreeSans.ttf"
+  size = 11
+  encoding = 'unic'  
+
+# 7-segment font used for elapsed time and track number
+[[fonts]]
+  name = "font7S"
+  path = "fonts/DSEG14Classic-Regular.ttf"
+  size = 32
+
+[[fonts]]
+  name = "font7S_sm"
+  path = "fonts/DSEG14Classic-Regular.ttf"
+  size = 11
+
+
+# --------------------------------------------------------------------
+# Audio Screen content
+#
+#   This data structure gets used by audio_screens() to control the
+#   layout and contents of any audio information screens.  Content can
+#   be omitted from a screen just by commenting it out here, particular
+#   for text fields.
+#
+#   Top-level entries within this A_LAYOUT table MUST have names that
+#   correspond to the ALAYOUT_NAMES list specified earlier in this
+#   file.
+#
+#   New top-level content requires corresponding changes to
+#   audio_screens().  If a completely new text field is desired, then
+#   the JSON-RPC call made in update_display() needs to be updated as
+#   well.
+#
+#   Special treatment exists for the 'codec' and 'artist' text fields.
+#
+# --------------------------------------------------------------------
+
+#
+# Default audio info screen
+#
+
+[A_LAYOUT.A_DEFAULT.thumb]   # Artwork
+posx = 4
+posy = 7
+size = 140
+
+[A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
+posx   = 150     # upper-left corner x position
+posy   = 7       # upper-left corner y position
+height = 8       # pixel height
+short_len = 104  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 164  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Time"
+posx = 148
+posy = 23
+font = "font7S"
+fill = "color_7S"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 148
+posy = 79
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 148
+  lposy = 65
+  lfont = "font_tiny"
+  lfill = "white"
+
+#
+# This group of fields all appear to the right of the cover art
+# and track number, in a small font.
+#
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Duration"
+posx = 230
+posy = 65
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "codec"   # special treatment in audio_screens()
+posx = 230
+posy = 79
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Genre"
+posx = 230
+posy = 93
+font = "font_tiny"
+fill = "white"
+trunc = 1
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Year"
+posx = 230
+posy = 107
+font = "font_tiny"
+fill = "white"
+
+
+#
+# Finally, the track title, album title, and artist appear below
+# the cover art.
+#
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "MusicPlayer.Title"
+posx  = 4
+posy  = 152
+font  = "font_main"
+fill  = "white"
+trunc = 1
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "MusicPlayer.Album"
+posx  = 4
+posy  = 180
+font  = "font_sm"
+fill  = "white"
+trunc = 1
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "artist"   # special treatment in audio_screens()
+posx  = 4
+posy  = 205
+font  = "font_sm"
+fill  = "color_artist"
+trunc = 1
+
+
+#
+# Fullscreen artwork (by itself)
+#
+
+[A_LAYOUT.A_FULLSCREEN.thumb]
+center = 1
+size = 235
+
+
+#
+# Fullscreen artwork with progress bar
+#
+[A_LAYOUT.A_FULL_PROG.thumb]
+center = 1
+size = 235
+
+[A_LAYOUT.A_FULL_PROG.prog]
+vertical = 1
+posx = 308    # upper-left corner x-position
+posy = 1      # upper-left corner y-position
+len  = 10     # pixel width for a vertical bar
+height = 236  # total height for the vertical bar
+
+
+# --------------------------------------------------------------------
+# Status Screen Content
+#
+#   Similar to audio layout above, but used for the status screen
+#   that appears following a screen touch when idle.  The screen
+#   gets drain by status_screen().
+#
+#   Special treatment exists for several field names
+#
+
+[STATUS_LAYOUT.thumb]   # Kodi logo
+posx = 5
+posy = 5
+size = 128
+
+[[STATUS_LAYOUT.fields]]
+name = "version"        # special treatment
+posx = 145
+posy = 8
+font = "font_main"
+fill = "color_artist"
+
+
+[[STATUS_LAYOUT.fields]]
+name = "summary"        # special treatment
+posx = 145
+posy = 35
+font = "font_main"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "time_hrmin"     # special treatment
+posx = 145
+posy = 73
+font = "font7S"
+fill = "color_7S"
+smfont = "font7S_sm"    # used for AM / PM
+
+# The remaining fields all get populated via a special JSON-RPC query
+# to Kodi specifically for the status screen.
+
+[[STATUS_LAYOUT.fields]]
+name = "System.Date"
+posx = 5
+posy = 150
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.Uptime"
+posx = 5
+posy = 175
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.CPUTemperature"
+posx = 5
+posy = 200
+font = "font_sm"
+fill = "white"
+
