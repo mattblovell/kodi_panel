@@ -327,11 +327,15 @@ results!
 Prototyping Changes
 -------------------
 
-The ``luma_demo.py`` script is almost a duplicate of ``kodi_panel.py``.
-Taking advantage of luma.lcd's ability to use pygame as a device
-emulator, it provides a really convenient way of prototyping layout
+The ``kodi_panel_demo.py`` script is essentially identical to the
+other executable scripts, except that it takes advantage of
+luma.lcd's ability to use pygame as a device emulator.
+The demo script thus provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
 start of that file for how to invoke it.
+
+All of the content within an info display should be adjustable via
+the variables in ``setup.toml``.
 
 Here are some examples from the emulator, which also serve to show several
 of kodi_panel's available "modes":
@@ -343,7 +347,7 @@ of kodi_panel's available "modes":
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_full_prog.PNG
 
 
-In the main loop for ``luma_demo.py`` I did recently add code to use
+When in "demo mode", the main update loop does have code to use
 keypresses as emulated touchscreen presses.  The pygame key state is
 only sampled at the end of the update process, however, so one must
 hold a key and *wait* for that to occur.  The actual T_IRQ
