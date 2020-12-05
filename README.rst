@@ -94,28 +94,42 @@ you are running a fairly complete Linux distribution, such as
 `Raspberry Pi OS <https://www.raspberrypi.org/downloads/raspberry-pi-os/>`_.
 
 Once you have the luma.examples working, you're really about done!
-Install Kodi as well, and get it working as desired.  If kodi_panel is
-to run on the same SBC as is hosting the display, then no immediate
-editing of ``kodi_panel.py`` should be needed.  Otherwise, you will need
-to at least specify the correct IP address to use for kodi_panel's ``base_url``
-variable.  After that, try starting kodi_panel by
-changing directory to ``kodi_panel`` and invoking
+Install Kodi as well, and get it working as desired.  Two additional
+Python modules are needed:
+
+::
+   pip3 install toml aenum
+
+
+The ``example_setup_320x240.toml`` file should be copied to ``setup.toml``
+and edited as appropriate for your needs.  Additional example files may
+get populated at other display resolutions.  If kodi_panel is to run on
+the same SBC as hosting the display, the ``BASE_URL`` within ``setup.toml``
+can be left using ``localhost``.  Otherwise, set it as needed.
+
+Afer that, try starting kodi_panel.  Assuming you are using an ili9341-based
+display, that's accomplished by invoking
 
 ::
 
-  python3 kodi_panel.py
+  python3 kodi_panel_ili9341.py
 
 
-At the moment, I have forgotten whether some of the additional packages
-used in ``kodi_panel.py`` come with Python or have to be installed.  It is
-certainly possible that you'll have to add additional (pure Python) packages
-via ``pip``, such as 
+when in the ``kodi_panel`` directory.  You may wish to create a softlink
+named simply ``kodi_panel.py``, just for convenience.
+  
+At the moment, I have forgotten whether any other the additional
+packages used in ``kodi_panel_display.py`` come with Python or have to
+be installed, aside from toml and aenum listed above.  It is certainly
+possible that you'll have to add additional (pure Python) packages via
+``pip``, such as
 
 ::
 
   pip3 install requests
 
-Ideally, you'll then see the start of kodi_panel's log-style standard output:
+Ideally, upon startup you will then see the start of kodi_panel's
+log-style standard output:
 
 ::
 
@@ -216,6 +230,11 @@ as a consequence of the Entware installation.
 
      pip3 install luma.lcd
 
+6. Install additional Python modules:
+
+   ::
+     pip3 install toml aenum
+     
 Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
 and running (it is CoreELEC, after all), one can ``cd`` into
@@ -223,7 +242,7 @@ kodi_panel's directory and invoke
 
 ::
 
-  /opt/bin/python3 kodi_panel.py
+  /opt/bin/python3 kodi_panel_ili9341.py
 
 Now, try playing something!
 
