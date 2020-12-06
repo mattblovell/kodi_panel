@@ -46,9 +46,9 @@ import os
 import threading
 
 # kodi_panel settings
-import config  
+import config
 
-PANEL_VER = "v0.85"
+PANEL_VER = "v0.90"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -82,7 +82,7 @@ headers  = {'content-type': 'application/json'}
 frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
 last_image_path = None
 last_thumb      = None
-                   
+
 # Thumbnail defaults (these don't get resized)
 kodi_thumb      = config.settings["KODI_THUMB"]
 default_thumb   = config.settings["DEFAULT_THUMB"]
@@ -106,12 +106,12 @@ for user_font in config.settings["fonts"]:
     except OSError:
         print("Unable to load font ", user_font["name"], " with path '", user_font["path"], "'", sep='')
         sys.exit("Exiting")
-        
+
 
 # Color lookup table
 colors = config.settings["COLORS"]
 
-        
+
 # Audio screen enumeration
 # ------------------------
 # The next() function serves to switch modes in response to screen
@@ -128,10 +128,10 @@ class ADisplay(Enum):
             index = 0
         return members[index]
 
-# Populate enum based upon settings file    
+# Populate enum based upon settings file
 for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
     extend_enum(ADisplay, value, index)
-    
+
 # At startup, use the default layout mode specified in settings
 audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
 
@@ -152,7 +152,7 @@ def fixup_layouts(nested_dict):
         elif type(value) is list:
             newdict[key] = fixup_array(value)
         else:
-            if ((key.startswith("color") or key == "lcolor" or                 
+            if ((key.startswith("color") or key == "lcolor" or
                  key == "fill" or key == "lfill") and
                 value.startswith("color_")):
                 # Lookup color
@@ -232,7 +232,7 @@ DEMO_MODE = False
 
 
 # ----------------------------------------------------------------------------
-    
+
 # Maintain a short list of the most recently-truncated strings,
 # for use by truncate_text() below
 last_trunc = []
@@ -537,6 +537,11 @@ def audio_screens(image, draw, info, prog):
         # special treatment for codec, which gets a lookup
         if txt_field[index]["name"] == "codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
+                # render any label first
+                if "label" in txt_field[index]:
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
                 draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                           codec_name[info['MusicPlayer.Codec']],
                           fill=txt_field[index]["fill"],
@@ -567,7 +572,7 @@ def audio_screens(image, draw, info, prog):
         else:
             if (txt_field[index]["name"] in info.keys() and
                 info[txt_field[index]["name"]] != ""):
-                # ender any label first
+                # render any label first
                 if "label" in txt_field[index]:
                     draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
                               txt_field[index]["label"],
@@ -751,7 +756,7 @@ def main(device_handle):
     kodi_active = False
 
     device = device_handle
-    
+
     print(datetime.now(), "Starting")
     # turn down verbosity from http connections
     logging.basicConfig()
@@ -839,8 +844,7 @@ def main(device_handle):
 def shutdown():
     if (USE_TOUCH and not DEMO_MODE):
         print(datetime.now(), "Removing touchscreen interrupt")
-        GPIO.remove_event_detect(TOUCH_INT)        
+        GPIO.remove_event_detect(TOUCH_INT)
         GPIO.cleanup()
     print(datetime.now(), "Stopping")
     exit(0)
-        
