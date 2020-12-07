@@ -9,8 +9,7 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-#BASE_URL = "http://localhost:8080"
-BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
+BASE_URL = "http://localhost:8080"
 
 
 # --------------------------------------------------------------------
@@ -109,26 +108,26 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 # Standard fonts
 [[fonts]]
   name = "font_main"
-  path = "fonts/Cabin.ttf"
+  path = "fonts/Roboto-Medium.ttf"
   size = 22
   encoding = 'unic'
 
 [[fonts]]
   name = "font_bold"
-  path = "fonts/CabinCondensed-SemiBold.ttf"
-  size = 26
+  path = "fonts/RobotoCondensed-Regular.ttf"
+  size = 28
   encoding = 'unic'
 
 [[fonts]]
   name = "font_sm"
-  path = "fonts/Cabin.ttf"
+  path = "fonts/Roboto-Medium.ttf"
   size = 18
   encoding = 'unic'  
 
 [[fonts]]
   name = "font_tiny"
-  path = "fonts/FreeSans.ttf"
-  size = 14
+  path = "fonts/Roboto-Medium.ttf"
+  size = 16
   encoding = 'unic'  
 
 # 7-segment font used for elapsed time and track number
@@ -170,11 +169,11 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 [A_LAYOUT.A_DEFAULT.thumb]   # Artwork
 posx = 4
-posy = 7
+posy = 4
 size = 228
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
-posx   = 240     # upper-left corner x position
+posx   = 245     # upper-left corner x position
 posy   = 7       # upper-left corner y position
 height = 8       # pixel height
 short_len = 134  # length when elapsed time matches 00:00 (min, seconds)
@@ -182,20 +181,20 @@ long_len  = 208  # length when elapsed time matches 00:00:00 (hrs, mins, seconds
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
-posx = 240
+posx = 245
 posy = 25
 font = "font7S"
 fill = "color_7S"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
-posx = 240
-posy = 97
+posx = 245
+posy = 99
 font = "font7S"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
-  lposx = 240
+  lposx = 245
   lposy = 78
   lfont = "font_tiny"
   lfill = "white"
@@ -209,30 +208,30 @@ fill = "color_7S"
 # closer to the next row
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Duration"
-posx = 330
+posx = 335
 posy = 78
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "codec"   # special treatment in audio_screens()
-posx = 330
-posy = 96
+posx = 335
+posy = 98
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Genre"
-posx = 330
-posy = 114
+posx = 335
+posy = 118
 font = "font_tiny"
 fill = "white"
 trunc = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
-posx = 330
-posy = 132
+posx = 335
+posy = 138
 font = "font_tiny"
 fill = "white"
 
@@ -245,7 +244,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 238
+posy  = 236
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -281,14 +280,14 @@ size = 320
 #
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
-size = 235
+size = 320
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
-posx = 308    # upper-left corner x-position
+posx = 468    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
 len  = 10     # pixel width for a vertical bar
-height = 236  # total height for the vertical bar
+height = 316  # total height for the vertical bar
 
 
 # --------------------------------------------------------------------
