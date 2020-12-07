@@ -20,19 +20,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+# ----------------------------------------------------------------------------
+#
+# kodi_panel for an ili9341 display
+#
+# ----------------------------------------------------------------------------
 
-# ----------------------------------------------------------------------------
-#
-# This file is a variant of kodi_panel.py that copies the Pillow image,
-# via luma.lcd, to a framebuffer.
-#
-# The first version of this file make use of Pytorinox's
-# framebuffer.py.  However, the 2.0.0 release of luma.core includes a
-# new linux_framebuffer class.  Using it permits for fewer changes.
-#
-# ----------------------------------------------------------------------------
-#
-from luma.core import device
+from luma.core.interface.serial import spi
+from luma.core.render import canvas
+from luma.lcd.device import ili9486
 
 # kodi_panel modules
 import config
@@ -40,11 +37,13 @@ import kodi_panel_display
 
 # ----------------------------------------------------------------------------
 
-# Use a Linux framebuffer via luma.core.device
-device = device.linux_framebuffer("/dev/fb1")
+# SPI interface
+serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
+             reset_hold_time=0.2, reset_release_time=0.2)
 
-# Don't try to use luma.lcd's backlight control
-kodi_panel_display.USE_BACKLIGHT = False
+# LCD display
+device = ili9486(serial, active_low=False, width=320, height=480,
+                 rotate=1, bus_speed_hz=50000000)
 
 if __name__ == "__main__":
     try:

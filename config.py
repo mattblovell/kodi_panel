@@ -20,35 +20,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# ----------------------------------------------------------------------------
-#
-# This file is a variant of kodi_panel.py that copies the Pillow image,
-# via luma.lcd, to a framebuffer.
-#
-# The first version of this file make use of Pytorinox's
-# framebuffer.py.  However, the 2.0.0 release of luma.core includes a
-# new linux_framebuffer class.  Using it permits for fewer changes.
 #
 # ----------------------------------------------------------------------------
+
+# TOML file used for settings
 #
-from luma.core import device
+#    See format reference at https://toml.io/en/
+#
+import toml
+settings = toml.load('setup.toml')
 
-# kodi_panel modules
-import config
-import kodi_panel_display
-
-# ----------------------------------------------------------------------------
-
-# Use a Linux framebuffer via luma.core.device
-device = device.linux_framebuffer("/dev/fb1")
-
-# Don't try to use luma.lcd's backlight control
-kodi_panel_display.USE_BACKLIGHT = False
-
-if __name__ == "__main__":
-    try:
-        kodi_panel_display.main(device)
-    except KeyboardInterrupt:
-        kodi_panel_display.shutdown()
-        pass

@@ -21,19 +21,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from luma.core.interface.serial import spi
-from luma.core.render import canvas
-from luma.lcd.device import ili9341
 
 import sys
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    pass
 
+from luma.core.device import device
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
 from datetime import datetime, timedelta
-from enum import Enum
+from aenum import Enum, extend_enum
+import copy
 import time
 import logging
 import requests
@@ -43,45 +45,10 @@ import re
 import os
 import threading
 
-# ----------------------------------------------------------------------------
-PANEL_VER = "v0.85"
+# kodi_panel settings
+import config
 
-base_url = "http://localhost:8080"  # use localhost if running on same box as Kodi
-rpc_url  = base_url + "/jsonrpc"
-headers  = {'content-type': 'application/json'}
-
-# Image handling
-frame_size      = (320, 240)
-last_image_path = None
-last_thumb      = None
-
-# Thumbnail defaults (these don't get resized)
-kodi_thumb      = "./images/kodi_thumb.jpg"
-default_thumb   = "./images/music_icon.png"
-default_airplay = "./images/airplay_thumb.png"
-
-# RegEx for recognizing AirPlay images (compiled once)
-special_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
-
-# Track info fonts
-font_main = ImageFont.truetype("fonts/FreeSans.ttf", 22, encoding='unic')
-font_bold = ImageFont.truetype("fonts/FreeSansBold.ttf", 22, encoding='unic')
-font_sm   = ImageFont.truetype("fonts/FreeSans.ttf", 18, encoding='unic')
-font_tiny = ImageFont.truetype("fonts/FreeSans.ttf", 11, encoding='unic')
-
-# 7-Segment Font for time and track number
-font7S    = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 32)
-font7S_sm = ImageFont.truetype("fonts/DSEG14Classic-Regular.ttf", 11)
-
-# Colors
-color7S       = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while)
-color_progbg  = '#424242'    # progress bar background (used 'dimgrey' for a while)
-color_progfg  = color7S      # progress bar foreground
-color_artist  = 'yellow'     # artist name
-
-# Pillow objects
-image  = Image.new('RGB', (frame_size), 'black')
-draw   = ImageDraw.Draw(image)
+PANEL_VER = "v0.90"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -103,17 +70,56 @@ codec_name = {
     "dsd_lsbf_planar": "DSD",
 }
 
+# ----------------------------------------------------------------------------
+
+#
+# Start processing settings...
+#
+rpc_url  = config.settings["BASE_URL"] + "/jsonrpc"
+headers  = {'content-type': 'application/json'}
+
+# Image handling
+frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
+last_image_path = None
+last_thumb      = None
+
+# Thumbnail defaults (these don't get resized)
+kodi_thumb      = config.settings["KODI_THUMB"]
+default_thumb   = config.settings["DEFAULT_THUMB"]
+default_airplay = config.settings["DEFAULT_AIRPLAY"]
+
+# RegEx for recognizing AirPlay images (compiled once)
+airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+
+# Load all user-specified fonts
+fonts = {}
+for user_font in config.settings["fonts"]:
+    try:
+        if "encoding" in user_font.keys():
+            fonts[user_font["name"]] = ImageFont.truetype(
+                user_font["path"], user_font["size"], encoding=user_font["encoding"]
+            )
+        else:
+            fonts[user_font["name"]] = ImageFont.truetype(
+                user_font["path"], user_font["size"]
+            )
+    except OSError:
+        print("Unable to load font ", user_font["name"], " with path '", user_font["path"], "'", sep='')
+        sys.exit("Exiting")
+
+
+# Color lookup table
+colors = config.settings["COLORS"]
+
 
 # Audio screen enumeration
-#
+# ------------------------
 # The next() function serves to switch modes in response to screen
 # touches.  The list is intended to grow, as other ideas for layouts
 # are proposed.
-class ADisplay(Enum):
-    DEFAULT    = 0   # small artwork, elapsed time, track info
-    FULLSCREEN = 1   # fullscreen cover artwork
-    FULL_PROG  = 2   # fullscreen art with vertical progress bar
+#
 
+class ADisplay(Enum):
     def next(self):
         cls = self.__class__
         members = list(cls)
@@ -122,99 +128,61 @@ class ADisplay(Enum):
             index = 0
         return members[index]
 
-# At startup, just use the default layout for audio info.  This
-# setting, if serialized and stored someplace, could be made
-# persistent across script invocations if desired.
-audio_dmode = ADisplay.DEFAULT
+# Populate enum based upon settings file
+for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
+    extend_enum(ADisplay, value, index)
+
+# At startup, use the default layout mode specified in settings
+audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
 
 
-# Audio screen layouts, used by audio_screens()
-AUDIO_LAYOUT = \
-{ ADisplay.DEFAULT :
-  {
-    # Artwork position and size
-    "thumb" : { "pos": (4, 7), "size": 140 },
 
-    # Progress bar.  Two versions are possible, short and long,
-    # depending upon the MusicPlayer.Time string.
-    "prog"  : { "pos": (150, 7),
-                "short_len": 104,  "long_len": 164,
-                "height": 8 },
+# Screen layouts
+# --------------------
+#
+# Fixup fonts and colors, so that further table lookups are not
+# necessary at run-time.
+#
 
-    # All other text fields, including any labels
-    #
-    # Removing fields can be accomplished just by commenting out the
-    # corresponding entry in this array.  If a new field is desired,
-    # then the JSON-RPC call made in update_display() likely needs to
-    # be augmented first.
-    #
-    # Special treatment exists for 'codec' and 'artist'.
-    #
-    "fields" :
-    [
-        { "name": "MusicPlayer.Time",          "pos": (148, 23), "font": font7S, "fill":color7S },
+def fixup_layouts(nested_dict):
+    newdict = copy.deepcopy(nested_dict)
+    for key, value in nested_dict.items():
+        if type(value) is dict:
+            newdict[key] = fixup_layouts(value)
+        elif type(value) is list:
+            newdict[key] = fixup_array(value)
+        else:
+            if ((key.startswith("color") or key == "lcolor" or
+                 key == "fill" or key == "lfill") and
+                value.startswith("color_")):
+                # Lookup color
+                newdict[key] = colors[value]
+            elif (key == "font" or key == "lfont" or
+                  key == "smfont"):
+                # Lookup font
+                newdict[key] = fonts[value]
+    return newdict
 
-        { "name":  "MusicPlayer.TrackNumber",  "pos": (148, 79),  "font": font7S,     "fill": color7S,
-          "label": "Track",                   "lpos": (148, 65), "lfont": font_tiny, "lfill": "white" },
+def fixup_array(array):
+    newarray = []
+    for item in array:
+        if type(item) is dict:
+            newarray.append(fixup_layouts(item))
+        else:
+            newarray.append(item)
+    return newarray
 
-        { "name": "MusicPlayer.Duration", "pos": (230, 65), "font": font_tiny, "fill": "white" },
-        { "name": "codec",                "pos": (230, 79), "font": font_tiny, "fill": "white" },
-        { "name": "MusicPlayer.Genre",    "pos": (230, 93), "font": font_tiny, "fill": "white", "trunc":1 },
-        { "name": "MusicPlayer.Year",     "pos": (230,107), "font": font_tiny, "fill": "white" },
-
-        { "name": "MusicPlayer.Title",    "pos": (4, 152),  "font": font_main, "fill": "white",      "trunc":1 },
-        { "name": "MusicPlayer.Album",    "pos": (4, 180),  "font": font_sm,   "fill": "white",      "trunc":1 },
-        { "name": "artist",               "pos": (4, 205),  "font": font_sm,   "fill": color_artist, "trunc":1 },
-    ]
-  },
-
-  ADisplay.FULLSCREEN :
-  {
-    # artwork size, position is determined by centering
-    "thumb"   : { "center": 1, "size": frame_size[1]-5 },
-  },
-
-  ADisplay.FULL_PROG :
-  {
-    # artwork size, position is determined by centering
-    "thumb" : { "center": 1, "size": frame_size[1]-5 },
-
-    # vertical progress bar
-    "prog" : { "pos": (frame_size[0]-12, 1),
-               "len": 10,
-               "height": frame_size[1]-4,
-               "vertical": 1
-    },
-  },
-
-}
-
+# Used by audio_screens() for all info display screens
+AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
 
 # Layout control for status screen, used by status_screen()
-STATUS_LAYOUT = \
-{
-    # Kodi logo
-    "thumb" : { "pos": (5, 5), "size": 128 },
-
-    # all other text fields
-    #
-    # special treatment exists for several field names
-    "fields" :
-    [
-        { "name": "version",    "pos": (145,  8), "font": font_main, "fill": color_artist },
-        { "name": "summary",    "pos": (145, 35), "font": font_sm,   "fill": "white" },
-        { "name": "time_hrmin", "pos": (145, 73), "font": font7S,    "fill": color7S,  "smfont": font7S_sm },
-
-        { "name": "System.Date",           "pos": (  5,150), "font": font_sm,   "fill": "white" },
-        { "name": "System.Uptime",         "pos": (  5,175), "font": font_sm,   "fill": "white" },
-        { "name": "System.CPUTemperature", "pos": (  5,200), "font": font_sm,   "fill": "white" },
-    ]
-}
+STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 
 
-# ----------------------------------------------------------------------------
-
-# GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
+# GPIO assignments and display options
+# ------------------------------------
+#
+# Pin for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.  Find a pin that's unused by luma.  The touchscreen chip
 # in my display has its own internal pullup resistor, so further below
 # no pullup is specified.
@@ -224,8 +192,8 @@ STATUS_LAYOUT = \
 #   Odroid C4:  GPIO19 (physical Pin 35)
 #   RPi 3:      GPIO16 (physical Pin 36)
 #
-USE_TOUCH      = True   # Set False to disable interrupt use
-TOUCH_INT      = 19
+USE_TOUCH      = config.settings["USE_TOUCH"]  # Set False to disable interrupt use
+TOUCH_INT      = config.settings["TOUCH_INT"]
 
 # Internal state variables used to manage screen presses
 kodi_active    = False
@@ -246,11 +214,11 @@ lock = threading.Lock()
 # I have not yet found a way to take advantage of the C4's hardware
 # PWM simultaneous with using luma.lcd.
 #
-# The USE_BACKLIGHT variable controls whether calls are made to
-# luma.lcd at all to change backlight state.  Uses with OLED displays
+# The USE_BACKLIGHT boolean controls whether calls are made to
+# luma.lcd at all to change backlight state.  Users with OLED displays
 # should set it to False.
 #
-USE_BACKLIGHT = True
+USE_BACKLIGHT = config.settings["USE_BACKLIGHT"]
 USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
 PWM_LEVEL     = 75.0     # float value between 0 and 100
@@ -259,59 +227,22 @@ PWM_LEVEL     = 75.0     # float value between 0 and 100
 # Users of other displays should set this to False.
 CHANGE_GAMMA = True
 
-# Finally, a handle to the ILI9341-driven SPI panel via luma.lcd.
-#
-# The backlight signal (with inline resistor NEEDED) is connected to
-# GPIO18, physical pin 12.  Recall that the GPIOx number is using
-# RPi.GPIO's scheme!
-#
-# Below is how I've connected the ILI9341, which is *close* to the
-# recommended wiring in luma.lcd's online documentation.  Again,
-# recall the distinction between RPi.GPIO pin naming and physical pin
-# numbers.
-#
-# As you can provide RPi.GPIO numbers as arguments to the spi()
-# constructor, you do have some flexibility.
-#
-#
-#   LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
-#   ------------|------------------|-----------------
-#   VCC         |  3V3             |  1 or 17
-#   GND         |  GND             |  9 or 25 or 39
-#   CS          |  GPIO8           |  24
-#   RST / RESET |  GPIO25          |  22
-#   DC          |  GPIO24          |  18
-#   MOSI        |  GPIO10 (MOSI)   |  19
-#   SCLK / CLK  |  GPIO11 (SCLK)   |  23
-#   LED         |  GPIO18          |  12 (a.k.a. PWM_E)
-#   ------------|------------------|-----------------
-#
-# Originally, the constructor for ili9341 also included a
-# framebuffer="full_frame" argument.  That proved unnecessary
-# once non-zero reset hold and release times were specified
-# for the device.
-#
-serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
-             reset_hold_time=0.2, reset_release_time=0.2)
+# Are we running using luma.lcd's pygame demo mode?
+DEMO_MODE = False
 
-if USE_PWM:
-    device = ili9341(serial, active_low=False, width=320, height=240,
-                     bus_speed_hz=32000000,
-                     gpio_LIGHT=18,
-                     pwm_frequency=PWM_FREQ
-    )
-else:
-    device = ili9341(serial, active_low=False, width=320, height=240,
-                     bus_speed_hz=32000000,
-                     gpio_LIGHT=18
-    )
 
 # ----------------------------------------------------------------------------
 
 # Maintain a short list of the most recently-truncated strings,
-# for use by truncate_text()
+# for use by truncate_text() below
 last_trunc = []
 
+# Finally, create Pillow objects
+image  = Image.new('RGB', (frame_size), 'black')
+draw   = ImageDraw.Draw(image)
+
+
+# ----------------------------------------------------------------------------
 
 # Render text at the specified location, truncating characters and
 # placing a final ellipsis if the string is too wide to display in its
@@ -415,7 +346,7 @@ def get_artwork(info, prev_image, thumb_size):
 
     if (info['MusicPlayer.Cover'] != '' and
         info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
-        not special_re.match(info['MusicPlayer.Cover'])):
+        not airtunes_re.match(info['MusicPlayer.Cover'])):
 
         image_path = info['MusicPlayer.Cover']
         #print("image_path : ", image_path) # debug info
@@ -459,8 +390,8 @@ def get_artwork(info, prev_image, thumb_size):
     # finally, if we still don't have anything, check if is Airplay active
     if not image_set:
         resize_needed = False
-        if special_re.match(info['MusicPlayer.Cover']):
-            airplay_thumb = "/storage/.kodi/temp/" + special_re.match(info['MusicPlayer.Cover']).group(1)
+        if airtunes_re.match(info['MusicPlayer.Cover']):
+            airplay_thumb = "/storage/.kodi/temp/" + airtunes_re.match(info['MusicPlayer.Cover']).group(1)
             if os.path.isfile(airplay_thumb):
                 last_image_path = airplay_thumb
                 resize_needed   = True
@@ -506,7 +437,7 @@ def status_screen(draw, kodi_status, summary_string):
     if "thumb" in layout.keys():
         kodi_icon = Image.open(kodi_thumb)
         kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
-        image.paste(kodi_icon, layout["thumb"]["pos"])
+        image.paste(kodi_icon, (layout["thumb"]["posx"], layout["thumb"]["posy"] ))
 
     # go through all text fields, if any
     if "fields" not in layout.keys():
@@ -516,20 +447,23 @@ def status_screen(draw, kodi_status, summary_string):
 
     for index in range(len(txt_field)):
         if txt_field[index]["name"] == "version":
-            draw.text(txt_field[index]["pos"], "kodi_panel " + PANEL_VER,
+            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+                      "kodi_panel " + PANEL_VER,
                       txt_field[index]["fill"], txt_field[index]["font"])
 
         elif txt_field[index]["name"] == "summary":
-            draw.text(txt_field[index]["pos"], summary_string,
+            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+                      summary_string,
                       txt_field[index]["fill"], txt_field[index]["font"])
 
         elif txt_field[index]["name"] == "time_hrmin":
             # time, in 7-segment font by default
             time_parts = kodi_status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(time_parts[0], font7S)
-            draw.text(txt_field[index]["pos"], time_parts[0],
+            time_width, time_height = draw.textsize(time_parts[0], txt_field[index]["font"])
+            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+                      time_parts[0],
                       txt_field[index]["fill"], txt_field[index]["font"])
-            draw.text((txt_field[index]["pos"][0] + time_width + 5, txt_field[index]["pos"][1]),
+            draw.text((txt_field[index]["posx"] + time_width + 5, txt_field[index]["posy"]),
                       time_parts[1],
                       txt_field[index]["fill"], txt_field[index]["smfont"])
 
@@ -538,7 +472,8 @@ def status_screen(draw, kodi_status, summary_string):
             if txt_field[index]["name"] in str_prefix.keys():
                 display_string = str_prefix[txt_field[index]["name"]] + display_string
 
-            draw.text(txt_field[index]["pos"], display_string,
+            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+                      display_string,
                       txt_field[index]["fill"], txt_field[index]["font"])
 
 
@@ -557,7 +492,7 @@ def audio_screens(image, draw, info, prog):
     global last_image_path
 
     # Get layout details for this mode
-    layout = AUDIO_LAYOUT[audio_dmode]
+    layout = AUDIO_LAYOUT[audio_dmode.name]
 
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
@@ -568,27 +503,27 @@ def audio_screens(image, draw, info, prog):
                             (int((frame_size[0]-last_thumb.width)/2),
                              int((frame_size[1]-last_thumb.height)/2)))
             else:
-                image.paste(last_thumb, layout["thumb"]["pos"])
+                image.paste(last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
     else:
         last_thumb = None
 
     # progress bar
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
-            progress_bar(draw, color_progbg, color_progfg,
-                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
                          prog, vertical=True)
         elif info['MusicPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, color_progbg, color_progfg,
-                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["long_len"], layout["prog"]["height"],
                          prog)
         else:
-            progress_bar(draw, color_progbg, color_progfg,
-                         layout["prog"]["pos"][0], layout["prog"]["pos"][1],
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["short_len"], layout["prog"]["height"],
                          prog)
 
@@ -602,7 +537,12 @@ def audio_screens(image, draw, info, prog):
         # special treatment for codec, which gets a lookup
         if txt_field[index]["name"] == "codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
-                draw.text(txt_field[index]["pos"],
+                # render any label first
+                if "label" in txt_field[index]:
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                           codec_name[info['MusicPlayer.Codec']],
                           fill=txt_field[index]["fill"],
                           font=txt_field[index]["font"])
@@ -617,12 +557,13 @@ def audio_screens(image, draw, info, prog):
 
             if display_string:
                 if "trunc" in txt_field[index].keys():
-                    truncate_text(draw, txt_field[index]["pos"],
+                    truncate_text(draw,
+                                  (txt_field[index]["posx"], txt_field[index]["posy"]),
                                   display_string,
                                   fill=txt_field[index]["fill"],
                                   font=txt_field[index]["font"])
                 else:
-                    draw.text(txt_field[index]["pos"],
+                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               display_string,
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
@@ -631,18 +572,20 @@ def audio_screens(image, draw, info, prog):
         else:
             if (txt_field[index]["name"] in info.keys() and
                 info[txt_field[index]["name"]] != ""):
-                # ender any label first
+                # render any label first
                 if "label" in txt_field[index]:
-                    draw.text(txt_field[index]["lpos"], txt_field[index]["label"],
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
                               fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
                 # now render the field itself
                 if "trunc" in txt_field[index].keys():
-                    truncate_text(draw, txt_field[index]["pos"],
+                    truncate_text(draw,
+                                  (txt_field[index]["posx"], txt_field[index]["posy"]),
                                   info[txt_field[index]["name"]],
                                   fill=txt_field[index]["fill"],
                                   font=txt_field[index]["font"])
                 else:
-                    draw.text(txt_field[index]["pos"],
+                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               info[txt_field[index]["name"]],
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
@@ -650,7 +593,7 @@ def audio_screens(image, draw, info, prog):
 
 
 def screen_on():
-    if not USE_BACKLIGHT:
+    if (not USE_BACKLIGHT or DEMO_MODE):
         return
     if USE_PWM:
         device.backlight(PWM_LEVEL)
@@ -658,7 +601,7 @@ def screen_on():
         device.backlight(True)
 
 def screen_off():
-    if not USE_BACKLIGHT:
+    if (not USE_BACKLIGHT or DEMO_MODE):
         return
     if USE_PWM:
         device.backlight(0)
@@ -806,10 +749,13 @@ def touch_callback(channel):
             pass
 
 
-def main():
+def main(device_handle):
+    global device
     global kodi_active
     global screen_press
     kodi_active = False
+
+    device = device_handle
 
     print(datetime.now(), "Starting")
     # turn down verbosity from http connections
@@ -827,7 +773,7 @@ def main():
 
 
     # setup T_IRQ as a GPIO interrupt, if enabled
-    if USE_TOUCH:
+    if (USE_TOUCH and not DEMO_MODE):
         print(datetime.now(), "Setting up touchscreen interrupt")
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(TOUCH_INT, GPIO.IN)
@@ -838,7 +784,7 @@ def main():
     while True:
         screen_on()
         draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
-        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=font_main)
+        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=fonts["font_main"])
         device.display(image)
 
         while True:
@@ -868,6 +814,11 @@ def main():
         screen_press = False
         while True:
             try:
+                if DEMO_MODE:
+                    keys = device._pygame.key.get_pressed()
+                    if keys[device._pygame.K_SPACE]:
+                        screen_press = True
+                        print(datetime.now(), "Touchscreen pressed (emulated)")
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
@@ -890,13 +841,10 @@ def main():
             time.sleep(0.91)
 
 
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        if USE_TOUCH:
-            print(datetime.now(), "Removing touchscreen interrupt")
-            GPIO.remove_event_detect(TOUCH_INT)
+def shutdown():
+    if (USE_TOUCH and not DEMO_MODE):
+        print(datetime.now(), "Removing touchscreen interrupt")
+        GPIO.remove_event_detect(TOUCH_INT)
         GPIO.cleanup()
-        print(datetime.now(), "Stopping")
-        exit(0)
+    print(datetime.now(), "Stopping")
+    exit(0)

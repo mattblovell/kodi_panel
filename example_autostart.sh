@@ -6,6 +6,6 @@ sleep 5
 
 (
 cd ~/projects/kodi_panel
-nohup /opt/bin/python3 -u kodi_panel.py > ~/kodi_panel.log &
+nohup /opt/bin/python3 -u kodi_panel_ili9341.py > ~/kodi_panel.log &
 ) &
 

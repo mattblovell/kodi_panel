@@ -94,28 +94,43 @@ you are running a fairly complete Linux distribution, such as
 `Raspberry Pi OS <https://www.raspberrypi.org/downloads/raspberry-pi-os/>`_.
 
 Once you have the luma.examples working, you're really about done!
-Install Kodi as well, and get it working as desired.  If kodi_panel is
-to run on the same SBC as is hosting the display, then no immediate
-editing of ``kodi_panel.py`` should be needed.  Otherwise, you will need
-to at least specify the correct IP address to use for kodi_panel's ``base_url``
-variable.  After that, try starting kodi_panel by
-changing directory to ``kodi_panel`` and invoking
+Install Kodi as well, and get it working as desired.  Two additional
+Python modules are needed:
+
+::
+   
+   pip3 install toml aenum
+
+
+The ``example_setup_320x240.toml`` file should be copied to ``setup.toml``
+and edited as appropriate for your needs.  Additional example files may
+get populated at other display resolutions.  If kodi_panel is to run on
+the same SBC as hosting the display, the ``BASE_URL`` within ``setup.toml``
+can be left using ``localhost``.  Otherwise, set it as needed.
+
+Afer that, try starting kodi_panel.  Assuming you are using an ili9341-based
+display, that's accomplished by invoking
 
 ::
 
-  python3 kodi_panel.py
+  python3 kodi_panel_ili9341.py
 
 
-At the moment, I have forgotten whether some of the additional packages
-used in ``kodi_panel.py`` come with Python or have to be installed.  It is
-certainly possible that you'll have to add additional (pure Python) packages
-via ``pip``, such as 
+when in the ``kodi_panel`` directory.  You may wish to create a softlink
+named simply ``kodi_panel.py``, just for convenience.
+  
+At the moment, I have forgotten whether any other the additional
+packages used in ``kodi_panel_display.py`` come with Python or have to
+be installed, aside from toml and aenum listed above.  It is certainly
+possible that you'll have to add additional (pure Python) packages via
+``pip``, such as
 
 ::
 
   pip3 install requests
 
-Ideally, you'll then see the start of kodi_panel's log-style standard output:
+Ideally, upon startup you will then see the start of kodi_panel's
+log-style standard output:
 
 ::
 
@@ -216,6 +231,18 @@ as a consequence of the Entware installation.
 
      pip3 install luma.lcd
 
+6. Install additional Python modules:
+
+   ::
+      
+     pip3 install toml aenum
+
+7. In the ``kodi_panel/`` directory, copy and rename
+   ``example_setup_320x240.toml`` to ``setup.toml``.  Open the file
+   for editing, checking that at least ``BASE_URL`` and display width
+   and height are correct.  (Additional example files at other
+   resolutions will hopefully get populated.)
+     
 Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
 and running (it is CoreELEC, after all), one can ``cd`` into
@@ -223,7 +250,7 @@ kodi_panel's directory and invoke
 
 ::
 
-  /opt/bin/python3 kodi_panel.py
+  /opt/bin/python3 kodi_panel_ili9341.py
 
 Now, try playing something!
 
@@ -300,11 +327,15 @@ results!
 Prototyping Changes
 -------------------
 
-The ``luma_demo.py`` script is almost a duplicate of ``kodi_panel.py``.
-Taking advantage of luma.lcd's ability to use pygame as a device
-emulator, it provides a really convenient way of prototyping layout
+The ``kodi_panel_demo.py`` script is essentially identical to the
+other executable scripts, except that it takes advantage of
+luma.lcd's ability to use pygame as a device emulator.
+The demo script thus provides a really convenient way of prototyping layout
 decisions, font choices, artwork size, etc.  See the header at the
 start of that file for how to invoke it.
+
+All of the content within an info display should be adjustable via
+the variables in ``setup.toml``.
 
 Here are some examples from the emulator, which also serve to show several
 of kodi_panel's available "modes":
@@ -316,7 +347,7 @@ of kodi_panel's available "modes":
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/emulator_full_prog.PNG
 
 
-In the main loop for ``luma_demo.py`` I did recently add code to use
+When in "demo mode", the main update loop does have code to use
 keypresses as emulated touchscreen presses.  The pygame key state is
 only sampled at the end of the update process, however, so one must
 hold a key and *wait* for that to occur.  The actual T_IRQ
