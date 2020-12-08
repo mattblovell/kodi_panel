@@ -122,7 +122,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 [[fonts]]
   name = "font_sm"
   path = "fonts/Roboto-Medium.ttf"
-  size = 26
+  size = 28
   encoding = 'unic'  
 
 [[fonts]]
@@ -183,7 +183,7 @@ long_len  = 208  # length when elapsed time matches 00:00:00 (hrs, mins, seconds
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
 posx = 420
-posy = 25
+posy = 28
 font = "font7S"
 fill = "color_7S"
 
@@ -217,14 +217,14 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "codec"   # special treatment in audio_screens()
 posx = 580
-posy = 122
+posy = 126
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Genre"
 posx = 580
-posy = 146
+posy = 154
 font = "font_tiny"
 fill = "white"
 trunc = 1
@@ -232,7 +232,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
 posx = 580
-posy = 172
+posy = 182
 font = "font_tiny"
 fill = "white"
 
@@ -245,7 +245,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 415
+posy  = 418
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -253,7 +253,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Album"
 posx  = 420
-posy  = 235
+posy  = 270
 font  = "font_sm"
 fill  = "white"
 trunc = 1
@@ -261,7 +261,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "artist"   # special treatment in audio_screens()
 posx  = 420
-posy  = 270
+posy  = 305
 font  = "font_sm"
 fill  = "color_artist"
 trunc = 1
