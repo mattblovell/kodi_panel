@@ -178,7 +178,7 @@ posx   = 420     # upper-left corner x position
 posy   = 7       # upper-left corner y position
 height = 8       # pixel height
 short_len = 188  # length when elapsed time matches 00:00 (min, seconds)
-long_len  = 208  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+long_len  = 292  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
