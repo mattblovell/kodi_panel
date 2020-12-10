@@ -75,13 +75,18 @@ codec_name = {
 #
 # Start processing settings...
 #
-rpc_url  = config.settings["BASE_URL"] + "/jsonrpc"
+base_url = config.settings["BASE_URL"]
+rpc_url  = base_url + "/jsonrpc"
 headers  = {'content-type': 'application/json'}
+
+_local_kodi = (base_url.startswith("http://localhost:") or
+               base_url.startswith("https://localhost:"))
 
 # Image handling
 frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
-last_image_path = None
-last_thumb      = None
+_last_image_path = None
+_last_thumb      = None
+_last_image_time = None   # used with airtunes / airplay coverart
 
 # Thumbnail defaults (these don't get resized)
 kodi_thumb      = config.settings["KODI_THUMB"]
@@ -89,7 +94,7 @@ default_thumb   = config.settings["DEFAULT_THUMB"]
 default_airplay = config.settings["DEFAULT_AIRPLAY"]
 
 # RegEx for recognizing AirPlay images (compiled once)
-airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+_airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Load all user-specified fonts
 fonts = {}
@@ -329,7 +334,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 # Note that details of retrieval seem to differ depending upon whether
 # Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
 #
-# The global last_image_path is intended to let any given image file
+# The global _last_image_path is intended to let any given image file
 # be fetched and resized just *once*.  Subsequent calls just reuse the
 # same data, provided that the caller preserves and passes in
 # prev_image.
@@ -337,7 +342,8 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 # The info argument must be the result of an XBMC.GetInfoLabels
 # JSON-RPC call to Kodi.
 def get_artwork(info, prev_image, thumb_size):
-    global last_image_path
+    global _last_image_path
+    global _last_image_time
     image_set     = False
     resize_needed = False
 
@@ -346,16 +352,16 @@ def get_artwork(info, prev_image, thumb_size):
 
     if (info['MusicPlayer.Cover'] != '' and
         info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
-        not airtunes_re.match(info['MusicPlayer.Cover'])):
+        not _airtunes_re.match(info['MusicPlayer.Cover'])):
 
         image_path = info['MusicPlayer.Cover']
         #print("image_path : ", image_path) # debug info
 
-        if (image_path == last_image_path and prev_image):
+        if (image_path == _last_image_path and prev_image):
             # Fall through and just return prev_image
             image_set = True
         else:
-            last_image_path = image_path
+            _last_image_path = image_path
             if image_path.startswith("http://"):
                 image_url = image_path
             else:
@@ -387,21 +393,85 @@ def get_artwork(info, prev_image, thumb_size):
                     image_set     = True
                     resize_needed = False
 
-    # finally, if we still don't have anything, check if is Airplay active
+    # Airplay artwork
+
+
+    # If artwork is local, then we'll have to retrieve it over the
+    # network. Airplay coverart is always stored to the same file.
+    # So, we start by getting the last modification time to figure out
+    # if we need to retrieve it.
+    if (not image_set and
+        _airtunes_re.match(info['MusicPlayer.Cover']) and
+        not _local_kodi):
+
+        image_path = info['MusicPlayer.Cover']
+        #print("image_path : ", image_path) # debug info
+        payload = {
+            "jsonrpc": "2.0",
+            "method"  : "Files.GetFileDetails",
+            "params"  : {"file": image_path,
+                         "properties" : ["lastmodified"]
+                         },
+            "id"      : "5b",
+        }
+        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+        #print("Airplay image details: ", json.dumps(response))  # debug info
+        new_image_time = None
+        try:
+            new_image_time = response['result']['filedetails']['lastmodified']
+        except:
+            pass
+        # print("new_image_time", new_image_time)  # debug info
+        if (new_image_time and new_image_time != _last_image_time):
+            payload = {
+                "jsonrpc": "2.0",
+                "method"  : "Files.PrepareDownload",
+                "params"  : {"path": image_path},
+                "id"      : "5c",
+            }
+            response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+            #print("Response: ", json.dumps(response))  # debug info
+
+            if ('details' in response['result'].keys() and
+                'path' in response['result']['details'].keys()) :
+                image_url = base_url + "/" + response['result']['details']['path']
+                #print("image_url : ", image_url) # debug info
+
+            r = requests.get(image_url, stream = True)
+            # check that the retrieval was successful before proceeding
+            if r.status_code == 200:
+                try:
+                    r.raw.decode_content = True
+                    cover = Image.open(io.BytesIO(r.content))
+                    image_set       = True
+                    resize_needed   = True
+                    _last_image_time = new_image_time
+                except:
+                    cover = Image.open(default_thumb)
+                    prev_image = cover
+                    image_set     = True
+                    resize_needed = False
+        else:
+            image_set = True
+
+
+    # Finally, if we still don't have anything, check if we are local
+    # to Kodi and Airplay artwork can just be opened.  Otherwise, use
+    # default images.
     if not image_set:
         resize_needed = False
-        if airtunes_re.match(info['MusicPlayer.Cover']):
-            airplay_thumb = "/storage/.kodi/temp/" + airtunes_re.match(info['MusicPlayer.Cover']).group(1)
+        if _airtunes_re.match(info['MusicPlayer.Cover']):
+            airplay_thumb = "/storage/.kodi/temp/" + _airtunes_re.match(info['MusicPlayer.Cover']).group(1)
             if os.path.isfile(airplay_thumb):
-                last_image_path = airplay_thumb
+                _last_image_path = airplay_thumb
                 resize_needed   = True
             else:
-                last_image_path = default_airplay
+                _last_image_path = default_airplay
         else:
             # default image when no artwork is available
-            last_image_path = default_thumb
+            _last_image_path = default_thumb
 
-        cover = Image.open(last_image_path)
+        cover = Image.open(_last_image_path)
         prev_image = cover
         image_set = True
 
@@ -488,24 +558,24 @@ def status_screen(draw, kodi_status, summary_string):
 #
 def audio_screens(image, draw, info, prog):
     global audio_dmode
-    global last_thumb
-    global last_image_path
+    global _last_thumb
+    global _last_image_path
 
     # Get layout details for this mode
     layout = AUDIO_LAYOUT[audio_dmode.name]
 
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
-        last_thumb = get_artwork(info, last_thumb, layout["thumb"]["size"])
-        if last_thumb:
+        _last_thumb = get_artwork(info, _last_thumb, layout["thumb"]["size"])
+        if _last_thumb:
             if "center" in layout["thumb"].keys():
-                image.paste(last_thumb,
-                            (int((frame_size[0]-last_thumb.width)/2),
-                             int((frame_size[1]-last_thumb.height)/2)))
+                image.paste(_last_thumb,
+                            (int((frame_size[0]-_last_thumb.width)/2),
+                             int((frame_size[1]-_last_thumb.height)/2)))
             else:
-                image.paste(last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
     else:
-        last_thumb = None
+        _last_thumb = None
 
     # progress bar
     if (prog != -1 and "prog" in layout.keys()):
@@ -613,8 +683,8 @@ def screen_off():
 # Determine Kodi state and, if something of interest is playing,
 # retrieve all the relevant information and get it drawn.
 def update_display():
-    global last_image_path
-    global last_thumb
+    global _last_image_path
+    global _last_thumb
     global screen_press
     global screen_active
     global screen_offtime
@@ -642,8 +712,9 @@ def update_display():
         response['result'][0]['type'] != 'audio'):
         # Nothing is playing or non-audio is playing, but check for screen
         # press before proceeding
-        last_image_path = None
-        last_thumb = None
+        _last_image_path = None
+        _last_image_time = None
+        _last_thumb = None
 
         if screen_press:
             screen_press = False
@@ -685,8 +756,9 @@ def update_display():
             screen_press = False
             audio_dmode = audio_dmode.next()
             print(datetime.now(), "audio display mode now", audio_dmode.name)
-            last_image_path = None
-            last_thumb = None
+            _last_image_path = None
+            _last_image_time = None
+            _last_thumb = None
 
         # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
