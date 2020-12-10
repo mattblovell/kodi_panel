@@ -116,13 +116,13 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 [[fonts]]
   name = "font_bold"
   path = "fonts/RobotoCondensed-Regular.ttf"
-  size = 42
+  size = 44
   encoding = 'unic'
 
 [[fonts]]
   name = "font_sm"
   path = "fonts/Roboto-Medium.ttf"
-  size = 28
+  size = 30
   encoding = 'unic'  
 
 [[fonts]]
@@ -169,9 +169,9 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #
 
 [A_LAYOUT.A_DEFAULT.thumb]   # Artwork
-posx = 4
+posx = 3
 posy = 4
-size = 400
+size = 405
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
@@ -245,7 +245,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 418
+posy  = 420
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -253,7 +253,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Album"
 posx  = 420
-posy  = 270
+posy  = 260
 font  = "font_sm"
 fill  = "white"
 trunc = 1

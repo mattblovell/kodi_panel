@@ -270,8 +270,6 @@ def truncate_text(pil_draw, xy, text, fill, font):
         if (new_text == last_trunc[index]["str"] and
             font == last_trunc[index]["font"]):
             new_text = last_trunc[index]["short_str"]
-            if last_trunc[index]["truncating"]:
-                new_text += "\u2026"
             pil_draw.text(xy, new_text, fill, font)
             return
 
@@ -280,7 +278,7 @@ def truncate_text(pil_draw, xy, text, fill, font):
 
     # Form an initial estimate for how many characters will fit
     avg_char = len(new_text) / t_width
-    avail_width = frame_size[0] - 10
+    avail_width = frame_size[0] - 20
     num_chars = int( (avail_width + 20) / avg_char )
     new_text = new_text[0:num_chars]
 
