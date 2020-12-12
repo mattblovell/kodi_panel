@@ -46,8 +46,30 @@ TOUCH_INT = 25
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
-# should set it to false.
+# (or typical HDMI panels) should set it to false.
+#
+# Note that the framebuffer version (kodi_panel_fb.py) may ignore or
+# override this setting, in favor of the group below.
+#
 USE_BACKLIGHT = true
+
+# Hardware PWM is available on many SBCs.  For the Raspberry Pi
+# with new-ish kernels, one can add
+#
+#   dtoverlay=pwm_2chan
+#
+# to /boot/config.txt to get an appropriate kernel module loaded.
+#
+# The clock period below is expressed in nanoseconds (1e-9).  The
+# brightness level is a float between 0 and 1.  Using 0 would yield no
+# backlight, so that value isn't particularly useful.
+#
+# As of Dec 2020, only kodi_panel_fb.py examines these settings.
+# They are not used within kodi_panel_display itself
+#
+USE_HW_PWM = true
+HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
+HW_PWM_LEVEL = 0.75
 
 
 # PWM options not yet production-worthy in kodi_panel

@@ -884,6 +884,7 @@ def main(device_handle):
         screen_press = False
         while True:
             try:
+                start_time = time.time()
                 if DEMO_MODE:
                     keys = device._pygame.key.get_pressed()
                     if keys[device._pygame.K_SPACE]:
@@ -896,19 +897,16 @@ def main(device_handle):
                 kodi_active = False
                 break
 
-            # This delay seems sufficient to have a (usually) smooth
-            # progress bar and elapsed time update.  The goal is to
-            # wake up once a second, but this is effectively running
-            # open-loop.  An occassional hiccup is somewhat
-            # unavoidable.
-            #
-            # An alternative would be to maintain our own elapsed time
-            # counter.  Keeping that counter accurate, though, would
-            # then require notifications regarding pauses, seeks, or
-            # faster-than 1x playback.  This is a potential reason to
-            # explore using WebSocket as the JSON-RPC transport
-            # mechanism.
-            time.sleep(0.91)
+            # If connecting to Kodi over an actual network connection,
+            # update times can vary.  Rather than sleeping for a fixed
+            # duration, we might as well measure how long the update
+            # took and then sleep whatever remains of that second.
+
+            elapsed = time.time() - start_time
+            if elapsed < 1:
+                time.sleep(1 - elapsed)
+            else:
+                time.sleep(0.6)
 
 
 def shutdown():
