@@ -139,14 +139,15 @@ log-style standard output:
   2020-10-16 09:29:54.293762 Connected with Kodi.  Entering update_display() loop.
 
 Alternatively, you can instead make use of ``kodi_panel.service`` and systemd.
-Copy that example service file to `/etc/systemd/service` and then invoke
+Copy that example service file to ``/etc/systemd/service`` and then invoke
 
 ::
 
   sudo systemctl enable kodi_panel
 
 Running as a service under systemd is useful when kodi_panel is *not* running 
-on the same SBC as Kodi.  Naturally, you can edit the service file to 
+on the same SBC as Kodi.  As written, the service file starts up the
+framebuffer version of kodi_panel.  Naturally, you can edit the service file to 
 match your needs.
 
 
