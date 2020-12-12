@@ -1,0 +1,18 @@
+[Unit]
+Description=kodi_panel display
+After=network.target rc-local.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+WorkingDirectory=/home/pi/projects/kodi_panel
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/bin/sleep 4
+ExecStart=/usr/bin/python3 -u kodi_panel_fb.py 
+
+[Install]
+WantedBy=multi-user.target
+
