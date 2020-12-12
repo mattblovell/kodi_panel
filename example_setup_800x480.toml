@@ -69,7 +69,7 @@ USE_BACKLIGHT = true
 #
 USE_HW_PWM = true
 HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
-HW_PWM_LEVEL = 0.75
+HW_PWM_LEVEL = 0.55
 
 
 # PWM options not yet production-worthy in kodi_panel
@@ -340,14 +340,14 @@ fill = "color_artist"
 [[STATUS_LAYOUT.fields]]
 name = "summary"        # special treatment
 posx = 145
-posy = 35
+posy = 40
 font = "font_main"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "time_hrmin"     # special treatment
 posx = 145
-posy = 73
+posy = 90
 font = "font7S"
 fill = "color_7S"
 smfont = "font7S_sm"    # used for AM / PM
@@ -358,21 +358,21 @@ smfont = "font7S_sm"    # used for AM / PM
 [[STATUS_LAYOUT.fields]]
 name = "System.Date"
 posx = 5
-posy = 150
+posy = 170
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Uptime"
 posx = 5
-posy = 175
+posy = 210
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.CPUTemperature"
 posx = 5
-posy = 200
+posy = 250
 font = "font_sm"
 fill = "white"
 
