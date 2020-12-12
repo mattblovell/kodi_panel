@@ -38,10 +38,11 @@ DISPLAY_HEIGHT = 480
 #
 # Pins are fixed if using the header on the Waveshare displays:
 #
-#   Waveshare 3.5" LCD(B):   GPIO17 (physical pin 11)
+#   Waveshare 3.5" LCD (B):  GPIO17 (physical pin 11)
+#   Waveshare 4" HDMI (H):   GPIO25 (physical pin 22)
 #
 USE_TOUCH = true   # Set false to disable interrupt use
-TOUCH_INT = 17
+TOUCH_INT = 25
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
@@ -273,7 +274,7 @@ trunc = 1
 
 [A_LAYOUT.A_FULLSCREEN.thumb]
 center = 1
-size = 320
+size = 480
 
 
 #
@@ -281,14 +282,14 @@ size = 320
 #
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
-size = 320
+size = 480
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
-posx = 468    # upper-left corner x-position
+posx = 788    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
 len  = 10     # pixel width for a vertical bar
-height = 316  # total height for the vertical bar
+height = 476  # total height for the vertical bar
 
 
 # --------------------------------------------------------------------
