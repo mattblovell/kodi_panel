@@ -41,7 +41,7 @@ import kodi_panel_display
 # ----------------------------------------------------------------------------
 
 # Use a Linux framebuffer via luma.core.device
-device = device.linux_framebuffer("/dev/fb1")
+device = device.linux_framebuffer("/dev/fb0",bgr=1)
 
 # Don't try to use luma.lcd's backlight control
 kodi_panel_display.USE_BACKLIGHT = False
