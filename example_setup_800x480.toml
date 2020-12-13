@@ -9,7 +9,8 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-BASE_URL = "http://localhost:8080"
+#BASE_URL = "http://localhost:8080"
+BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
 
 
 
@@ -261,8 +262,7 @@ fill = "white"
 
 
 #
-# Finally, the track title, album title, and artist appear below
-# the cover art.
+# Finally, the track title in this layout appears below the cover art...
 #
 
 [[A_LAYOUT.A_DEFAULT.fields]]
@@ -273,21 +273,31 @@ font  = "font_bold"
 fill  = "white"
 trunc = 1
 
-[[A_LAYOUT.A_DEFAULT.fields]]
-name  = "MusicPlayer.Album"
-posx  = 420
-posy  = 260
-font  = "font_sm"
-fill  = "white"
-trunc = 1
+
+#
+# ... while the album title and artist are moved over to the right of
+# the cover.
+#
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "artist"   # special treatment in audio_screens()
 posx  = 420
-posy  = 305
+posy  = 240
 font  = "font_sm"
 fill  = "color_artist"
 trunc = 1
+
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "MusicPlayer.Album"
+posx  = 420
+posy  = 280
+font  = "font_sm"
+fill  = "white"
+wrap  = 1
+max_width = 375
+max_lines = 3
+
 
 
 #

@@ -239,7 +239,7 @@ DEMO_MODE = False
 # ----------------------------------------------------------------------------
 
 # Maintain a short list of the most recently-truncated strings,
-# for use by truncate_text() below
+# for use by truncate_line() below
 last_trunc = []
 
 # Finally, create Pillow objects
@@ -249,61 +249,110 @@ draw   = ImageDraw.Draw(image)
 
 # ----------------------------------------------------------------------------
 
-# Render text at the specified location, truncating characters and
-# placing a final ellipsis if the string is too wide to display in its
-# entirety.
+
+# Text wrapping from public blog post
 #
-# In its present form, this function essentially only checks for
-# extensions past the right-hand side of the screen.  That could
-# be remedied, if needed, by passing in a maximum permitted width
-# and using it.
-def truncate_text(pil_draw, xy, text, fill, font):
+# http://fiveminutes.today/articles/putting-text-on-images-with-python-pil/
+#
+# by Bach Ton That, with further modifications.  With the 800x480
+# example layout, having the album title to the right of the cover art
+# works better if one can wrap it across two lines.
+
+def truncate_line(line, font, max_width):
     global last_trunc
     truncating = 0
+    new_text = line
 
-    # Assume an upper bound on how many characters are even
-    # possible to display
-    new_text = text[0:59]
-
-    # Check if we've already truncated this string
+    # Check if we've already truncated this string in the
+    # font specified
     for index in range(len(last_trunc)):
-        if (new_text == last_trunc[index]["str"] and
+        if (line == last_trunc[index]["str"] and
             font == last_trunc[index]["font"]):
-            new_text = last_trunc[index]["short_str"]
-            pil_draw.text(xy, new_text, fill, font)
-            return
-
-    # Otherwise, try an initial rendering
-    t_width, t_height = pil_draw.textsize(new_text, font)
-
-    # Form an initial estimate for how many characters will fit
+            return last_trunc[index]["result"]
+    
+    # Form an initial estimate of how many characters will fit,
+    # leaving some margin.
+    t_width = font.getsize(line)[0]
     avg_char = len(new_text) / t_width
-    avail_width = frame_size[0] - 20
-    num_chars = int( (avail_width + 20) / avg_char )
+    num_chars = int( max_width / avg_char ) + 4
     new_text = new_text[0:num_chars]
 
-    # Now perform naive truncation.  A binary search would
-    # be faster, if further speed is needed
-    t_width, t_height = pil_draw.textsize(new_text, font)
-    while (xy[0] + t_width) > avail_width:
+    # Leave room for ellipsis
+    avail_width = max_width - font.getsize("\u2026")[0] + 6
+    
+    # Now perform naive truncation.
+    t_width = font.getsize(new_text)[0]
+    while (t_width > avail_width):
         truncating = 1
         new_text = new_text[:-1]
-        t_width, t_height = pil_draw.textsize(new_text, font)
+        t_width = font.getsize(new_text)[0]
 
-    disp_text = new_text
+    final_text = new_text
     if truncating:
-        disp_text += "\u2026"
-    pil_draw.text(xy, disp_text, fill, font)
+        final_text += "\u2026"
 
-    # Store results for later consultation
+    # Store result for later table lookup.
+    #
+    # NOTE: Is there some standard Python mechanism for
+    #       memoization??
+    #
     new_result = {
-        "str"        : text[0:59],
-        "short_str"  : disp_text,
+        "str"        : line,
+        "result"     : final_text,
         "truncating" : truncating,
         "font"       : font
         }
     last_trunc.insert(0, new_result)
-    last_trunc = last_trunc[:9]
+    
+    return final_text
+    
+    
+def text_wrap(text, font, max_width, max_lines=None):
+    lines = []
+    # If the width of the text is smaller than image width
+    # we don't need to split it, just add it to the lines array
+    # and return
+    if font.getsize(text)[0] <= max_width:
+        lines.append(text)
+    elif max_lines and max_lines == 1:
+        # only a single line available, so just truncate
+        lines.append(truncate_line(text, font, max_width))        
+    else:
+        # split the line by spaces to get words
+        words = text.split(' ')  
+        i = 0
+        # append every word to a line while its width is shorter than max width
+        while i < len(words):
+            line = ''         
+            while i < len(words) and font.getsize(line + words[i])[0] <= max_width:                
+                line = line + words[i] + " "
+                i += 1
+            if not line:
+                line = words[i]
+                i += 1
+            # when the line gets longer than the max width do not append the word, 
+            # add the line to the lines array
+            lines.append(line)
+            if max_lines and len(lines) >= max_lines-1:
+                break
+
+        if max_lines and len(lines) >= max_lines-1 and i < len(words):
+            lines.append(truncate_line(" ".join(words[i:]), font, max_width))
+            
+    return lines
+
+
+# Render text at the specified location, wrapping lines if possible
+# and truncating characters on the final line (with ellipsis placed)
+# if the string is too wide to display in its entirety.
+def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
+    line_array = text_wrap(text, font, max_width, max_lines)
+    line_height = font.getsize('Ahg')[1]
+    (posx, posy) = xy
+    for line in line_array:
+        pil_draw.text((posx, posy), line, fill, font)
+        posy = posy + line_height
+    return
 
 
 
@@ -625,11 +674,13 @@ def audio_screens(image, draw, info, prog):
 
             if display_string:
                 if "trunc" in txt_field[index].keys():
-                    truncate_text(draw,
-                                  (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                  display_string,
-                                  fill=txt_field[index]["fill"],
-                                  font=txt_field[index]["font"])
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     display_string,
+                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_lines=1,
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])                                    
                 else:
                     draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               display_string,
@@ -646,12 +697,22 @@ def audio_screens(image, draw, info, prog):
                               txt_field[index]["label"],
                               fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
                 # now render the field itself
-                if "trunc" in txt_field[index].keys():
-                    truncate_text(draw,
-                                  (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                  info[txt_field[index]["name"]],
-                                  fill=txt_field[index]["fill"],
-                                  font=txt_field[index]["font"])
+                if "wrap" in txt_field[index].keys():
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     info[txt_field[index]["name"]],                                     
+                                     max_width=txt_field[index]["max_width"],
+                                     max_lines=txt_field[index]["max_lines"],
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])                
+                elif "trunc" in txt_field[index].keys():
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     info[txt_field[index]["name"]],                                     
+                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_lines=1,
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])                
                 else:
                     draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               info[txt_field[index]["name"]],
