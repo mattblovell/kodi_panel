@@ -240,10 +240,10 @@ DEMO_MODE = False
 
 # Maintain a short list of the most recently-truncated strings,
 # for use by truncate_line() below
-last_trunc = []
+_last_trunc = []
 
 # Similar structure for wrapping
-last_wrap = []
+_last_wrap = []
 
 # Finally, create Pillow objects
 image  = Image.new('RGB', (frame_size), 'black')
@@ -262,20 +262,31 @@ draw   = ImageDraw.Draw(image)
 # works better if one can wrap it across two lines.
 
 def truncate_line(line, font, max_width):
-    global last_trunc
+    global _last_trunc
     truncating = 0
     new_text = line
 
     # Check if we've already truncated this string in the
     # font specified
-    for index in range(len(last_trunc)):
-        if (line == last_trunc[index]["str"] and
-            font == last_trunc[index]["font"]):
-            return last_trunc[index]["result"]
+    for index in range(len(_last_trunc)):
+        if (line == _last_trunc[index]["str"] and
+            font == _last_trunc[index]["font"]):
+            return _last_trunc[index]["result"]
     
     # Form an initial estimate of how many characters will fit,
     # leaving some margin.
     t_width = font.getsize(line)[0]
+    if t_width <= max_width:
+        new_result = {
+            "str"        : line,
+            "result"     : line,
+            "truncating" : 0,
+            "font"       : font
+        }
+        _last_trunc.insert(0, new_result)
+        _last_trunc = _last_trunc[:9]
+        return line
+    
     avg_char = len(new_text) / t_width
     num_chars = int( max_width / avg_char ) + 4
     new_text = new_text[0:num_chars]
@@ -306,22 +317,22 @@ def truncate_line(line, font, max_width):
         "truncating" : truncating,
         "font"       : font
         }
-    last_trunc.insert(0, new_result)
-    last_trunc = last_trunc[:9]
+    _last_trunc.insert(0, new_result)
+    _last_trunc = _last_trunc[:9]
     
     return final_text
     
     
 def text_wrap(text, font, max_width, max_lines=None):
-    global last_wrap
+    global _last_wrap
     lines = []
 
     # Check if we've already wrapped this text in the
     # font specified
-    for index in range(len(last_wrap)):
-        if (text == last_wrap[index]["str"] and
-            font == last_wrap[index]["font"]):
-            return last_wrap[index]["result"]
+    for index in range(len(_last_wrap)):
+        if (text == _last_wrap[index]["str"] and
+            font == _last_wrap[index]["font"]):
+            return _last_wrap[index]["result"]
     
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
@@ -365,8 +376,8 @@ def text_wrap(text, font, max_width, max_lines=None):
         "result"     : lines,
         "font"       : font
         }
-    last_wrap.insert(0, new_result)
-    last_wrap = last_wrap[:9]
+    _last_wrap.insert(0, new_result)
+    _last_wrap = _last_wrap[:9]
             
     return lines
 
@@ -702,7 +713,15 @@ def audio_screens(image, draw, info, prog):
                 display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
 
             if display_string:
-                if "trunc" in txt_field[index].keys():
+                if "wrap" in txt_field[index].keys():
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     display_string,
+                                     max_width=txt_field[index]["max_width"],
+                                     max_lines=txt_field[index]["max_lines"],
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])                    
+                elif "trunc" in txt_field[index].keys():
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
                                      display_string,
@@ -716,7 +735,7 @@ def audio_screens(image, draw, info, prog):
                               fill=txt_field[index]["fill"],
                               font=txt_field[index]["font"])
 
-        # all other fields
+        # all other text fields
         else:
             if (txt_field[index]["name"] in info.keys() and
                 info[txt_field[index]["name"]] != ""):
@@ -773,6 +792,8 @@ def screen_off():
 def update_display():
     global _last_image_path
     global _last_thumb
+    global _last_wrap
+    global _last_trunc    
     global screen_press
     global screen_active
     global screen_offtime
@@ -838,8 +859,9 @@ def update_display():
         # Audio is playing!
         screen_on()
 
-        # Change display modes upon any screen press, forcing
-        # a re-fetch of any artwork
+        # Change display modes upon any screen press, forcing a
+        # re-fetch of any artwork.  Clear other state that may also be
+        # mode-specific.
         if screen_press:
             screen_press = False
             audio_dmode = audio_dmode.next()
@@ -847,6 +869,8 @@ def update_display():
             _last_image_path = None
             _last_image_time = None
             _last_thumb = None
+            _last_trunc = []
+            _last_wrap = []
 
         # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
@@ -993,8 +1017,8 @@ def main(device_handle):
             # took and then sleep whatever remains of that second.
 
             elapsed = time.time() - start_time
-            if elapsed < 1:
-                time.sleep(1 - elapsed)
+            if elapsed < 0.99:
+                time.sleep(0.99 - elapsed)
             else:
                 time.sleep(0.6)
 
