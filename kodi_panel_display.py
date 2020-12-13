@@ -242,6 +242,9 @@ DEMO_MODE = False
 # for use by truncate_line() below
 last_trunc = []
 
+# Similar structure for wrapping
+last_wrap = []
+
 # Finally, create Pillow objects
 image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
@@ -291,7 +294,8 @@ def truncate_line(line, font, max_width):
     if truncating:
         final_text += "\u2026"
 
-    # Store result for later table lookup.
+    # Store result for later table lookup, only keeping
+    # the last 10 results.
     #
     # NOTE: Is there some standard Python mechanism for
     #       memoization??
@@ -303,12 +307,22 @@ def truncate_line(line, font, max_width):
         "font"       : font
         }
     last_trunc.insert(0, new_result)
+    last_trunc = last_trunc[:9]
     
     return final_text
     
     
 def text_wrap(text, font, max_width, max_lines=None):
+    global last_wrap
     lines = []
+
+    # Check if we've already wrapped this text in the
+    # font specified
+    for index in range(len(last_wrap)):
+        if (text == last_wrap[index]["str"] and
+            font == last_wrap[index]["font"]):
+            return last_wrap[index]["result"]
+    
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
     # and return
@@ -338,6 +352,21 @@ def text_wrap(text, font, max_width, max_lines=None):
 
         if max_lines and len(lines) >= max_lines-1 and i < len(words):
             lines.append(truncate_line(" ".join(words[i:]), font, max_width))
+
+
+    # Store result for later table lookup, only keeping
+    # the last 10 results.
+    #
+    # NOTE: Is there some standard Python mechanism for
+    #       memoization??
+    #
+    new_result = {
+        "str"        : text,
+        "result"     : lines,
+        "font"       : font
+        }
+    last_wrap.insert(0, new_result)
+    last_wrap = last_wrap[:9]
             
     return lines
 
