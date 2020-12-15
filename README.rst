@@ -413,7 +413,7 @@ sitting across the living room.  I therefore really wanted to try an IPS display
 
 I ended up getting both another SPI-connected 3.5-inch IPS display *and* a 4-inch
 HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
-luma.lcd, and its authors welcomed the addition!  I got the HDMI display working
+luma.lcd, and its authors welcomed the addition.  I got the HDMI display working
 thanks to a few additions to luma.core's framebuffer support.
 
 So, here's a photo showing the two IPS panels, both from Waveshare.
