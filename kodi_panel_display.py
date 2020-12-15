@@ -272,7 +272,7 @@ def truncate_line(line, font, max_width):
         if (line == _last_trunc[index]["str"] and
             font == _last_trunc[index]["font"]):
             return _last_trunc[index]["result"]
-    
+
     # Form an initial estimate of how many characters will fit,
     # leaving some margin.
     t_width = font.getsize(line)[0]
@@ -286,14 +286,14 @@ def truncate_line(line, font, max_width):
         _last_trunc.insert(0, new_result)
         _last_trunc = _last_trunc[:9]
         return line
-    
+
     avg_char = len(new_text) / t_width
     num_chars = int( max_width / avg_char ) + 4
     new_text = new_text[0:num_chars]
 
     # Leave room for ellipsis
     avail_width = max_width - font.getsize("\u2026")[0] + 6
-    
+
     # Now perform naive truncation.
     t_width = font.getsize(new_text)[0]
     while (t_width > avail_width):
@@ -319,10 +319,10 @@ def truncate_line(line, font, max_width):
         }
     _last_trunc.insert(0, new_result)
     _last_trunc = _last_trunc[:9]
-    
+
     return final_text
-    
-    
+
+
 def text_wrap(text, font, max_width, max_lines=None):
     global _last_wrap
     lines = []
@@ -333,7 +333,7 @@ def text_wrap(text, font, max_width, max_lines=None):
         if (text == _last_wrap[index]["str"] and
             font == _last_wrap[index]["font"]):
             return _last_wrap[index]["result"]
-    
+
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
     # and return
@@ -341,21 +341,21 @@ def text_wrap(text, font, max_width, max_lines=None):
         lines.append(text)
     elif max_lines and max_lines == 1:
         # only a single line available, so just truncate
-        lines.append(truncate_line(text, font, max_width))        
+        lines.append(truncate_line(text, font, max_width))
     else:
         # split the line by spaces to get words
-        words = text.split(' ')  
+        words = text.split(' ')
         i = 0
         # append every word to a line while its width is shorter than max width
         while i < len(words):
-            line = ''         
-            while i < len(words) and font.getsize(line + words[i])[0] <= max_width:                
+            line = ''
+            while i < len(words) and font.getsize(line + words[i])[0] <= max_width:
                 line = line + words[i] + " "
                 i += 1
             if not line:
                 line = words[i]
                 i += 1
-            # when the line gets longer than the max width do not append the word, 
+            # when the line gets longer than the max width do not append the word,
             # add the line to the lines array
             lines.append(line)
             if max_lines and len(lines) >= max_lines-1:
@@ -378,7 +378,7 @@ def text_wrap(text, font, max_width, max_lines=None):
         }
     _last_wrap.insert(0, new_result)
     _last_wrap = _last_wrap[:9]
-            
+
     return lines
 
 
@@ -588,6 +588,7 @@ def status_screen(draw, kodi_status, summary_string):
         "System.Date"           : "",
         "System.Uptime"         : "Up: ",
         "System.CPUTemperature" : "CPU: ",
+        "System.CpuFrequency"   : "Freq: ",
     }
 
     # Kodi logo, if desired
@@ -611,6 +612,13 @@ def status_screen(draw, kodi_status, summary_string):
         elif txt_field[index]["name"] == "summary":
             draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
                       summary_string,
+                      txt_field[index]["fill"], txt_field[index]["font"])
+
+        elif txt_field[index]["name"] == "kodi_version":
+            kodi_version = kodi_status["System.BuildVersion"].split()[0]
+            build_date   = kodi_status["System.BuildDate"]
+            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+                      "Kodi version : " + kodi_version + " (" + build_date + ")",
                       txt_field[index]["fill"], txt_field[index]["font"])
 
         elif txt_field[index]["name"] == "time_hrmin":
@@ -720,7 +728,7 @@ def audio_screens(image, draw, info, prog):
                                      max_width=txt_field[index]["max_width"],
                                      max_lines=txt_field[index]["max_lines"],
                                      fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])                    
+                                     font=txt_field[index]["font"])
                 elif "trunc" in txt_field[index].keys():
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
@@ -728,7 +736,7 @@ def audio_screens(image, draw, info, prog):
                                      max_width=frame_size[0] - txt_field[index]["posx"],
                                      max_lines=1,
                                      fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])                                    
+                                     font=txt_field[index]["font"])
                 else:
                     draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               display_string,
@@ -748,19 +756,19 @@ def audio_screens(image, draw, info, prog):
                 if "wrap" in txt_field[index].keys():
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],                                     
+                                     info[txt_field[index]["name"]],
                                      max_width=txt_field[index]["max_width"],
                                      max_lines=txt_field[index]["max_lines"],
                                      fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])                
+                                     font=txt_field[index]["font"])
                 elif "trunc" in txt_field[index].keys():
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],                                     
+                                     info[txt_field[index]["name"]],
                                      max_width=frame_size[0] - txt_field[index]["posx"],
                                      max_lines=1,
                                      fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])                
+                                     font=txt_field[index]["font"])
                 else:
                     draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               info[txt_field[index]["name"]],
@@ -793,7 +801,7 @@ def update_display():
     global _last_image_path
     global _last_thumb
     global _last_wrap
-    global _last_trunc    
+    global _last_trunc
     global screen_press
     global screen_active
     global screen_offtime
@@ -845,8 +853,12 @@ def update_display():
                 "method"  : "XBMC.GetInfoLabels",
                 "params"  : {"labels": ["System.Uptime",
                                         "System.CPUTemperature",
+                                        "System.CpuFrequency",
                                         "System.Date",
                                         "System.Time",
+                                        "System.BuildVersion",
+                                        "System.BuildDate",
+                                        "System.FreeSpace"
                 ]},
                 "id"      : 10,
             }

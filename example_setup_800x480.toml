@@ -9,7 +9,8 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-BASE_URL = "http://localhost:8080"
+#BASE_URL = "http://localhost:8080"
+BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
 
 
 
@@ -492,9 +493,22 @@ font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "System.CPUTemperature"
+name = "kodi_version"  # special treatment
 posx = 5
 posy = 250
 font = "font_sm"
 fill = "white"
 
+[[STATUS_LAYOUT.fields]]
+name = "System.CPUTemperature"
+posx = 5
+posy = 290
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.CpuFrequency"
+posx = 5
+posy = 330
+font = "font_sm"
+fill = "white"
