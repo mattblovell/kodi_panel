@@ -406,9 +406,24 @@ hardware PWM for it on the N2 and C4 boards.
 Further Development
 *******************
 
-Photo showing an 3.5-inch ILI9486 IPS panel and a 4-inch HDMI panel, both from Waveshare.
+I liked the first version of kodi_panel, but the TN (twisted nematic) LCD I used
+had a pretty small viewing angle.  One doesn't tend to notice this when sitting at
+a desk immediately in front of the display, but it ends up being more noticeable 
+sitting across the living room.  So, I really wanted to try an IPS display.
+
+I ended up getting both another SPI-connected 3.5-inch IPS display *and* a 4-inch
+HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
+luma.lcd, and its authors welcomed the addition!  I got the HDMI display working
+thanks to a few additions to luma.core's framebuffer support.
+
+So, here's a photo showing the two IPS panels, both from Waveshare.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/dualing_displays.jpg
+
+The displays have resolutions of 480x320 and 800x480.  In order to support those sizes,
+as well as the original 320x240, I ended up adding TOML support for a setup file.  The
+details of creating a luma.lcd display, or setting up the framebuffer as a device, were 
+also separated from the "draw with Pillow" portion of the script.
 
 
 License
