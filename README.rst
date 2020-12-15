@@ -408,8 +408,8 @@ Further Development
 
 I liked the first version of kodi_panel, but the TN (twisted nematic) LCD I used
 had a pretty small viewing angle.  One doesn't tend to notice this when sitting at
-a desk immediately in front of the display, but it ends up being more noticeable 
-sitting across the living room.  So, I really wanted to try an IPS display.
+a desk immediately in front of the display, but it ends up being pretty obvious 
+sitting across the living room.  I therefore really wanted to try an IPS display!
 
 I ended up getting both another SPI-connected 3.5-inch IPS display *and* a 4-inch
 HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
