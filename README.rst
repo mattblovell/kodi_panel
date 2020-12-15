@@ -281,11 +281,14 @@ I have only tried the above on an Odroid C4.  If others want to inform me of the
 attempts and what instruction changes need to be captured, please let me know.
 
 
+Other Details
+-------------
+
 Touch Interrupt
 ***************
 
-For the 3.2-inch ILI9341-based board that I tried, the touch
-controller (XPT2046) was sufficiently active following power-up that
+For the 3.2-inch ILI9341-based board that I initially tried, the touch
+controller (XPT2046) was alive following power-up that
 T_IRQ, the touch interrupt, was working!  It was not necessary to send
 any command to the controller or even connect T_CLK.  The T_IRQ signal
 is by default pulled up to Vcc by an internal resistor and gets pulled
@@ -336,7 +339,7 @@ results!
 
 
 Prototyping Changes
--------------------
+*******************
 
 The ``kodi_panel_demo.py`` script is essentially identical to the
 other executable scripts, except that it takes advantage of
@@ -367,10 +370,6 @@ the emulator the ability to cycle through the display modes and show
 the status screen.
 
 
-
-Other Details
--------------
-
 Case
 ****
 
@@ -391,21 +390,26 @@ LCD Brightness
 An LCD panel in a darkened room can be *very* bright.  That was one of
 my reasons for focusing initially on just a music now-playing screen.
 
-There is some code present to try using luma.lcd's PWM feature for the
-backlight.  Unfortunately (as of Oct 2020) RPi.GPIO (even the Odroid
-version) uses software to control the PWM (via pthreads).  Since exact
-scheduling cannot be guaranteed with Linux, the screen's brightness
-can flicker.  I've not yet found a way to make use of the C4's
-available hardware PWM together with luma.lcd.
+All of the displays I've purchased require PWM (Pulse Width Modulation)
+for control over backlight brightness.  (The Waveshare panels have fairly
+straightforward rework -- moving a resistor -- that gives one PWM control
+via one of the connector pins.)  There is code present within luma.lcd
+to permit for PWM control of the backlight, using RPi.GPIO.  Unfortunately,
+as of late 2020, RPi.GPIO uses software to control the PWM on (by default)
+GPIO18 / Physical Pin 12.  Since exact scheduling cannot be guaranteed with
+pthreads on Linux, the screen brightness ends up with a flicker.  
 
-I ended up soldering a 10 kΩ trimpot inline with the LED wire.  Unfortunately,
-I think the GPIO signal just goes to a transistor that then controls
-the backlight LEDs.  So, brightness can only be controlled via
-PWM.  (This 
-`post <https://forum.pjrc.com/threads/28106-Display_ili9341?p=76835&viewfull=1#post76835>`_,
-concerning the Teensy color display, which I think is the same as the
-3.2-inch display I'm using, has a user-generated schematic.)
- 
+The same is true for RPi.GPIO-Odroid, although changes are underway to enable
+hardware PWM for it on the N2 and C4 boards.
+
+
+Further Development
+*******************
+
+Photo showing an 3.5-inch ILI9486 IPS panel and a 4-inch HDMI panel, both from Waveshare.
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/dualing_displays.jpg
+
 
 License
 -------
