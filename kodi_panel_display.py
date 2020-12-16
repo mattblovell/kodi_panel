@@ -927,8 +927,15 @@ def update_display():
         else:
             prog = -1
 
-        # Audio info
-        audio_screens(image, draw, track_info, prog)
+        # Audio info.  Only display for a non-zero time, though.
+        # There seems to be a hiccup in DLNA/UPnP playback in which an
+        # album change (or stopping playback) causes a moment when
+        # nothing is actually playing, according to the Info Labels.
+        if (track_info["MusicPlayer.Time"] == "00:00" or
+            track_info["MusicPlayer.Time"] == "00:00:00"):
+            pass
+        else:
+            audio_screens(image, draw, track_info, prog)
 
     # Output to OLED/LCD display
     device.display(image)
