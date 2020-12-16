@@ -931,8 +931,10 @@ def update_display():
         # There seems to be a hiccup in DLNA/UPnP playback in which an
         # album change (or stopping playback) causes a moment when
         # nothing is actually playing, according to the Info Labels.
-        if (track_info["MusicPlayer.Time"] == "00:00" or
-            track_info["MusicPlayer.Time"] == "00:00:00"):
+        if ((track_info["MusicPlayer.Time"] == "00:00" or
+             track_info["MusicPlayer.Time"] == "00:00:00") and
+            track_info["MusicPlayer.Duration"] == "" and
+            track_info["MusicPlayer.Cover"] == ""):
             pass
         else:
             audio_screens(image, draw, track_info, prog)
