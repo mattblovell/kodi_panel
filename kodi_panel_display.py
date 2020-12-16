@@ -269,8 +269,9 @@ def truncate_line(line, font, max_width):
     # Check if we've already truncated this string in the
     # font specified
     for index in range(len(_last_trunc)):
-        if (line == _last_trunc[index]["str"] and
-            font == _last_trunc[index]["font"]):
+        if (line      == _last_trunc[index]["str"] and
+            max_width == _last_trunc[index]["max_width"] and
+            font      == _last_trunc[index]["font"]):
             return _last_trunc[index]["result"]
 
     # Form an initial estimate of how many characters will fit,
@@ -315,7 +316,8 @@ def truncate_line(line, font, max_width):
         "str"        : line,
         "result"     : final_text,
         "truncating" : truncating,
-        "font"       : font
+        "font"       : font,
+        "max_width"  : max_width
         }
     _last_trunc.insert(0, new_result)
     _last_trunc = _last_trunc[:9]
@@ -330,8 +332,9 @@ def text_wrap(text, font, max_width, max_lines=None):
     # Check if we've already wrapped this text in the
     # font specified
     for index in range(len(_last_wrap)):
-        if (text == _last_wrap[index]["str"] and
-            font == _last_wrap[index]["font"]):
+        if (text      == _last_wrap[index]["str"] and
+            max_width == _last_wrap[index]["max_width"] and
+            font      == _last_wrap[index]["font"]):
             return _last_wrap[index]["result"]
 
     # If the width of the text is smaller than image width
@@ -374,7 +377,8 @@ def text_wrap(text, font, max_width, max_lines=None):
     new_result = {
         "str"        : text,
         "result"     : lines,
-        "font"       : font
+        "font"       : font,
+        "max_width"  : max_width
         }
     _last_wrap.insert(0, new_result)
     _last_wrap = _last_wrap[:9]
