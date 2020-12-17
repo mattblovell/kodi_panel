@@ -55,7 +55,7 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #     DC          |  GPIO24          |  18
 #     MOSI        |  GPIO10 (MOSI)   |  19
 #     SCLK / CLK  |  GPIO11 (SCLK)   |  23
-#     LED (*)     |  GPIO18          |  12 (a.k.a. PWM_E)
+#     LED (*)     |  GPIO18          |  12 
 #     ------------|------------------|-----------------
 #
 #   The display I used, a 3.5-inch Waveshare IPS LCD (B)

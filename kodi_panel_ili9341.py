@@ -68,7 +68,7 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #   DC          |  GPIO24          |  18
 #   MOSI        |  GPIO10 (MOSI)   |  19
 #   SCLK / CLK  |  GPIO11 (SCLK)   |  23
-#   LED         |  GPIO18          |  12 (a.k.a. PWM_E)
+#   LED         |  GPIO18          |  12 
 #   ------------|------------------|-----------------
 #
 # Originally, the constructor for ili9341 also included a
@@ -82,9 +82,9 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 # As Linux is not a real-time OS, the scheduling of that thread is not
 # guaranteed and flickering can result.
 #
-# See kodi_panel_fb.py for an example of using sysfs directly for
-# hardware PWM on an RPi (after loading the pwm-2chan overlay in the
-# Pi's /boot/config.txt file).
+# The GPIO18 pin is PWM-capable.  See kodi_panel_fb.py for an example 
+# of using sysfs directly for hardware PWM on an RPi (after loading 
+# the pwm-2chan overlay in the Pi's /boot/config.txt file).
 #
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
