@@ -442,10 +442,11 @@ display is on the left, and the 4-inch display is on the right.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/dualing_displays.jpg
 
-The displays have resolutions of 480x320 and 800x480.  In order to support those sizes,
-as well as the original 320x240, I ended up adding TOML support for a setup file.  The
-details of creating a luma.lcd display, or setting up the framebuffer as a device, were 
-also separated from the "draw with Pillow" portion of the script.
+The displays have resolutions of 480x320 and 800x480, respectively. In order to
+support those sizes, as well as the original 320x240, I ended up adding TOML
+support for a setup file. The details of creating a luma.lcd display, or
+setting up the framebuffer as a device, were also separated from the "draw with
+Pillow" portion of the script.
 
 
 License
