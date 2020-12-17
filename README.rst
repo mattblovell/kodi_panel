@@ -292,7 +292,7 @@ Touch Interrupt
 ***************
 
 For the 3.2-inch ILI9341-based board that I initially tried, the touch
-controller (XPT2046) was alive following power-up that
+controller (XPT2046) was alive following power-up such that
 T_IRQ, the touch interrupt, was working!  It was not necessary to send
 any command to the controller or even connect T_CLK.  The T_IRQ signal
 is by default pulled up to Vcc by an internal resistor and gets pulled
