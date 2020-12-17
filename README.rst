@@ -47,7 +47,7 @@ attempt here!)
 On an Odroid C4, kodi_panel appears to take ~0.5% of CPU time when idle
 and about ~2.5% when music playback is occurring.  Kodi itself, for
 comparison, takes 3% CPU when idle and 8% when busy (for ALAC playback).
-The CPU load increases when when remotely from Kodi and as
+The CPU load increases when running remotely from Kodi and as
 the display size increases.  For a 800x480 display using network
 calls to query Kodi state, the active load increases to 12 to 15%
 running on an RPi 3.
