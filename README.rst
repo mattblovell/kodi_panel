@@ -384,8 +384,8 @@ Here are two photos of the finished product:
 
 
 
-LCD Brightness
-**************
+LCD Brightness / PWM
+********************
 
 An LCD panel in a darkened room can be *very* bright.  That was one of
 my reasons for focusing initially on just a music now-playing screen.
@@ -406,12 +406,12 @@ enable hardware PWM for it on the N2 and C4 boards.
 If you examine ``kodi_panel_fb.py``, there is code present for using
 hardware PWM on an RPi.  That code depends upon first loading a device
 driver that provides for PWM.  On the RPi 3, this can be accomplished
-by adding the following to ``/boot/config.txt``
+by adding the following to ``/boot/config.txt``:
 
 ::
 
-  # PWM for display
-  dtoverlay=pwm-2chan
+    # PWM for display
+    dtoverlay=pwm-2chan
 
 
 and then rebooting.  Alternatively, one can invoke 
