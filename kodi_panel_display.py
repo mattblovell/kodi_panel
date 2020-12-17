@@ -48,7 +48,7 @@ import threading
 # kodi_panel settings
 import config
 
-PANEL_VER = "v0.90"
+PANEL_VER = "v0.95"
 
 # Audio/Video codec lookup
 codec_name = {
