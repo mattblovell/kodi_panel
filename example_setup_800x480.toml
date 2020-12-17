@@ -9,9 +9,7 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-#BASE_URL = "http://localhost:8080"
-BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
-
+BASE_URL = "http://localhost:8080"
 
 
 # --------------------------------------------------------------------
@@ -20,7 +18,8 @@ BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
 #
 
 # Specify the size of the display in pixels.  These values get stored
-# into a tuple within kodi_panel.
+# into a tuple within kodi_panel and MUST match how the display (or
+# framebuffer) is configured.
 DISPLAY_WIDTH  = 800 
 DISPLAY_HEIGHT = 480 
 
@@ -37,7 +36,8 @@ DISPLAY_HEIGHT = 480
 #   Odroid C4:  GPIO19 (physical Pin 35)
 #   RPi 3:      GPIO16 (physical Pin 36)
 #
-# Pins are fixed if using the header on the Waveshare displays:
+# Pin choices are fixed if using the header on the Waveshare displays
+# to connect directly to GPIO pins:
 #
 #   Waveshare 3.5" LCD (B):  GPIO17 (physical pin 11)
 #   Waveshare 4" HDMI (H):   GPIO25 (physical pin 22)
@@ -47,8 +47,10 @@ TOUCH_INT = 25
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
-# (or typical HDMI panels) should set it to false.
+# (or using luma.core's linux_framebuffer) should set it to false.
 #
+# This variable should likely be set false if using the PWM control
+# through sysfs files (as presently implemented in kodi_panel_fb.py).
 # Note that the framebuffer version (kodi_panel_fb.py) may ignore or
 # override this setting, in favor of the group below.
 #
@@ -71,9 +73,6 @@ USE_BACKLIGHT = true
 USE_HW_PWM = true
 HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
 HW_PWM_LEVEL = 0.55
-
-
-# PWM options not yet production-worthy in kodi_panel
 
 
 # --------------------------------------------------------------------
@@ -107,7 +106,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 # Colors
 #
-#   Specify color names to use elsewhere.  To know whether this
+#   Specify color names to use further below.  To know whether this
 #   dictionary needs to be consulted, all names MUST begin with
 #   "color_".  Color references without those initial characters just
 #   get passed through, without a lookup in this dictionary.
