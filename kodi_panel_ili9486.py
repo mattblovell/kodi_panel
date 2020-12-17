@@ -47,10 +47,9 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #   documented in the ili9341 version of this script, except
 #   for the touch interrupt pin.
 #
-#     LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
+#                 |  BCM /           |
+#     LCD pin     |  RPi.GPIO name   |  Physical pin #
 #     ------------|------------------|-----------------
-#     VCC         |  3V3             |  1 or 17
-#     GND         |  GND             |  9 or 25 or 39
 #     CS          |  GPIO8           |  24
 #     RST / RESET |  GPIO25          |  22
 #     DC          |  GPIO24          |  18

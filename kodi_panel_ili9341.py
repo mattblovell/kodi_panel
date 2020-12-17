@@ -58,7 +58,8 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 # As you can provide RPi.GPIO numbers as arguments to the spi()
 # constructor, you do have some flexibility.
 #
-#   LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
+#               |  BCM /           |
+#   LCD pin     |  RPi.GPIO name   |  Physical pin #
 #   ------------|------------------|-----------------
 #   VCC         |  3V3             |  1 or 17
 #   GND         |  GND             |  9 or 25 or 39
