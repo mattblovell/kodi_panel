@@ -305,9 +305,10 @@ All that was necessary was to find a GPIO pin that was free to use an
 an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
 known as Pin Number 35.  On the RPi3, GPIO16 (physical Pin 36) worked.
 
-The following block of code in ``kodi_panel.py`` is qualified by a USE_TOUCH
-boolean that is set to True at the start of the script.  If you are *not*
-using the touch interrupt, just set USE_TOUCH to False.
+The following block of code from ``kodi_panel_display.py`` is qualified by a
+USE_TOUCH boolean that is set according to the ``setup.toml``. If you are *not*
+using the touch interrupt, just set the relevant variable to ``false`` in the
+TOML file.
 
 ::
 
