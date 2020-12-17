@@ -409,11 +409,13 @@ driver that provides for PWM.  On the RPi 3, this can be accomplished
 by adding the following to ``/boot/config.txt``
 
 ::
-   # PWM for display
-   dtoverlay=pwm-2chan
+
+  # PWM for display
+  dtoverlay=pwm-2chan
 
 
-and then rebooting.  Alternatively, one can invoke ``sudo dtoverlay /boot/overlays/pwm-2chan.dtbo``.
+and then rebooting.  Alternatively, one can invoke 
+``sudo dtoverlay /boot/overlays/pwm-2chan.dtbo``.
 
 Following that, `sysfs <https://en.wikipedia.org/wiki/Sysfs>`_
 directory structure should exist under ``/sys/class/pwm``.  The code
