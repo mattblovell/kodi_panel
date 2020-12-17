@@ -387,18 +387,18 @@ Here are two photos of the finished product:
 LCD Brightness / PWM
 ********************
 
-An LCD panel in a darkened room can be *very* bright.  That was one of
-my reasons for focusing initially on just a music now-playing screen.
+An LCD panel in a darkened room can be *very* bright. That was one of my
+reasons for focusing initially on just a music now-playing screen. All of the
+displays I've purchased require PWM (Pulse Width Modulation) for control over
+backlight brightness. (The Waveshare panels have fairly straightforward rework
+-- moving a resistor -- that gives one PWM control via one of the connector
+pins.)
 
-All of the displays I've purchased require PWM (Pulse Width
-Modulation) for control over backlight brightness.  (The Waveshare
-panels have fairly straightforward rework -- moving a resistor -- that
-gives one PWM control via one of the connector pins.)  There is code
-present within luma.lcd to permit for PWM control of the backlight,
-using RPi.GPIO.  Unfortunately, as of late 2020, RPi.GPIO uses
-software to control the PWM on (by default) GPIO18 / Physical Pin 12.
-Since exact scheduling cannot be guaranteed with pthreads on Linux,
-the screen brightness ends up with a flicker.
+There is code present within luma.lcd to permit for PWM control of the
+backlight, using RPi.GPIO. Unfortunately, as of late 2020, RPi.GPIO uses
+software to control the PWM on (by default) GPIO18 / Physical Pin 12. Since
+exact scheduling cannot be guaranteed with pthreads on Linux, the screen
+brightness ends up with a flicker.
 
 The same is true for RPi.GPIO-Odroid, although changes are underway to
 enable hardware PWM for it on the N2 and C4 boards.
