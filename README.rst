@@ -32,7 +32,7 @@ with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
 script also means that one can have a separate SBC driving a "Now Playing"
 screen anywhere one would like!  
 
-The ``kodi_panel.py`` script is also fairly short.  If you are
+The various kodi_panel scripts are also fairly short.  If you are
 familiar with reading and writing Python, and making use of the Pillow
 image library, it should be straightforward to modify it to your taste
 or needs.  Using Python also lets one experiment with and inspect the
