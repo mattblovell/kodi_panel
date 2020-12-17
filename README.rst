@@ -390,18 +390,37 @@ LCD Brightness
 An LCD panel in a darkened room can be *very* bright.  That was one of
 my reasons for focusing initially on just a music now-playing screen.
 
-All of the displays I've purchased require PWM (Pulse Width Modulation)
-for control over backlight brightness.  (The Waveshare panels have fairly
-straightforward rework -- moving a resistor -- that gives one PWM control
-via one of the connector pins.)  There is code present within luma.lcd
-to permit for PWM control of the backlight, using RPi.GPIO.  Unfortunately,
-as of late 2020, RPi.GPIO uses software to control the PWM on (by default)
-GPIO18 / Physical Pin 12.  Since exact scheduling cannot be guaranteed with
-pthreads on Linux, the screen brightness ends up with a flicker.  
+All of the displays I've purchased require PWM (Pulse Width
+Modulation) for control over backlight brightness.  (The Waveshare
+panels have fairly straightforward rework -- moving a resistor -- that
+gives one PWM control via one of the connector pins.)  There is code
+present within luma.lcd to permit for PWM control of the backlight,
+using RPi.GPIO.  Unfortunately, as of late 2020, RPi.GPIO uses
+software to control the PWM on (by default) GPIO18 / Physical Pin 12.
+Since exact scheduling cannot be guaranteed with pthreads on Linux,
+the screen brightness ends up with a flicker.
 
-The same is true for RPi.GPIO-Odroid, although changes are underway to enable
-hardware PWM for it on the N2 and C4 boards.
+The same is true for RPi.GPIO-Odroid, although changes are underway to
+enable hardware PWM for it on the N2 and C4 boards.
 
+If you examine ``kodi_panel_fb.py``, there is code present for using
+hardware PWM on an RPi.  That code depends upon first loading a device
+driver that provides for PWM.  On the RPi 3, this can be accomplished
+by adding the following to ``/boot/config.txt``
+
+::
+   # PWM for display
+   dtoverlay=pwm-2chan
+
+
+and then rebooting.  Alternatively, one can invoke ``sudo dtoverlay /boot/overlays/pwm-2chan.dtbo``.
+
+Following that, `sysfs <https://en.wikipedia.org/wiki/Sysfs>`_
+directory structure should exist under ``/sys/class/pwm``.  The code
+in that framebuffer version of kodi_panel makes use of those sysfs
+files to control backlight brightness.
+
+   
 
 Further Development
 *******************
