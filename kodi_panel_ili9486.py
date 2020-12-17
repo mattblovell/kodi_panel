@@ -59,12 +59,18 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #     LED (*)     |  GPIO18          |  12 (a.k.a. PWM_E)
 #     ------------|------------------|-----------------
 #
-#   The display I was using, a 3.5-inch Waveshare IPS LCD (B)
+#   The display I used, a 3.5-inch Waveshare IPS LCD (B)
 #   panel, has a header on the back that is meant to directly
 #   connect to an RPi's GPIO header.  Unless one wishes
 #   to use jumper wires, there isn't a lot of choice for
 #   the pin assignments.  It does permit for use of
 #   a nice ribbon cable connector, though!
+#
+#   (*) As shipped, the Waveshare 3.5-inch (B) display turns
+#       on the backlight whenever the display has power.
+#       A small soldering change is required to let
+#       GPIO18 control the backlight (whether on/off or
+#       PWM).
 #
 #
 device = ili9486(serial, active_low=False, width=320, height=480,
