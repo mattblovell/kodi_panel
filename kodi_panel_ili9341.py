@@ -46,9 +46,9 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #
 # Create a handle to the ILI9341-driven SPI panel via luma.lcd.
 #
-# The backlight signal (with inline resistor NEEDED) is connected to
-# GPIO18, physical pin 12.  Recall that the GPIOx number is using
-# RPi.GPIO's scheme!
+# The backlight signal (with inline resistor possibly needed) is
+# connected to GPIO18, physical pin 12.  Recall that the GPIOx number
+# is using RPi.GPIO's scheme!
 #
 # Below is how I've connected the ILI9341, which is *close* to the
 # recommended wiring in luma.lcd's online documentation.  Again,
@@ -57,7 +57,6 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #
 # As you can provide RPi.GPIO numbers as arguments to the spi()
 # constructor, you do have some flexibility.
-#
 #
 #   LCD pin     |  RPi.GPIO name   |  Odroid C4 pin #
 #   ------------|------------------|-----------------
@@ -75,6 +74,16 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 # framebuffer="full_frame" argument.  That proved unnecessary
 # once non-zero reset hold and release times were specified
 # for the device.
+#
+# The USE_PWM option that exists below is, unfortunately, not all that
+# useful as of this writing (in late 2020).  RPi.GPIO-Odroid, like
+# RPi.GPIO itself, uses a pthreads software implementation for PWM.
+# As Linux is not a real-time OS, the scheduling of that thread is not
+# guaranteed and flickering can result.
+#
+# See kodi_panel_fb.py for an example of using sysfs directly for
+# hardware PWM on an RPi (after loading the pwm-2chan overlay in the
+# Pi's /boot/config.txt file).
 #
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
