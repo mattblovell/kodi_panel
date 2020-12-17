@@ -441,7 +441,7 @@ max_lines = 4
 #
 #   Similar to audio layout above, but used for the status screen
 #   that appears following a screen touch when idle.  The screen
-#   gets drain by status_screen().
+#   gets drawn by status_screen().
 #
 #   Special treatment exists for several field names
 #
