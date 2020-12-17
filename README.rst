@@ -405,7 +405,7 @@ enable hardware PWM for it on the N2 and C4 boards.
 
 If you examine ``kodi_panel_fb.py``, there is code present for using
 hardware PWM on an RPi.  That code depends upon first loading a device
-driver that provides for PWM.  On the RPi 3, this can be accomplished
+driver that provides for PWM.  On an RPi 3, this can be accomplished
 by adding the following to ``/boot/config.txt``:
 
 ::
@@ -437,7 +437,8 @@ HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
 luma.lcd, and its authors welcomed the addition.  I got the HDMI display working
 thanks to a few additions to luma.core's framebuffer support.
 
-So, here's a photo showing the two IPS panels, both from Waveshare.
+So, here's a photo showing the two IPS panels, both from Waveshare.  The 3.5-inch
+display is on the left, and the 4-inch display is on the right.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/dualing_displays.jpg
 
