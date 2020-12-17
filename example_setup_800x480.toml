@@ -492,22 +492,23 @@ font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "kodi_version"  # special treatment
+name = "System.CPUTemperature"
 posx = 5
 posy = 250
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "System.CPUTemperature"
+name = "System.CpuFrequency"
 posx = 5
 posy = 290
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "System.CpuFrequency"
+name = "kodi_version"  # special treatment
 posx = 5
 posy = 330
 font = "font_sm"
 fill = "white"
+
