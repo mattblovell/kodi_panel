@@ -417,7 +417,7 @@ by adding the following to ``/boot/config.txt``:
 and then rebooting.  Alternatively, one can invoke 
 ``sudo dtoverlay /boot/overlays/pwm-2chan.dtbo``.
 
-Following that, `sysfs <https://en.wikipedia.org/wiki/Sysfs>`_
+Following that, a `sysfs <https://en.wikipedia.org/wiki/Sysfs>`_
 directory structure should exist under ``/sys/class/pwm``.  The code
 in that framebuffer version of kodi_panel makes use of those sysfs
 files to control backlight brightness.
