@@ -27,7 +27,7 @@ boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
 The general approach taken by this project, running separately from Kodi
-itself and retrieving all relevant state via JSON-RPC, has been used by other
+and retrieving all relevant state via JSON-RPC, has been used by other
 projects.  The main advantage of *not* being a Kodi addon is that, at least
 with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
 script also means that one can have a separate SBC driving a "Now Playing"
