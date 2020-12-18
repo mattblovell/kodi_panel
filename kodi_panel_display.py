@@ -667,10 +667,20 @@ def audio_screens(image, draw, info, prog):
     if "thumb" in layout.keys():
         _last_thumb = get_artwork(info, _last_thumb, layout["thumb"]["size"])
         if _last_thumb:
-            if "center" in layout["thumb"].keys():
+            if layout["thumb"].get("center",0):
                 image.paste(_last_thumb,
                             (int((frame_size[0]-_last_thumb.width)/2),
                              int((frame_size[1]-_last_thumb.height)/2)))
+            elif (layout["thumb"].get("center_sm", 0) and
+                  (_last_thumb.width < layout["thumb"]["size"] or
+                   _last_thumb.height < layout["thumb"]["size"])):
+                new_x = layout["thumb"]["posx"]                
+                new_y = layout["thumb"]["posy"]
+                if _last_thumb.width < layout["thumb"]["size"]:
+                    new_x += int((layout["thumb"]["size"]/2) - (_last_thumb.width/2))
+                if _last_thumb.height < layout["thumb"]["size"]:
+                    new_y += int((layout["thumb"]["size"]/2) - (_last_thumb.height/2))
+                image.paste(_last_thumb, (new_x, new_y))
             else:
                 image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
     else:

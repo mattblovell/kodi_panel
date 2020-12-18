@@ -178,6 +178,9 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 posx = 4
 posy = 7
 size = 140
+# If artwork is smaller than the above size, should it be centered
+# where the fullsize artwork would have been placed?
+center_sm = 1  
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 150     # upper-left corner x position
@@ -278,6 +281,7 @@ trunc = 1
 [A_LAYOUT.A_FULLSCREEN.thumb]
 center = 1
 size = 235
+center_sm = 1  
 
 
 #
@@ -286,6 +290,7 @@ size = 235
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
 size = 235
+center_sm = 1  
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
