@@ -1,7 +1,7 @@
 The Kodi logo is an XBMC Foundation Trademark and is being used here
 in a non-commercial fashion, as kodi_panel is possible solely due to
 Kodi itself.  Note that kodi_panel is NOT a part of Kodi and has no
-relationship to the XMBC Foundation.
+relationship to the XBMC Foundation.
 
 The image file(s)
 
