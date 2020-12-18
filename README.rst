@@ -17,7 +17,7 @@ occur over the network.
 
 **Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
-`CoreELEC <https://coreelec.org/>`_.  Kodi® is a registered trademark
+`CoreELEC <https://coreelec.org/>`_.  Kodi is a registered trademark
 of the XBMC Foundation.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
