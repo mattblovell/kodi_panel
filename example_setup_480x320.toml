@@ -275,6 +275,8 @@ posy  = 295
 font  = "font_sm"
 fill  = "color_artist"
 trunc = 1
+# Drop artist display if "Unknown"
+drop_unknown = 1
 
 
 #

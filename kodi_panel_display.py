@@ -734,6 +734,10 @@ def audio_screens(image, draw, info, prog):
             elif info['MusicPlayer.Property(Role.Composer)'] != "":
                 display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
 
+            if (display_string == "Unknown" and
+                txt_field[index].get("drop_unknown",0)):
+                continue
+                
             if display_string:
                 if "wrap" in txt_field[index].keys():
                     render_text_wrap(draw,
