@@ -2,7 +2,7 @@ kodi_panel
 ==========
 
 Kodi_panel is a standalone Python 3 script that provides an
-information front panel for Kodi via an attached LCD display.  The LCD
+information front panel for Kodi® via an attached LCD display.  The LCD
 is handled entirely by `luma.core <https://github.com/rm-hull/luma.core/>`_
 and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
 depend upon `Pillow <https://python-pillow.org/>`_ and `RPi.GPIO
@@ -15,15 +15,16 @@ computer) on which Kodi itself is running.  That's not really
 necessary, though, provided one is willing to let the JSON-RPC calls
 occur over the network.
 
-For Raspberry Pi boards, RPi.GPIO obviously works as-is.  For Odroid
-boards, one must instead make use of
-`RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
+**Disclaimer:** This project is *not* directly associated with either
+`Kodi <https://kodi.tv/>`_ or
+`CoreELEC <https://coreelec.org/>`_.  Kodi® is a registered trademark
+of the XBMC Foundation.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
-**Disclaimer:** This project is *not* directly associated with either
-`Kodi <https://kodi.tv/>`_ or
-`CoreELEC <https://coreelec.org/>`_.
+For Raspberry Pi boards, RPi.GPIO obviously works as-is.  For Odroid
+boards, one must instead make use of
+`RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
 The general approach taken by this project, running separately from Kodi
 itself and retrieving all relevant state via JSON-RPC, has been used by other
