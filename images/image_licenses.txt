@@ -5,10 +5,14 @@ relationship to the XMBC Foundation.
 
 The image file(s)
 
-- CD.png
+- CD.png (http://www.softicons.com/toolbar-icons/soft-icons-by-lokas-software/cd-icon)
+  by Lokas Software
 
 are distributed under the Create Commons Attribution 3.0 license, as
 available here:
 
   https://creativecommons.org/licenses/by/3.0/
 
+
+Any image file not listed was available for distribution without
+attribution.
