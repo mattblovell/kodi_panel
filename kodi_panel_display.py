@@ -622,7 +622,7 @@ def status_screen(draw, kodi_status, summary_string):
             kodi_version = kodi_status["System.BuildVersion"].split()[0]
             build_date   = kodi_status["System.BuildDate"]
             draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
-                      "Kodi version : " + kodi_version + " (" + build_date + ")",
+                      "Kodi version: " + kodi_version + " (" + build_date + ")",
                       txt_field[index]["fill"], txt_field[index]["font"])
 
         elif txt_field[index]["name"] == "time_hrmin":
@@ -674,7 +674,7 @@ def audio_screens(image, draw, info, prog):
             elif (layout["thumb"].get("center_sm", 0) and
                   (_last_thumb.width < layout["thumb"]["size"] or
                    _last_thumb.height < layout["thumb"]["size"])):
-                new_x = layout["thumb"]["posx"]                
+                new_x = layout["thumb"]["posx"]
                 new_y = layout["thumb"]["posy"]
                 if _last_thumb.width < layout["thumb"]["size"]:
                     new_x += int((layout["thumb"]["size"]/2) - (_last_thumb.width/2))
@@ -737,7 +737,7 @@ def audio_screens(image, draw, info, prog):
             if (display_string == "Unknown" and
                 txt_field[index].get("drop_unknown",0)):
                 continue
-                
+
             if display_string:
                 if "wrap" in txt_field[index].keys():
                     render_text_wrap(draw,
