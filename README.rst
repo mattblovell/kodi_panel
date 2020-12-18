@@ -2,7 +2,7 @@ kodi_panel
 ==========
 
 Kodi_panel is a standalone Python 3 script that provides an
-information front panel for Kodi® via an attached LCD display.  The LCD
+information front panel for `Kodi <https://kodi.tv/>`_® via an attached LCD display.  The LCD
 is handled entirely by `luma.core <https://github.com/rm-hull/luma.core/>`_
 and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
 depend upon `Pillow <https://python-pillow.org/>`_ and `RPi.GPIO
