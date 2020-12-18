@@ -284,7 +284,6 @@ trunc = 1
 [A_LAYOUT.A_FULLSCREEN.thumb]
 center = 1
 size = 320
-center_sm = 1    
 
 
 #
@@ -293,7 +292,6 @@ center_sm = 1
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
 size = 320
-center_sm = 1    
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
