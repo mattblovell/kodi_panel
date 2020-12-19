@@ -482,7 +482,7 @@ def get_artwork(info, prev_image, thumb_size):
                     cover = Image.open(default_thumb)
                     prev_image = cover
                     image_set     = True
-                    resize_needed = False
+                    resize_needed = True
 
     # Airplay artwork
 
@@ -541,7 +541,7 @@ def get_artwork(info, prev_image, thumb_size):
                     cover = Image.open(default_thumb)
                     prev_image = cover
                     image_set     = True
-                    resize_needed = False
+                    resize_needed = True
         else:
             image_set = True
 
@@ -550,7 +550,7 @@ def get_artwork(info, prev_image, thumb_size):
     # to Kodi and Airplay artwork can just be opened.  Otherwise, use
     # default images.
     if not image_set:
-        resize_needed = False
+        resize_needed = True
         if _airtunes_re.match(info['MusicPlayer.Cover']):
             airplay_thumb = "/storage/.kodi/temp/" + _airtunes_re.match(info['MusicPlayer.Cover']).group(1)
             if os.path.isfile(airplay_thumb):
