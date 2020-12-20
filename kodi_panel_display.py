@@ -608,7 +608,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
         # be precisely what thumbnail accomplishes
         cover.thumbnail((thumb_width, thumb_height))
         prev_image = cover
-        
+
     if image_set:
         return prev_image
     else:
