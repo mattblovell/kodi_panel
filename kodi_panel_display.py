@@ -950,6 +950,10 @@ def video_screens(image, draw, info, prog):
 def calc_progress(time_str, duration_str):
     if (time_str == "" or duration_str == ""):
         return -1
+    if not (1 <= time_str.count(":") <= 2 and
+            1 <= duration_str.count(":") <= 2):
+        return -1
+    
     cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
     total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
     if (cur_secs > 0 and
@@ -1096,7 +1100,9 @@ def update_display():
         #print("Response: ", json.dumps(response))
         video_info = response['result']
 
+        # See remarks in audio_screens() regarding calc_progress()
         prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
+
         video_screens(image, draw, video_info, prog)
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
@@ -1138,24 +1144,25 @@ def update_display():
         #print("Response: ", json.dumps(response))
         track_info = response['result']
 
-        # Progress information in Kodi Leia must be fetched separately.  This
-        # looks to be fixed in Kodi Matrix.
-        payload = {
-            "jsonrpc": "2.0",
-            "method"  : "Player.GetProperties",
-            "params"  : {
-                "playerid": 0,
-                "properties" : ["percentage"],
-            },
-            "id"      : "prog",
-        }
-        prog_response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        if ('result' in prog_response.keys() and 'percentage' in prog_response['result'].keys()):
-            prog = float(prog_response['result']['percentage']) / 100.0
-        else:
-            prog = -1
-
-        # Audio info.  Only display for a non-zero time, though.
+        # Progress information in Kodi Leia must be fetch separately, via a
+        # JSON-RPC call like the following:
+        #
+        #   payload = {
+        #       "jsonrpc": "2.0",
+        #       "method"  : "Player.GetProperties",
+        #       "params"  : {
+        #           "playerid": 0,
+        #           "properties" : ["percentage"],
+        #       },
+        #       "id"      : "prog",
+        #   }
+        #
+        # This looks to be fixed in Kodi Matrix.  However, since we
+        # already have the current time and duration, let's just
+        # calculate the current position as a percentage.
+        
+        prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
+            
         # There seems to be a hiccup in DLNA/UPnP playback in which an
         # album change (or stopping playback) causes a moment when
         # nothing is actually playing, according to the Info Labels.
