@@ -466,7 +466,7 @@ info screens during video playback.  I only have movies on my server, so I don't
 have any material with which to test TV episodes.
 
 See the ``example_setup_800x480.toml`` file for the data structures (more Python
-dictionaries) that must be set up for video info screens.  The sole example
+dictionaries) that must be set up for video info screens.  The default screen
 presently implemented includes the movie poster, progress bar, elapsed time, 
 title, genre, year, and rating.
 
@@ -476,6 +476,9 @@ Some example screens from the emulator mode:
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example2.PNG
 
+One must declare what video info screens exist, via ``VLAYOUT_NAMES`` and then
+populate screen contents in the ``VLAYOUT`` dictionary.  These data structures
+are directly analogous to ``ALAYOUT_NAMES`` and ``A_LAYOUT``.
 
 
 License
