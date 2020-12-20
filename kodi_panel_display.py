@@ -90,7 +90,7 @@ _last_image_time = None   # used with airtunes / airplay coverart
 
 # Thumbnail defaults (these don't get resized)
 kodi_thumb      = config.settings["KODI_THUMB"]
-default_thumb   = config.settings["DEFAULT_THUMB"]
+default_thumb   = config.settings["DEFAULT_AUDIO"]
 default_airplay = config.settings["DEFAULT_AIRPLAY"]
 
 # RegEx for recognizing AirPlay images (compiled once)
@@ -116,6 +116,10 @@ for user_font in config.settings["fonts"]:
 # Color lookup table
 colors = config.settings["COLORS"]
 
+# Which display modes are enabled for use?
+AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS",0)
+VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS",0)
+
 
 # Audio screen enumeration
 # ------------------------
@@ -134,12 +138,35 @@ class ADisplay(Enum):
         return members[index]
 
 # Populate enum based upon settings file
-for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
-    extend_enum(ADisplay, value, index)
+if AUDIO_ENABLED:
+    for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
+        extend_enum(ADisplay, value, index)
 
-# At startup, use the default layout mode specified in settings
-audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
+    # At startup, use the default layout mode specified in settings
+    audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
 
+
+# Video screen enumeration
+# ------------------------
+# Same functionality as ADisplay above.
+#
+
+class VDisplay(Enum):
+    def next(self):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1
+        if index >= len(members):
+            index = 0
+        return members[index]
+
+if VIDEO_ENABLED:
+    # Populate enum based upon settings file
+    for index, value in enumerate(config.settings["VLAYOUT_NAMES"]):
+        extend_enum(VDisplay, value, index)
+
+    # At startup, use the default layout mode specified in settings
+    video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
 
 
 # Screen layouts
@@ -177,8 +204,17 @@ def fixup_array(array):
             newarray.append(item)
     return newarray
 
-# Used by audio_screens() for all info display screens
-AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
+# Used by audio_screens() for all info screens
+if AUDIO_ENABLED:
+    AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
+else:
+    AUDIO_LAYOUT = {}
+
+# Used by video_screens() for all info screens
+if VIDEO_ENABLED:
+    VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
+else:
+    VIDEO_LAYOUT = {}
 
 # Layout control for status screen, used by status_screen()
 STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
@@ -432,7 +468,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 #
 # The info argument must be the result of an XBMC.GetInfoLabels
 # JSON-RPC call to Kodi.
-def get_artwork(info, prev_image, thumb_size):
+def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
     global _last_image_path
     global _last_image_time
     image_set     = False
@@ -441,11 +477,11 @@ def get_artwork(info, prev_image, thumb_size):
     cover = None   # retrieved artwork, original size
     thumb = None   # resized artwork
 
-    if (info['MusicPlayer.Cover'] != '' and
-        info['MusicPlayer.Cover'] != 'DefaultAlbumCover.png' and
-        not _airtunes_re.match(info['MusicPlayer.Cover'])):
+    if (cover_path != '' and
+        cover_path != 'DefaultAlbumCover.png' and
+        not _airtunes_re.match(cover_path)):
 
-        image_path = info['MusicPlayer.Cover']
+        image_path = cover_path
         #print("image_path : ", image_path) # debug info
 
         if (image_path == _last_image_path and prev_image):
@@ -485,17 +521,17 @@ def get_artwork(info, prev_image, thumb_size):
                     resize_needed = True
 
     # Airplay artwork
-
-
-    # If artwork is local, then we'll have to retrieve it over the
+    #
+    # If artwork is NOT local, then we'll have to retrieve it over the
     # network. Airplay coverart is always stored to the same file.
     # So, we start by getting the last modification time to figure out
     # if we need to retrieve it.
+    #
     if (not image_set and
-        _airtunes_re.match(info['MusicPlayer.Cover']) and
+        _airtunes_re.match(cover_path) and
         not _local_kodi):
 
-        image_path = info['MusicPlayer.Cover']
+        image_path = cover_path
         #print("image_path : ", image_path) # debug info
         payload = {
             "jsonrpc": "2.0",
@@ -551,8 +587,8 @@ def get_artwork(info, prev_image, thumb_size):
     # default images.
     if not image_set:
         resize_needed = True
-        if _airtunes_re.match(info['MusicPlayer.Cover']):
-            airplay_thumb = "/storage/.kodi/temp/" + _airtunes_re.match(info['MusicPlayer.Cover']).group(1)
+        if _airtunes_re.match(cover_path):
+            airplay_thumb = "/storage/.kodi/temp/" + _airtunes_re.match(cover_path).group(1)
             if os.path.isfile(airplay_thumb):
                 _last_image_path = airplay_thumb
                 resize_needed   = True
@@ -570,9 +606,9 @@ def get_artwork(info, prev_image, thumb_size):
     if (image_set and resize_needed):
         # resize while maintaining aspect ratio, which should
         # be precisely what thumbnail accomplishes
-        cover.thumbnail((thumb_size, thumb_size))
+        cover.thumbnail((thumb_width, thumb_height))
         prev_image = cover
-
+        
     if image_set:
         return prev_image
     else:
@@ -665,7 +701,8 @@ def audio_screens(image, draw, info, prog):
 
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
-        _last_thumb = get_artwork(info, _last_thumb, layout["thumb"]["size"])
+        _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
+                                  layout["thumb"]["size"], layout["thumb"]["size"])
         if _last_thumb:
             if layout["thumb"].get("center",0):
                 image.paste(_last_thumb,
@@ -795,6 +832,134 @@ def audio_screens(image, draw, info, prog):
 
 
 
+# Video info screens (shown when a video is playing).
+#
+# First two arguments are Pillow Image and ImageDraw objects.
+# Third argument is a dictionary loaded from Kodi with relevant track fields.
+# Fourth argument is a float representing progress through the track.
+#
+def video_screens(image, draw, info, prog):
+    global video_dmode
+    global _last_thumb
+    global _last_image_path
+
+    # Get layout details for this mode
+    layout = VIDEO_LAYOUT[video_dmode.name]
+
+    # retrieve cover image from Kodi, if it exists and needs a refresh
+    if "thumb" in layout.keys():
+        _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
+                                  layout["thumb"]["width"], layout["thumb"]["height"])
+        if _last_thumb:
+            if layout["thumb"].get("center",0):
+                image.paste(_last_thumb,
+                            (int((frame_size[0]-_last_thumb.width)/2),
+                             int((frame_size[1]-_last_thumb.height)/2)))
+            elif (layout["thumb"].get("center_sm", 0) and
+                  (_last_thumb.width < layout["thumb"]["width"] or
+                   _last_thumb.height < layout["thumb"]["height"])):
+                new_x = layout["thumb"]["posx"]
+                new_y = layout["thumb"]["posy"]
+                if _last_thumb.width < layout["thumb"]["width"]:
+                    new_x += int((layout["thumb"]["width"]/2) - (_last_thumb.width/2))
+                if _last_thumb.height < layout["thumb"]["height"]:
+                    new_y += int((layout["thumb"]["height"]/2) - (_last_thumb.height/2))
+                image.paste(_last_thumb, (new_x, new_y))
+            else:
+                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+    else:
+        _last_thumb = None
+
+    # progress bar
+    if (prog != -1 and "prog" in layout.keys()):
+        if "vertical" in layout["prog"].keys():
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["len"],
+                         layout["prog"]["height"],
+                         prog, vertical=True)
+        elif info['VideoPlayer.Time'].count(":") == 2:
+            # longer bar for longer displayed time
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["long_len"], layout["prog"]["height"],
+                         prog)
+        else:
+            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["short_len"], layout["prog"]["height"],
+                         prog)
+
+    # text fields, if there are any
+    if "fields" not in layout.keys():
+        return
+
+    txt_field = layout["fields"]
+    for index in range(len(txt_field)):
+
+        # special treatment for audio codec, which gets a lookup
+        if txt_field[index]["name"] == "acodec":
+            if info['VideoPlayer.Codec'] in codec_name.keys():
+                # render any label first
+                if "label" in txt_field[index]:
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                          codec_name[info['VideoPlayer.Codec']],
+                          fill=txt_field[index]["fill"],
+                          font=txt_field[index]["font"])
+
+        # all other text fields
+        else:
+            if (txt_field[index]["name"] in info.keys() and
+                info[txt_field[index]["name"]] != ""):
+                # render any label first
+                if "label" in txt_field[index]:
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                # now render the field itself
+                if "wrap" in txt_field[index].keys():
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     info[txt_field[index]["name"]],
+                                     max_width=txt_field[index]["max_width"],
+                                     max_lines=txt_field[index]["max_lines"],
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])
+                elif "trunc" in txt_field[index].keys():
+                    render_text_wrap(draw,
+                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     info[txt_field[index]["name"]],
+                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_lines=1,
+                                     fill=txt_field[index]["fill"],
+                                     font=txt_field[index]["font"])
+                else:
+                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                              info[txt_field[index]["name"]],
+                              fill=txt_field[index]["fill"],
+                              font=txt_field[index]["font"])
+
+
+
+
+# Given current position ([h:]m:s) and duration, calculate
+# percentage done as a float for progress bar display.
+def calc_progress(time_str, duration_str):
+    if (time_str == "" or duration_str == ""):
+        return -1
+    cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
+    total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
+    if (cur_secs > 0 and
+        total_secs > 0 and
+        cur_secs <= total_secs):
+        return cur_secs/total_secs
+    else:
+        return -1
+
+
 def screen_on():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
@@ -824,6 +989,7 @@ def update_display():
     global screen_active
     global screen_offtime
     global audio_dmode
+    global video_dmode
 
     lock.acquire()
 
@@ -844,9 +1010,14 @@ def update_display():
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
 
     if (len(response['result']) == 0 or
-        response['result'][0]['type'] != 'audio'):
-        # Nothing is playing or non-audio is playing, but check for screen
-        # press before proceeding
+        response['result'][0]['type'] == 'picture' or
+        (response['result'][0]['type'] == 'video' and not VIDEO_ENABLED) or
+        (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
+        # Nothing is playing or something for which no display screen
+        # is available.
+
+        # Check for screen press before proceeding.  A press when idle
+        # generates the status screen.
         _last_image_path = None
         _last_image_time = None
         _last_thumb = None
@@ -885,7 +1056,50 @@ def update_display():
         else:
             screen_off()
 
-    else:
+    elif (response['result'][0]['type'] == 'video' and VIDEO_ENABLED):
+        # Video is playing
+        screen_on()
+
+        # Change display modes upon any screen press, forcing a
+        # re-fetch of any artwork.  Clear other state that may also be
+        # mode-specific.
+        if screen_press:
+            screen_press = False
+            video_dmode = video_dmode.next()
+            print(datetime.now(), "video display mode now", video_dmode.name)
+            _last_image_path = None
+            _last_image_time = None
+            _last_thumb = None
+            _last_trunc = []
+            _last_wrap = []
+
+        # Retrieve (almost) all desired info in a single JSON-RPC call
+        payload = {
+            "jsonrpc": "2.0",
+            "method"  : "XBMC.GetInfoLabels",
+            "params"  : {"labels": ["VideoPlayer.Title",
+                                    "VideoPlayer.TVShowTitle",
+                                    "VideoPlayer.Season",
+                                    "VideoPlayer.Episode",
+                                    "VideoPlayer.Duration",
+                                    "VideoPlayer.Time",
+                                    "VideoPlayer.Genre",
+                                    "VideoPlayer.Year",
+                                    "VideoPlayer.VideoCodec",
+                                    "VideoPlayer.AudioCodec",
+                                    "VideoPlayer.Rating",
+                                    "VideoPlayer.Cover",
+            ]},
+            "id"      : 4,
+        }
+        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+        #print("Response: ", json.dumps(response))
+        video_info = response['result']
+
+        prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
+        video_screens(image, draw, video_info, prog)
+
+    elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
         screen_on()
 

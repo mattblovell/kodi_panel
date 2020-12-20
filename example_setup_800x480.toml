@@ -4,12 +4,16 @@
 #   For documentation regarding TOML (Tom's Obvious Minimal Language),
 #   see references at https://toml.io/en/
 #
+#   TOML is context sensitive, so the order of the entries below
+#   (particularly the arrays of tables) DOES matter unfortunately.
+#
 # --------------------------------------------------------------------
 
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-BASE_URL = "http://localhost:8080"
+#BASE_URL = "http://localhost:8080"
+BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
 
 
 # --------------------------------------------------------------------
@@ -51,6 +55,7 @@ TOUCH_INT = 25
 #
 # This variable should likely be set false if using the PWM control
 # through sysfs files (as presently implemented in kodi_panel_fb.py).
+#
 # Note that the framebuffer version (kodi_panel_fb.py) may ignore or
 # override this setting, in favor of the group below.
 #
@@ -77,14 +82,19 @@ HW_PWM_LEVEL = 0.55
 
 # --------------------------------------------------------------------
 #
-# Display rendering
+# Info screens, colors, & fonts
 #
 
-# Paths to default thumbnails.  These do NOT get resized, so they
-# should be created at the desired size.
-KODI_THUMB      = "images/kodi_thumb.jpg"     # Kodi icon
-DEFAULT_THUMB   = "images/music_icon.png"     # standard music file w/o artwork
-DEFAULT_AIRPLAY = "images/airplay_thumb.png"  # Airplay file w/o artwork
+# Audio and video screens are enabled and disabled separately.
+ENABLE_AUDIO_SCREENS = 1
+ENABLE_VIDEO_SCREENS = 1
+
+
+# Paths to default thumbnails for audio and status screen.  These now
+# get resized, to whatever is specified for the audio screen used.
+KODI_THUMB      = "images/kodi_thumb.jpg"       # Kodi icon
+DEFAULT_AUDIO   = "images/music_icon2_lg.png"   # standard music file w/o artwork
+DEFAULT_AIRPLAY = "images/airplay_thumb.png"    # Airplay file w/o artwork
 
 
 # Audio Layout Names
@@ -100,13 +110,25 @@ ALAYOUT_NAMES = [
 	"A_NOTIME",      # similar to default, but dropping elapsed time
 ]
 
-# Initial mode upon startup
+# Initial mode to use upon startup
 ALAYOUT_INITIAL = "A_DEFAULT"
+
+
+# Video Layout Names
+#
+#   Similar to audio screen modes above
+#
+VLAYOUT_NAMES = [
+	"V_DEFAULT",     # movie poster, movie name, elapsed time
+]
+
+# Initial mode to use upon startup
+VLAYOUT_INITIAL = "V_DEFAULT"
 
 
 # Colors
 #
-#   Specify color names to use further below.  To know whether this
+#   Specify color names to use elsewhere.  To know whether this
 #   dictionary needs to be consulted, all names MUST begin with
 #   "color_".  Color references without those initial characters just
 #   get passed through, without a lookup in this dictionary.
@@ -127,7 +149,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #   assigned must match those that get used further below in the
 #   layouts.
 #
-#   A "font_main" MUST be defined and successfully loaded.
+#   A "font_main" MUST be defined and successfully loaded!
 #
 
 # Standard fonts
@@ -168,7 +190,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 
 # --------------------------------------------------------------------
-# Audio Screen content
+# Audio Screens
 #
 #   This data structure gets used by audio_screens() to control the
 #   layout and contents of any audio information screens.  Content can
@@ -198,7 +220,7 @@ posy = 4
 size = 405
 # If artwork is smaller than the above size, should it be centered
 # where the fullsize artwork would have been placed?
-center_sm = 1 
+center_sm = 1    
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
@@ -226,6 +248,7 @@ fill = "color_7S"
   lposy = 98
   lfont = "font_tiny"
   lfill = "white"
+
 
 #
 # This group of fields all appear to the right of the cover art
@@ -289,9 +312,7 @@ posy  = 240
 font  = "font_sm"
 fill  = "color_artist"
 trunc = 1
-# Drop artist display if "Unknown"
 drop_unknown = 1
-
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Album"
@@ -302,6 +323,7 @@ fill  = "white"
 wrap  = 1
 max_width = 375
 max_lines = 3
+
 
 
 # --------------------------------------------------------------------
@@ -332,14 +354,16 @@ height = 476  # total height for the vertical bar
 
 # --------------------------------------------------------------------
 #
-# Similar to default info, but w/o elapsed time display
+# The A_NOTIME screen servers primarily as an example, It is similar
+# to the default (audio) info screen, but without the elapsed time
+# display.
 #
 
 [A_LAYOUT.A_NOTIME.thumb]   # Artwork
 posx = 3
 posy = 4
 size = 405
-center_sm = 1
+center_sm = 1    
 
 [A_LAYOUT.A_NOTIME.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
@@ -426,8 +450,6 @@ fill  = "color_artist"
 wrap  = 1
 max_width = 375
 max_lines = 2
-# Drop artist display if "Unknown"
-drop_unknown = 1
 
 
 [[A_LAYOUT.A_NOTIME.fields]]
@@ -441,7 +463,85 @@ max_width = 375
 max_lines = 4
 
 
+# --------------------------------------------------------------------
+# Video Screens
+#
+#   This data structure gets used by video_screens() to control the
+#   layout and contents of any audio information screens.  Content can
+#   be omitted from a screen just by commenting it out here, particular
+#   for text fields.
+#
+#   Top-level entries within this V_LAYOUT table MUST have names that
+#   correspond to the VLAYOUT_NAMES list specified earlier in this
+#   file.
+#
+#   New top-level content requires corresponding changes to
+#   video_screens().  If a completely new text field is desired, then
+#   the JSON-RPC call made in update_display() needs to be updated as
+#   well.
+#
+#   Special treatment may exist for text fields within video_screens()
+#
+# --------------------------------------------------------------------
 
+#
+# Default video info
+#
+
+[V_LAYOUT.V_DEFAULT.thumb]   # artwork / movie poster
+posx = 3
+posy = 4
+width  = 320
+height = 480
+center_sm = 1
+
+
+[V_LAYOUT.V_DEFAULT.prog]    # Progress Bar
+posx   = 340     # upper-left corner x position
+posy   = 7       # upper-left corner y position
+height = 8       # pixel height
+short_len = 188  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 292  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name = "VideoPlayer.Time"
+posx = 340
+posy = 28
+font = "font7S"
+fill = "color_7S"
+
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Title"
+posx  = 340
+posy  = 100
+font  = "font_bold"
+fill  = "white"
+wrap  = 1
+max_width = 445
+max_lines = 3
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Genre"
+posx  = 340
+posy  = 390
+font  = "font_sm"
+fill  = "white"
+trunc = 1
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Year"
+posx  = 340
+posy  = 430
+font  = "font_sm"
+fill  = "white"
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Rating"
+posx  = 480
+posy  = 430
+font  = "font_sm"
+fill  = "white"
 
 
 # --------------------------------------------------------------------
@@ -519,4 +619,3 @@ posx = 5
 posy = 330
 font = "font_sm"
 fill = "white"
-
