@@ -489,8 +489,8 @@ max_lines = 4
 #
 
 [V_LAYOUT.V_DEFAULT.thumb]   # artwork / movie poster
-posx = 3
-posy = 4
+posx = 0
+posy = 0
 width  = 320
 height = 480
 center_sm = 1
