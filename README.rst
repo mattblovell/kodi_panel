@@ -472,9 +472,9 @@ title, genre, year, and rating.
 
 Some example screens from the emulator mode:
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example1.jpg
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example1.PNG
 
-.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example2.jpg
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example2.PNG
 
 
 
