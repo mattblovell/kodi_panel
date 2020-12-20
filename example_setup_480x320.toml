@@ -4,6 +4,9 @@
 #   For documentation regarding TOML (Tom's Obvious Minimal Language),
 #   see references at https://toml.io/en/
 #
+#   TOML is context sensitive, so the order of the entries below
+#   (particularly the arrays of tables) DOES matter unfortunately.
+#
 # --------------------------------------------------------------------
 
 # Specify the Kodi instance to query.  Use localhost if running on
@@ -61,13 +64,19 @@ USE_BACKLIGHT = true
 
 # --------------------------------------------------------------------
 #
-# Display rendering
+# Info screens, colors, & fonts
 #
+
+# Audio and video screens are enabled and disabled separately.  See
+# the 800x480 example setup file for the additional dictionaries that
+# must be set for video info screens.
+ENABLE_AUDIO_SCREENS = 1
+ENABLE_VIDEO_SCREENS = 0
 
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
 KODI_THUMB      = "images/kodi_thumb.jpg"     # Kodi icon
-DEFAULT_THUMB   = "images/music_icon.png"     # standard music file w/o artwork
+DEFAULT_AUDIO   = "images/music_icon.png"     # standard music file w/o artwork
 DEFAULT_AIRPLAY = "images/airplay_thumb.png"  # Airplay file w/o artwork
 
 
@@ -83,7 +92,7 @@ ALAYOUT_NAMES = [
 	"A_FULL_PROG"    # fullscreen cover with vertical progress bar
 ]
 
-# Initial mode upon startup
+# Initial mode to use upon startup
 ALAYOUT_INITIAL = "A_DEFAULT"
 
 
@@ -110,7 +119,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #   assigned must match those that get used further below in the
 #   layouts.
 #
-#   A "font_main" MUST be defined and successfully loaded.
+#   A "font_main" MUST be defined and successfully loaded!
 #
 
 # Standard fonts
@@ -151,7 +160,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 
 # --------------------------------------------------------------------
-# Audio Screen content
+# Audio Screens
 #
 #   This data structure gets used by audio_screens() to control the
 #   layout and contents of any audio information screens.  Content can
