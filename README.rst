@@ -431,7 +431,10 @@ files to control backlight brightness.
    
 
 Further Development
-*******************
+-------------------
+
+Larger Resolutions
+******************
 
 I liked the first version of kodi_panel, but the TN (twisted nematic) LCD I used
 had a pretty small viewing angle.  One doesn't tend to notice this when sitting at
@@ -453,6 +456,26 @@ support those sizes, as well as the original 320x240, I ended up adding TOML
 support for a setup file. The details of creating a luma.lcd display, or
 setting up the framebuffer as a device, were also separated from the "draw with
 Pillow" portion of the script.
+
+
+Movie info screens
+******************
+
+With version 0.99, ``kodi_panel_display.py`` has preliminary support for showing
+info screens during video playback.  I only have movies on my server, so I don't
+have any material with which to test TV episodes.
+
+See the ``example_setup_800x480.toml`` file for the data structures (more Python
+dictionaries) that must be set up for video info screens.  The sole example
+presently implemented includes the movie poster, progress bar, elapsed time, 
+title, genre, year, and rating.
+
+Some example screens from the emulator mode:
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_poster1.jpg
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_poster2.jpg
+
 
 
 License
