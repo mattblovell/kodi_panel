@@ -478,7 +478,9 @@ Some example screens from the emulator mode:
 
 One must declare what video info screens exist, via ``VLAYOUT_NAMES`` and then
 populate screen contents in the ``VLAYOUT`` dictionary.  These data structures
-are directly analogous to ``ALAYOUT_NAMES`` and ``A_LAYOUT``.
+are directly analogous to ``ALAYOUT_NAMES`` and ``A_LAYOUT``.   See the
+JSON-RPC call involving ``VideoPlayer`` fields in ``update_display()`` to
+see what fields are available for displaying.
 
 
 License
