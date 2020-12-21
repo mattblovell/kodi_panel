@@ -91,7 +91,7 @@ _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
-# Thumbnail defaults (these don't get resized)
+# Thumbnail defaults (these now DO get resized as needed)
 kodi_thumb      = config.settings["KODI_THUMB"]
 default_thumb   = config.settings["DEFAULT_AUDIO"]
 default_airplay = config.settings["DEFAULT_AIRPLAY"]
