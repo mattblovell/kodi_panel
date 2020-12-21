@@ -953,7 +953,7 @@ def calc_progress(time_str, duration_str):
     if not (1 <= time_str.count(":") <= 2 and
             1 <= duration_str.count(":") <= 2):
         return -1
-    
+
     cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
     total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
     if (cur_secs > 0 and
@@ -1103,7 +1103,16 @@ def update_display():
         # See remarks in audio_screens() regarding calc_progress()
         prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
 
-        video_screens(image, draw, video_info, prog)
+        # There seems to be a hiccup in DLNA/UPnP playback in which a
+        # change (or stopping playback) causes a moment when
+        # nothing is actually playing, according to the Info Labels.
+        if ((video_info["VideoPlayer.Time"] == "00:00" or
+             video_info["VideoPlayer.Time"] == "00:00:00") and
+            video_info["VideoPlayer.Duration"] == "" and
+            video_info["VideoPlayer.Cover"] == ""):
+            pass
+        else:
+            video_screens(image, draw, video_info, prog)
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
@@ -1160,11 +1169,11 @@ def update_display():
         # This looks to be fixed in Kodi Matrix.  However, since we
         # already have the current time and duration, let's just
         # calculate the current position as a percentage.
-        
+
         prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
-            
-        # There seems to be a hiccup in DLNA/UPnP playback in which an
-        # album change (or stopping playback) causes a moment when
+
+        # There seems to be a hiccup in DLNA/UPnP playback in which a
+        # change (or stopping playback) causes a moment when
         # nothing is actually playing, according to the Info Labels.
         if ((track_info["MusicPlayer.Time"] == "00:00" or
              track_info["MusicPlayer.Time"] == "00:00:00") and

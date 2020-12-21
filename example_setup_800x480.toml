@@ -12,8 +12,7 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-#BASE_URL = "http://localhost:8080"
-BASE_URL = "http://10.0.0.188:8080"  # Odroid C4
+BASE_URL = "http://localhost:8080"
 
 
 # --------------------------------------------------------------------
@@ -119,11 +118,12 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #   Similar to audio screen modes above
 #
 VLAYOUT_NAMES = [
-	"V_DEFAULT",     # movie poster, movie name, elapsed time
+	"V_DEFAULT",       # movie poster, movie name, elapsed time
+	"V_FULLSCREEN"     # movie poster
 ]
 
 # Initial mode to use upon startup
-VLAYOUT_INITIAL = "V_DEFAULT"
+VLAYOUT_INITIAL = "V_FULLSCREEN"
 
 
 # Colors
@@ -542,6 +542,17 @@ posx  = 480
 posy  = 430
 font  = "font_sm"
 fill  = "white"
+
+
+#
+# Fullscreen movie poster only
+#
+
+[V_LAYOUT.V_FULLSCREEN.thumb]   # artwork / movie poster
+width  = 320
+height = 480
+center = 1
+
 
 
 # --------------------------------------------------------------------

@@ -70,7 +70,7 @@ USE_BACKLIGHT = true
 # the 800x480 example setup file for the additional dictionaries that
 # must be set for video info screens.
 ENABLE_AUDIO_SCREENS = 1
-ENABLE_VIDEO_SCREENS = 0
+ENABLE_VIDEO_SCREENS = 1
 
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
@@ -93,6 +93,20 @@ ALAYOUT_NAMES = [
 
 # Initial mode to use upon startup
 ALAYOUT_INITIAL = "A_DEFAULT"
+
+
+
+# Video Layout Names
+#
+#   Similar to audio screen modes above
+#
+VLAYOUT_NAMES = [
+	"V_FULLSCREEN",     # movie poster
+]
+
+# Initial mode to use upon startup
+VLAYOUT_INITIAL = "V_FULLSCREEN"
+
 
 
 # Colors
@@ -307,6 +321,38 @@ posx = 308    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
 len  = 10     # pixel width for a vertical bar
 height = 236  # total height for the vertical bar
+
+
+
+# --------------------------------------------------------------------
+# Video Screens
+#
+#   This data structure gets used by video_screens() to control the
+#   layout and contents of any audio information screens.  Content can
+#   be omitted from a screen just by commenting it out here, particular
+#   for text fields.
+#
+#   Top-level entries within this V_LAYOUT table MUST have names that
+#   correspond to the VLAYOUT_NAMES list specified earlier in this
+#   file.
+#
+#   New top-level content requires corresponding changes to
+#   video_screens().  If a completely new text field is desired, then
+#   the JSON-RPC call made in update_display() needs to be updated as
+#   well.
+#
+#   Special treatment may exist for text fields within video_screens()
+#
+# --------------------------------------------------------------------
+
+#
+# Default video info
+#
+
+[V_LAYOUT.V_FULLSCREEN.thumb]   # artwork / movie poster
+width  = 160
+height = 240
+center = 1
 
 
 # --------------------------------------------------------------------
