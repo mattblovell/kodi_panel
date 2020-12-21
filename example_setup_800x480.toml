@@ -162,7 +162,7 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 [[fonts]]
   name = "font_bold"
   path = "fonts/RobotoCondensed-Regular.ttf"
-  size = 52
+  size = 54
   encoding = 'unic'
 
 [[fonts]]
@@ -294,7 +294,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 412
+posy  = 410
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -429,7 +429,7 @@ fill = "white"
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 412
+posy  = 410
 font  = "font_bold"
 fill  = "white"
 trunc = 1
