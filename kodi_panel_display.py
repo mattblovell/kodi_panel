@@ -293,8 +293,6 @@ draw   = ImageDraw.Draw(image)
 def truncate_line(line, font, max_width):
     truncating = 0
     new_text = line
-
-    print("truncate_line called with: ", line)
     
     # Form an initial estimate of how many characters will fit,
     # leaving some margin.
@@ -332,8 +330,6 @@ def truncate_line(line, font, max_width):
 @lru_cache(maxsize=20)
 def text_wrap(text, font, max_width, max_lines=None):
     lines = []
-
-    print("text_wrap called with ", text)
     
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
