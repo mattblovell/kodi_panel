@@ -45,7 +45,7 @@ import io
 import re
 import os
 import threading
-
+import warnings
 
 
 # kodi_panel settings
@@ -142,11 +142,17 @@ class ADisplay(Enum):
 
 # Populate enum based upon settings file
 if AUDIO_ENABLED:
-    for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
-        extend_enum(ADisplay, value, index)
+    if ("ALAYOUT_NAMES" in config.settings.keys() and
+        "ALAYOUT_INITIAL" in config.settings.keys()):    
+        for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
+            extend_enum(ADisplay, value, index)
 
-    # At startup, use the default layout mode specified in settings
-    audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
+        # At startup, use the default layout mode specified in settings
+        audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
+    else:
+        warnings.warn("Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
+        print("Disabling audio screens (AUDIO_ENABLED=0)")        
+        AUDIO_ENABLED = 0
 
 
 # Video screen enumeration
@@ -164,13 +170,19 @@ class VDisplay(Enum):
         return members[index]
 
 if VIDEO_ENABLED:
-    # Populate enum based upon settings file
-    for index, value in enumerate(config.settings["VLAYOUT_NAMES"]):
-        extend_enum(VDisplay, value, index)
+    if ("VLAYOUT_NAMES" in config.settings.keys() and
+        "VLAYOUT_INITIAL" in config.settings.keys()):    
+        # Populate enum based upon settings file
+        for index, value in enumerate(config.settings["VLAYOUT_NAMES"]):
+            extend_enum(VDisplay, value, index)
 
-    # At startup, use the default layout mode specified in settings
-    video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
-
+        # At startup, use the default layout mode specified in settings
+        video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
+    else:
+        warnings.warn("Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
+        print("Disabling video screens (VIDEO_ENABLED=0)")
+        AUDIO_ENABLED = 0
+        
 
 # Screen layouts
 # --------------------
@@ -208,20 +220,26 @@ def fixup_array(array):
     return newarray
 
 # Used by audio_screens() for all info screens
-if AUDIO_ENABLED:
+if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
     AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
 else:
-    AUDIO_LAYOUT = {}
+    warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
+    AUDIO_ENABLED = 0
 
 # Used by video_screens() for all info screens
-if VIDEO_ENABLED:
+if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 else:
-    VIDEO_LAYOUT = {}
+    warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling video screens.")    
+    VIDEO_ENABLED = 0
 
 # Layout control for status screen, used by status_screen()
-STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
-
+if ("STATUS_LAYOUT" in config.settings.keys()):
+    STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
+else:
+    warnings.warn("Cannot find any STATUS_LAYOUT screen settings!  Exiting.")
+    sys.exit(1)
+    
 
 # GPIO assignments and display options
 # ------------------------------------
