@@ -37,12 +37,8 @@ import kodi_panel_display
 
 # ----------------------------------------------------------------------------
 
-# SPI interface
-serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
-             reset_hold_time=0.2, reset_release_time=0.2)
 
-
-# LCD display
+# SPI interface & LCD display
 #
 # Create a handle to the ILI9341-driven SPI panel via luma.lcd.
 #
@@ -86,6 +82,7 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 # of using sysfs directly for hardware PWM on an RPi (after loading 
 # the pwm-2chan overlay in the Pi's /boot/config.txt file).
 #
+
 serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
              reset_hold_time=0.2, reset_release_time=0.2)
 

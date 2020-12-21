@@ -37,11 +37,7 @@ import kodi_panel_display
 
 # ----------------------------------------------------------------------------
 
-# SPI interface
-serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
-             reset_hold_time=0.2, reset_release_time=0.2)
-
-# LCD display
+# SPI interface & LCD display
 #
 #   GPIO pin connectivity is essentially the same as what is
 #   documented in the ili9341 version of this script, except
@@ -71,7 +67,10 @@ serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
 #       GPIO18 control the backlight (whether on/off or
 #       PWM).
 #
-#
+
+serial = spi(port=0, device=0, gpio_DC=24, gpio_RST=25,
+             reset_hold_time=0.2, reset_release_time=0.2)
+
 device = ili9486(serial, active_low=False, width=320, height=480,
                  rotate=1, bus_speed_hz=50000000)
 
