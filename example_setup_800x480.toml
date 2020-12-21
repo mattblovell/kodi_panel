@@ -12,8 +12,7 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-#BASE_URL = "http://localhost:8080"
-BASE_URL = "http://10.0.0.188:8080"
+BASE_URL = "http://localhost:8080"
 
 
 # --------------------------------------------------------------------
