@@ -12,7 +12,8 @@
 # Specify the Kodi instance to query.  Use localhost if running on
 # the same box as Kodi, otherwise specify a resolvable machine name or
 # IP address.
-BASE_URL = "http://localhost:8080"
+#BASE_URL = "http://localhost:8080"
+BASE_URL = "http://10.0.0.188:8080"
 
 
 # --------------------------------------------------------------------
@@ -156,13 +157,13 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 [[fonts]]
   name = "font_main"
   path = "fonts/Roboto-Medium.ttf"
-  size = 28
+  size = 28 
   encoding = 'unic'
 
 [[fonts]]
   name = "font_bold"
   path = "fonts/RobotoCondensed-Regular.ttf"
-  size = 44
+  size = 52
   encoding = 'unic'
 
 [[fonts]]
@@ -294,7 +295,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 420
+posy  = 412
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -429,7 +430,7 @@ fill = "white"
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 420
+posy  = 412
 font  = "font_bold"
 fill  = "white"
 trunc = 1
