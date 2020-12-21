@@ -35,8 +35,11 @@ from luma.lcd.device import ili9341
 import config
 import kodi_panel_display
 
-# ----------------------------------------------------------------------------
+# Issue new gamma values to the ILI9341 controller below?
+CHANGE_GAMMA = True
 
+
+# ----------------------------------------------------------------------------
 
 # SPI interface & LCD display
 #
@@ -64,7 +67,7 @@ import kodi_panel_display
 #   DC          |  GPIO24          |  18
 #   MOSI        |  GPIO10 (MOSI)   |  19
 #   SCLK / CLK  |  GPIO11 (SCLK)   |  23
-#   LED         |  GPIO18          |  12 
+#   LED         |  GPIO18          |  12
 #   ------------|------------------|-----------------
 #
 # Originally, the constructor for ili9341 also included a
@@ -78,8 +81,8 @@ import kodi_panel_display
 # As Linux is not a real-time OS, the scheduling of that thread is not
 # guaranteed and flickering can result.
 #
-# The GPIO18 pin is PWM-capable.  See kodi_panel_fb.py for an example 
-# of using sysfs directly for hardware PWM on an RPi (after loading 
+# The GPIO18 pin is PWM-capable.  See kodi_panel_fb.py for an example
+# of using sysfs directly for hardware PWM on an RPi (after loading
 # the pwm-2chan overlay in the Pi's /boot/config.txt file).
 #
 
@@ -99,12 +102,21 @@ else:
     )
 
 
-    
+
 if __name__ == "__main__":
+
+    # This section is definitely specific to the ILI9341 display
+    if CHANGE_GAMMA:
+        # Use the gamma settings from Linux's mi0283qt.c driver
+        device.command(0xe0,                                # Set Gamma (+ polarity)
+            0x1f, 0x1a, 0x18, 0x0a, 0x0f, 0x06, 0x45, 0x87,
+            0x32, 0x0a, 0x07, 0x02, 0x07, 0x05, 0x00)
+        device.command(0xe1,                                # Set Gamma (- polarity)
+            0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3a, 0x78,
+            0x4d, 0x05, 0x18, 0x0d, 0x38, 0x3a, 0x1f)
+
     try:
         kodi_panel_display.main(device)
     except KeyboardInterrupt:
         kodi_panel_display.shutdown()
         pass
-
-    

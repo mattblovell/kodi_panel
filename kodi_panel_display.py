@@ -267,17 +267,13 @@ USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
 PWM_LEVEL     = 75.0     # float value between 0 and 100
 
-# Issue new gamma values to the ILI9341 controller?
-# Users of other displays should set this to False.
-CHANGE_GAMMA = True
-
 # Are we running using luma.lcd's pygame demo mode?
 DEMO_MODE = False
 
 
 # ----------------------------------------------------------------------------
 
-# Finally, create Pillow objects
+# Finally, create the needed Pillow objects
 image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
 
@@ -291,7 +287,7 @@ draw   = ImageDraw.Draw(image)
 #
 # by Bach Ton That, with further modifications.  With the 800x480
 # example layout, having the album title to the right of the cover art
-# works better if one can wrap it across two lines.
+# works better if one can wrap it across at least two lines.
 
 @lru_cache(maxsize=20)
 def truncate_line(line, font, max_width):
@@ -1162,18 +1158,6 @@ def main(device_handle):
     # turn down verbosity from http connections
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-    # This section is specific to the ILI9341 display; it should
-    # likely just be moved to that display-specific script.
-    if CHANGE_GAMMA:
-        # Use the gamma settings from Linux's mi0283qt.c driver
-        device.command(0xe0,                                # Set Gamma (+ polarity)
-            0x1f, 0x1a, 0x18, 0x0a, 0x0f, 0x06, 0x45, 0x87,
-            0x32, 0x0a, 0x07, 0x02, 0x07, 0x05, 0x00)
-        device.command(0xe1,                                # Set Gamma (- polarity)
-            0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3a, 0x78,
-            0x4d, 0x05, 0x18, 0x0d, 0x38, 0x3a, 0x1f)
-
 
     # setup T_IRQ as a GPIO interrupt, if enabled
     if (USE_TOUCH and not DEMO_MODE):
