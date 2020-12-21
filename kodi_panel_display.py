@@ -1108,7 +1108,7 @@ def update_display():
             "id"      : 4,
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        print("Response: ", json.dumps(response))
+        #print("Response: ", json.dumps(response))
         track_info = response['result']
 
         # Progress information in Kodi Leia must be fetch separately, via a
