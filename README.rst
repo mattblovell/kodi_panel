@@ -474,8 +474,10 @@ title, genre, year, and rating.
 Some example screens from the emulator mode:
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example1.PNG
+  :width: 480
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/movie_example2.PNG
+  :width: 480
 
 One must declare what video info screens exist, via ``VLAYOUT_NAMES`` and then
 populate screen contents in the ``VLAYOUT`` dictionary.  These data structures
