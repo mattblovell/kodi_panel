@@ -898,8 +898,7 @@ def calc_progress(time_str, duration_str):
 
     cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
     total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
-    if (cur_secs > 0 and
-        total_secs > 0 and
+    if (total_secs > 0 and
         cur_secs <= total_secs):
         return cur_secs/total_secs
     else:
