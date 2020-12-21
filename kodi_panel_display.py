@@ -51,7 +51,7 @@ import threading
 # kodi_panel settings
 import config
 
-PANEL_VER = "v0.99"
+PANEL_VER = "v1.00"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -293,7 +293,7 @@ draw   = ImageDraw.Draw(image)
 def truncate_line(line, font, max_width):
     truncating = 0
     new_text = line
-    
+
     # Form an initial estimate of how many characters will fit,
     # leaving some margin.
     t_width = font.getsize(line)[0]
@@ -330,7 +330,7 @@ def truncate_line(line, font, max_width):
 @lru_cache(maxsize=20)
 def text_wrap(text, font, max_width, max_lines=None):
     lines = []
-    
+
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
     # and return
@@ -1068,7 +1068,7 @@ def update_display():
             _last_image_time = None
             _last_thumb = None
             truncate_line.cache_clear()
-            text_wrap.cache_clear()            
+            text_wrap.cache_clear()
 
         # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
