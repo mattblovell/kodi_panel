@@ -35,6 +35,7 @@ from PIL import ImageFont
 
 from datetime import datetime, timedelta
 from aenum import Enum, extend_enum
+from functools import lru_cache
 import copy
 import time
 import logging
@@ -44,6 +45,8 @@ import io
 import re
 import os
 import threading
+
+
 
 # kodi_panel settings
 import config
@@ -274,13 +277,6 @@ DEMO_MODE = False
 
 # ----------------------------------------------------------------------------
 
-# Maintain a short list of the most recently-truncated strings,
-# for use by truncate_line() below
-_last_trunc = []
-
-# Similar structure for wrapping
-_last_wrap = []
-
 # Finally, create Pillow objects
 image  = Image.new('RGB', (frame_size), 'black')
 draw   = ImageDraw.Draw(image)
@@ -297,19 +293,13 @@ draw   = ImageDraw.Draw(image)
 # example layout, having the album title to the right of the cover art
 # works better if one can wrap it across two lines.
 
+@lru_cache(maxsize=20)
 def truncate_line(line, font, max_width):
-    global _last_trunc
     truncating = 0
     new_text = line
 
-    # Check if we've already truncated this string in the
-    # font specified
-    for index in range(len(_last_trunc)):
-        if (line      == _last_trunc[index]["str"] and
-            max_width == _last_trunc[index]["max_width"] and
-            font      == _last_trunc[index]["font"]):
-            return _last_trunc[index]["result"]
-
+    print("truncate_line called with: ", line)
+    
     # Form an initial estimate of how many characters will fit,
     # leaving some margin.
     t_width = font.getsize(line)[0]
@@ -320,8 +310,6 @@ def truncate_line(line, font, max_width):
             "truncating" : 0,
             "font"       : font
         }
-        _last_trunc.insert(0, new_result)
-        _last_trunc = _last_trunc[:9]
         return line
 
     avg_char = len(new_text) / t_width
@@ -342,37 +330,15 @@ def truncate_line(line, font, max_width):
     if truncating:
         final_text += "\u2026"
 
-    # Store result for later table lookup, only keeping
-    # the last 10 results.
-    #
-    # NOTE: Is there some standard Python mechanism for
-    #       memoization??
-    #
-    new_result = {
-        "str"        : line,
-        "result"     : final_text,
-        "truncating" : truncating,
-        "font"       : font,
-        "max_width"  : max_width
-        }
-    _last_trunc.insert(0, new_result)
-    _last_trunc = _last_trunc[:9]
-
     return final_text
 
 
+@lru_cache(maxsize=20)
 def text_wrap(text, font, max_width, max_lines=None):
-    global _last_wrap
     lines = []
 
-    # Check if we've already wrapped this text in the
-    # font specified
-    for index in range(len(_last_wrap)):
-        if (text      == _last_wrap[index]["str"] and
-            max_width == _last_wrap[index]["max_width"] and
-            font      == _last_wrap[index]["font"]):
-            return _last_wrap[index]["result"]
-
+    print("text_wrap called with ", text)
+    
     # If the width of the text is smaller than image width
     # we don't need to split it, just add it to the lines array
     # and return
@@ -402,22 +368,6 @@ def text_wrap(text, font, max_width, max_lines=None):
 
         if max_lines and len(lines) >= max_lines-1 and i < len(words):
             lines.append(truncate_line(" ".join(words[i:]), font, max_width))
-
-
-    # Store result for later table lookup, only keeping
-    # the last 10 results.
-    #
-    # NOTE: Is there some standard Python mechanism for
-    #       memoization??
-    #
-    new_result = {
-        "str"        : text,
-        "result"     : lines,
-        "font"       : font,
-        "max_width"  : max_width
-        }
-    _last_wrap.insert(0, new_result)
-    _last_wrap = _last_wrap[:9]
 
     return lines
 
@@ -987,8 +937,6 @@ def screen_off():
 def update_display():
     global _last_image_path
     global _last_thumb
-    global _last_wrap
-    global _last_trunc
     global screen_press
     global screen_active
     global screen_offtime
@@ -1074,8 +1022,8 @@ def update_display():
             _last_image_path = None
             _last_image_time = None
             _last_thumb = None
-            _last_trunc = []
-            _last_wrap = []
+            truncate_line.cache_clear()
+            text_wrap.cache_clear()
 
         # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
@@ -1128,8 +1076,8 @@ def update_display():
             _last_image_path = None
             _last_image_time = None
             _last_thumb = None
-            _last_trunc = []
-            _last_wrap = []
+            truncate_line.cache_clear()
+            text_wrap.cache_clear()            
 
         # Retrieve (almost) all desired info in a single JSON-RPC call
         payload = {
@@ -1215,6 +1163,8 @@ def main(device_handle):
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    # This section is specific to the ILI9341 display; it should
+    # likely just be moved to that display-specific script.
     if CHANGE_GAMMA:
         # Use the gamma settings from Linux's mi0283qt.c driver
         device.command(0xe0,                                # Set Gamma (+ polarity)
