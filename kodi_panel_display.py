@@ -980,6 +980,15 @@ def update_display():
         screen_off()
 
     # Ask Kodi whether anything is playing...
+    #
+    #   JSON-RPC calls can only invoke one method per call.  Unless
+    #   we wish to make a "blind" InfoLabels call asking for all
+    #   interesting MusicPlayer and VideoPlayer fields, we must
+    #   make 2 distinct network calls.
+    #
+    #   Over wifi on an RPi3 on my home network, each call seems to
+    #   take ~0.025 seconds.
+    #
     payload = {
         "jsonrpc": "2.0",
         "method"  : "Player.GetActivePlayers",
