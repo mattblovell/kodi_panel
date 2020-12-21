@@ -692,7 +692,7 @@ def audio_screens(image, draw, info, prog):
     txt_field = layout["fields"]
     for index in range(len(txt_field)):
 
-        # special treatment for codec, which gets a lookup
+        # special treatment for "codec", which gets a lookup
         if txt_field[index]["name"] == "codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
                 # render any label first
@@ -705,7 +705,24 @@ def audio_screens(image, draw, info, prog):
                           fill=txt_field[index]["fill"],
                           font=txt_field[index]["font"])
 
-        # special treatment for MusicPlayer.Artist
+        # special treatment for "full_codec"
+        elif txt_field[index]["name"] == "full_codec":
+            if info['MusicPlayer.Codec'] in codec_name.keys():
+                display_text =  codec_name[info['MusicPlayer.Codec']]
+                display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
+                    info['MusicPlayer.SampleRate'] + ")"
+                
+                # render any label first
+                if "label" in txt_field[index]:
+                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
+                              txt_field[index]["label"],
+                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                          display_text,
+                          fill=txt_field[index]["fill"],
+                          font=txt_field[index]["font"])                
+
+        # special treatment for "artist"
         elif txt_field[index]["name"] == "artist":
             display_string = None
             if info['MusicPlayer.Artist'] != "":
@@ -1082,6 +1099,8 @@ def update_display():
                                     "MusicPlayer.TrackNumber",
                                     "MusicPlayer.Property(Role.Composer)",
                                     "MusicPlayer.Codec",
+                                    "MusicPlayer.BitsPerSample",
+                                    "MusicPlayer.SampleRate",
                                     "MusicPlayer.Year",
                                     "MusicPlayer.Genre",
                                     "MusicPlayer.Cover",
@@ -1089,7 +1108,7 @@ def update_display():
             "id"      : 4,
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        #print("Response: ", json.dumps(response))
+        print("Response: ", json.dumps(response))
         track_info = response['result']
 
         # Progress information in Kodi Leia must be fetch separately, via a
@@ -1215,10 +1234,10 @@ def main(device_handle):
             # took and then sleep whatever remains of that second.
 
             elapsed = time.time() - start_time
-            if elapsed < 0.99:
-                time.sleep(0.99 - elapsed)
+            if elapsed < 1:
+                time.sleep(1 - elapsed)
             else:
-                time.sleep(0.6)
+                time.sleep(0.4)
 
 
 def shutdown():
