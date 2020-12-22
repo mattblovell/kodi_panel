@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.00"
+PANEL_VER = "v1.01"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -78,51 +78,80 @@ codec_name = {
 #
 # Start processing settings...
 #
-base_url = config.settings["BASE_URL"]
-rpc_url  = base_url + "/jsonrpc"
-headers  = {'content-type': 'application/json'}
+if "BASE_URL" in config.settings.keys():
+    base_url = config.settings["BASE_URL"]
+    rpc_url  = base_url + "/jsonrpc"
+    headers  = {'content-type': 'application/json'}
+else:
+    print("Settings file does not specify BASE_URL!  Stopping.")
+    sys.exit(1)
 
+# Is Kodi running locally?    
 _local_kodi = (base_url.startswith("http://localhost:") or
                base_url.startswith("https://localhost:"))
 
 # Image handling
-frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
+if ("DISPLAY_WIDTH"  in config.settings.keys() and
+    "DISPLAY_HEIGHT" in config.settings.keys()):
+    _frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
+else:
+    print("Settings file does not specify DISPLAY_WIDTH and DISPLAY_HEIGHT!  Stopping.")
+    sys.exit(1)
+
+# State to prevent re-fetching cover art unnecessarily    
 _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
 # Thumbnail defaults (these now DO get resized as needed)
-kodi_thumb      = config.settings["KODI_THUMB"]
-default_thumb   = config.settings["DEFAULT_AUDIO"]
-default_airplay = config.settings["DEFAULT_AIRPLAY"]
+_kodi_thumb      = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
+_default_thumb   = config.settings.get("DEFAULT_AUDIO",   "images/music_icon2_lg.png")
+_default_airplay = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
 # RegEx for recognizing AirPlay images (compiled once)
 _airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 # Load all user-specified fonts
-fonts = {}
-for user_font in config.settings["fonts"]:
-    try:
-        if "encoding" in user_font.keys():
-            fonts[user_font["name"]] = ImageFont.truetype(
-                user_font["path"], user_font["size"], encoding=user_font["encoding"]
-            )
-        else:
-            fonts[user_font["name"]] = ImageFont.truetype(
-                user_font["path"], user_font["size"]
-            )
-    except OSError:
-        print("Unable to load font ", user_font["name"], " with path '", user_font["path"], "'", sep='')
-        sys.exit("Exiting")
-
+_fonts = {}
+if "fonts" in config.settings.keys():
+    for user_font in config.settings["fonts"]:
+        try:
+            if "encoding" in user_font.keys():
+                _fonts[user_font["name"]] = ImageFont.truetype(
+                    user_font["path"], user_font["size"], encoding=user_font["encoding"]
+                )
+            else:
+                _fonts[user_font["name"]] = ImageFont.truetype(
+                    user_font["path"], user_font["size"]
+                )
+        except OSError:
+            print("Unable to load font ", user_font["name"], " with path '", user_font["path"], "'", sep='')
+            sys.exit("Exiting")
+else:
+    print("Settings file does not provide a fonts table!  Stopping.")
+    sys.exit(1)
+            
 
 # Color lookup table
-colors = config.settings["COLORS"]
+if "COLORS" in config.settings.keys():
+    _colors = config.settings.get("COLORS", {})
+else:
+    print("Settings file does not provide a COLORS table!  Stopping.")
+    sys.exit(1)    
 
-# Which display modes are enabled for use?
-AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS",0)
-VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS",0)
+if ("color_progfg" in _colors.keys() and
+    "color_progbg" in _colors.keys()):
+    pass
+else:
+    print("COLORS table must specify 'color_progfg' and 'color_progbg'!  Stopping.")
+    sys.exit(1)        
 
+
+#
+# Which display screens are enabled for use?
+#
+AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS",False)
+VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS",False)
 
 # Audio screen enumeration
 # ------------------------
@@ -187,7 +216,7 @@ if VIDEO_ENABLED:
 # Screen layouts
 # --------------------
 #
-# Fixup fonts and colors, so that further table lookups are not
+# Fixup fonts and _colors, so that further table lookups are not
 # necessary at run-time.
 #
 
@@ -203,11 +232,11 @@ def fixup_layouts(nested_dict):
                  key == "fill" or key == "lfill") and
                 value.startswith("color_")):
                 # Lookup color
-                newdict[key] = colors[value]
+                newdict[key] = _colors[value]
             elif (key == "font" or key == "lfont" or
                   key == "smfont"):
                 # Lookup font
-                newdict[key] = fonts[value]
+                newdict[key] = _fonts[value]
     return newdict
 
 def fixup_array(array):
@@ -254,19 +283,24 @@ else:
 #   Odroid C4:  GPIO19 (physical Pin 35)
 #   RPi 3:      GPIO16 (physical Pin 36)
 #
-USE_TOUCH      = config.settings["USE_TOUCH"]  # Set False to disable interrupt use
-TOUCH_INT      = config.settings["TOUCH_INT"]
+# The USE_TOUCH boolean can be set False to disable all attempts
+# at interrupt use.
+#
+USE_TOUCH      = config.settings.get("USE_TOUCH",False)
+TOUCH_INT      = config.settings.get("TOUCH_INT",0) 
 
 # Internal state variables used to manage screen presses
-kodi_active    = False
-screen_press   = False
-screen_active  = False
-screen_wake    = 25    # status screen waketime, in seconds
-screen_offtime = datetime.now()
+_kodi_active    = False
+_screen_press   = False
+_screen_active  = False
+
+# status screen waketime, in seconds
+_screen_wake    = config.settings.get("_SCREEN_WAKE_TIME", 25)    
+_screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  (This
 # is perhaps unnecessary given Python's GIL, but is certainly safe.)
-lock = threading.Lock()
+_lock = threading.Lock()
 
 # Additional screen controls.  Note that RPi.GPIO's PWM control, even
 # the Odroid variant, uses software (pthreads) to control the signal,
@@ -280,19 +314,20 @@ lock = threading.Lock()
 # luma.lcd at all to change backlight state.  Users with OLED displays
 # should set it to False.
 #
-USE_BACKLIGHT = config.settings["USE_BACKLIGHT"]
+USE_BACKLIGHT = config.settings.get("USE_BACKLIGHT",False)
 USE_PWM       = False
 PWM_FREQ      = 362      # frequency, presumably in Hz
 PWM_LEVEL     = 75.0     # float value between 0 and 100
 
-# Are we running using luma.lcd's pygame demo mode?
+# Are we running using luma.lcd's pygame demo mode?  This variable
+# gets modified directly by kodi_panel_demo.py.
 DEMO_MODE = False
 
 
 # ----------------------------------------------------------------------------
 
 # Finally, create the needed Pillow objects
-image  = Image.new('RGB', (frame_size), 'black')
+image  = Image.new('RGB', (_frame_size), 'black')
 draw   = ImageDraw.Draw(image)
 
 
@@ -475,7 +510,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                     image_set     = True
                     resize_needed = True
                 except:
-                    cover = Image.open(default_thumb)
+                    cover = Image.open(_default_thumb)
                     prev_image = cover
                     image_set     = True
                     resize_needed = True
@@ -534,7 +569,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                     resize_needed   = True
                     _last_image_time = new_image_time
                 except:
-                    cover = Image.open(default_thumb)
+                    cover = Image.open(_default_thumb)
                     prev_image = cover
                     image_set     = True
                     resize_needed = True
@@ -553,10 +588,10 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                 _last_image_path = airplay_thumb
                 resize_needed   = True
             else:
-                _last_image_path = default_airplay
+                _last_image_path = _default_airplay
         else:
             # default image when no artwork is available
-            _last_image_path = default_thumb
+            _last_image_path = _default_thumb
 
         cover = Image.open(_last_image_path)
         prev_image = cover
@@ -593,7 +628,7 @@ def status_screen(draw, kodi_status, summary_string):
 
     # Kodi logo, if desired
     if "thumb" in layout.keys():
-        kodi_icon = Image.open(kodi_thumb)
+        kodi_icon = Image.open(_kodi_thumb)
         kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
         image.paste(kodi_icon, (layout["thumb"]["posx"], layout["thumb"]["posy"] ))
 
@@ -666,8 +701,8 @@ def audio_screens(image, draw, info, prog):
         if _last_thumb:
             if layout["thumb"].get("center",0):
                 image.paste(_last_thumb,
-                            (int((frame_size[0]-_last_thumb.width)/2),
-                             int((frame_size[1]-_last_thumb.height)/2)))
+                            (int((_frame_size[0]-_last_thumb.width)/2),
+                             int((_frame_size[1]-_last_thumb.height)/2)))
             elif (layout["thumb"].get("center_sm", 0) and
                   (_last_thumb.width < layout["thumb"]["size"] or
                    _last_thumb.height < layout["thumb"]["size"])):
@@ -686,19 +721,19 @@ def audio_screens(image, draw, info, prog):
     # progress bar
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
                          prog, vertical=True)
         elif info['MusicPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["long_len"], layout["prog"]["height"],
                          prog)
         else:
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["short_len"], layout["prog"]["height"],
                          prog)
@@ -765,7 +800,7 @@ def audio_screens(image, draw, info, prog):
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
                                      display_string,
-                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_width=_frame_size[0] - txt_field[index]["posx"],
                                      max_lines=1,
                                      fill=txt_field[index]["fill"],
                                      font=txt_field[index]["font"])
@@ -797,7 +832,7 @@ def audio_screens(image, draw, info, prog):
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
                                      info[txt_field[index]["name"]],
-                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_width=_frame_size[0] - txt_field[index]["posx"],
                                      max_lines=1,
                                      fill=txt_field[index]["fill"],
                                      font=txt_field[index]["font"])
@@ -830,8 +865,8 @@ def video_screens(image, draw, info, prog):
         if _last_thumb:
             if layout["thumb"].get("center",0):
                 image.paste(_last_thumb,
-                            (int((frame_size[0]-_last_thumb.width)/2),
-                             int((frame_size[1]-_last_thumb.height)/2)))
+                            (int((_frame_size[0]-_last_thumb.width)/2),
+                             int((_frame_size[1]-_last_thumb.height)/2)))
             elif (layout["thumb"].get("center_sm", 0) and
                   (_last_thumb.width < layout["thumb"]["width"] or
                    _last_thumb.height < layout["thumb"]["height"])):
@@ -850,19 +885,19 @@ def video_screens(image, draw, info, prog):
     # progress bar
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
                          prog, vertical=True)
         elif info['VideoPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["long_len"], layout["prog"]["height"],
                          prog)
         else:
-            progress_bar(draw, colors["color_progbg"], colors["color_progfg"],
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["short_len"], layout["prog"]["height"],
                          prog)
@@ -909,7 +944,7 @@ def video_screens(image, draw, info, prog):
                     render_text_wrap(draw,
                                      (txt_field[index]["posx"], txt_field[index]["posy"]),
                                      info[txt_field[index]["name"]],
-                                     max_width=frame_size[0] - txt_field[index]["posx"],
+                                     max_width=_frame_size[0] - txt_field[index]["posx"],
                                      max_lines=1,
                                      fill=txt_field[index]["fill"],
                                      font=txt_field[index]["font"])
@@ -963,20 +998,20 @@ def screen_off():
 def update_display():
     global _last_image_path
     global _last_thumb
-    global screen_press
-    global screen_active
-    global screen_offtime
+    global _screen_press
+    global _screen_active
+    global _screen_offtime
     global audio_dmode
     global video_dmode
 
-    lock.acquire()
+    _lock.acquire()
 
     # Start with a blank slate
-    draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
+    draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
 
-    # Check if the screen_active time has expired
-    if (screen_active and datetime.now() >= screen_offtime):
-        screen_active = False
+    # Check if the _screen_active time has expired
+    if (_screen_active and datetime.now() >= _screen_offtime):
+        _screen_active = False
         screen_off()
 
     # Ask Kodi whether anything is playing...
@@ -1009,13 +1044,13 @@ def update_display():
         _last_image_time = None
         _last_thumb = None
 
-        if screen_press:
-            screen_press = False
+        if _screen_press:
+            _screen_press = False
             screen_on()
-            screen_active = True
-            screen_offtime = datetime.now() + timedelta(seconds=screen_wake)
+            _screen_active = True
+            _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
-        if screen_active:
+        if _screen_active:
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
@@ -1050,8 +1085,8 @@ def update_display():
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if screen_press:
-            screen_press = False
+        if _screen_press:
+            _screen_press = False
             video_dmode = video_dmode.next()
             print(datetime.now(), "video display mode now", video_dmode.name)
             _last_image_path = None
@@ -1104,8 +1139,8 @@ def update_display():
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if screen_press:
-            screen_press = False
+        if _screen_press:
+            _screen_press = False
             audio_dmode = audio_dmode.next()
             print(datetime.now(), "audio display mode now", audio_dmode.name)
             _last_image_path = None
@@ -1170,28 +1205,28 @@ def update_display():
 
     # Output to OLED/LCD display
     device.display(image)
-    lock.release()
+    _lock.release()
 
 
 # Interrupt callback target from RPi.GPIO for T_IRQ
 def touch_callback(channel):
-    global screen_press
-    global kodi_active
-    screen_press = kodi_active
+    global _screen_press
+    global _kodi_active
+    _screen_press = _kodi_active
     #print(datetime.now(), "Touchscreen pressed")
-    if kodi_active:
+    if _kodi_active:
         try:
             update_display()
-            screen_press = False
+            _screen_press = False
         except:
             pass
 
 
 def main(device_handle):
     global device
-    global kodi_active
-    global screen_press
-    kodi_active = False
+    global _kodi_active
+    global _screen_press
+    _kodi_active = False
 
     device = device_handle
 
@@ -1211,8 +1246,8 @@ def main(device_handle):
     # main communication loop
     while True:
         screen_on()
-        draw.rectangle([(0,0), (frame_size[0],frame_size[1])], 'black', 'black')
-        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=fonts["font_main"])
+        draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
+        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=_fonts["font_main"])
         device.display(image)
 
         while True:
@@ -1238,21 +1273,21 @@ def main(device_handle):
         screen_off()
 
         # Loop until Kodi goes away
-        kodi_active = True
-        screen_press = False
+        _kodi_active = True
+        _screen_press = False
         while True:
             try:
                 start_time = time.time()
                 if DEMO_MODE:
                     keys = device._pygame.key.get_pressed()
                     if keys[device._pygame.K_SPACE]:
-                        screen_press = True
+                        _screen_press = True
                         print(datetime.now(), "Touchscreen pressed (emulated)")
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
-                kodi_active = False
+                _kodi_active = False
                 break
 
             # If connecting to Kodi over an actual network connection,

@@ -85,8 +85,8 @@ HW_PWM_LEVEL = 0.55
 #
 
 # Audio and video screens are enabled and disabled separately.
-ENABLE_AUDIO_SCREENS = 1
-ENABLE_VIDEO_SCREENS = 1
+ENABLE_AUDIO_SCREENS = true
+ENABLE_VIDEO_SCREENS = true
 
 
 # Paths to default thumbnails for audio and status screen.  These now
