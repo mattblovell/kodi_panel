@@ -266,7 +266,7 @@ elif AUDIO_ENABLED:
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 elif VIDEO_ENABLED:
-    warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling video screens.")    
+    warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")    
     VIDEO_ENABLED = 0
 
 # Layout control for status screen, used by status_screen()
