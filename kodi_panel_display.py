@@ -132,6 +132,13 @@ else:
     sys.exit(1)
             
 
+if "font_main" in _fonts.keys():
+    pass
+else:
+    print("fonts table must specify a 'font_main' entry!  Stopping.")
+    sys.exit(1)            
+
+    
 # Color lookup table
 if "COLORS" in config.settings.keys():
     _colors = config.settings.get("COLORS", {})
