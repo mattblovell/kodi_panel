@@ -295,7 +295,7 @@ _screen_press   = False
 _screen_active  = False
 
 # status screen waketime, in seconds
-_screen_wake    = config.settings.get("_SCREEN_WAKE_TIME", 25)    
+_screen_wake    = config.settings.get("SCREEN_WAKE_TIME", 25)    
 _screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  (This
