@@ -1,3 +1,23 @@
+#
+# systemd service file for kodi_panel
+#
+#   Edit the WorkingDirectory below as appropriate for your
+#   installation.
+#
+#   On an RPi, this file should be copied to the directory
+#
+#     /etc/systemd/service
+#
+#   after which one can then one commands such as:
+#
+#     sudo systemctl start kodi_panel
+#     sudo systemctl stop kodi_panel
+#     sudo systemctl restart kodi_panel
+#
+#     sudo systemctl enable kodi_panel   # start upon boot
+#     sudo systemctl disable kodi_panel  # disable start at boot
+#
+
 [Unit]
 Description=kodi_panel display
 After=network.target rc-local.service
