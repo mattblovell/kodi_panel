@@ -462,8 +462,6 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 # same data, provided that the caller preserves and passes in
 # prev_image.
 #
-# The info argument must be the result of an XBMC.GetInfoLabels
-# JSON-RPC call to Kodi.
 def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
     global _last_image_path
     global _last_image_time
