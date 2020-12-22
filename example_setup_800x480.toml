@@ -225,27 +225,27 @@ center_sm = 1
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
 posy   = 7       # upper-left corner y position
-height = 8       # pixel height
-short_len = 188  # length when elapsed time matches 00:00 (min, seconds)
+height = 11      # pixel height
+short_len = 190  # length when elapsed time matches 00:00 (min, seconds)
 long_len  = 292  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
 posx = 420
-posy = 28
+posy = 32
 font = "font7S"
 fill = "color_7S"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
 posx = 420
-posy = 124
+posy = 132
 font = "font7S"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
   lposx = 420
-  lposy = 98
+  lposy = 104
   lfont = "font_tiny"
   lfill = "white"
 
@@ -260,21 +260,21 @@ fill = "color_7S"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Duration"
 posx = 580
-posy = 98
+posy = 104
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "codec"   # special treatment in audio_screens()
 posx = 580
-posy = 126
+posy = 132
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Genre"
 posx = 580
-posy = 154
+posy = 160
 font = "font_tiny"
 fill = "white"
 trunc = 1
@@ -282,7 +282,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
 posx = 580
-posy = 182
+posy = 188
 font = "font_tiny"
 fill = "white"
 
