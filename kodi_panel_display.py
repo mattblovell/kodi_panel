@@ -451,7 +451,8 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 
 
 # Retrieve cover art or a default thumbnail.  Cover art gets resized
-# to the provided thumb_size, but any default images are used as-is.
+# to the provided thumb_width and thumb_height.  (This now applies
+# to default images as well.)
 #
 # Note that details of retrieval seem to differ depending upon whether
 # Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
