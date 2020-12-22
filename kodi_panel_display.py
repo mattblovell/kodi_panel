@@ -682,7 +682,7 @@ def status_screen(draw, kodi_status, summary_string):
 # handled here in this function.
 #
 # First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant track fields.
+# Third argument is a dictionary loaded from Kodi with relevant info fields.
 # Fourth argument is a float representing progress through the track.
 #
 def audio_screens(image, draw, info, prog):
@@ -846,8 +846,8 @@ def audio_screens(image, draw, info, prog):
 # Video info screens (shown when a video is playing).
 #
 # First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant track fields.
-# Fourth argument is a float representing progress through the track.
+# Third argument is a dictionary loaded from Kodi with relevant info fields.
+# Fourth argument is a float representing progress through the video.
 #
 def video_screens(image, draw, info, prog):
     global video_dmode
