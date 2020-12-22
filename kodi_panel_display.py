@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.02"
+PANEL_VER = "v1.03"
 
 # Audio/Video codec lookup
 codec_name = {
