@@ -223,8 +223,8 @@ if VIDEO_ENABLED:
 # Screen layouts
 # --------------------
 #
-# Fixup fonts and _colors, so that further table lookups are not
-# necessary at run-time.
+# Fixup font and color entries now, so that further table lookups are
+# not necessary at run-time.
 #
 
 def fixup_layouts(nested_dict):
