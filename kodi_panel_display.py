@@ -258,14 +258,14 @@ def fixup_array(array):
 # Used by audio_screens() for all info screens
 if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
     AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
-else:
+elif AUDIO_ENABLED:
     warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
     AUDIO_ENABLED = 0
 
 # Used by video_screens() for all info screens
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
-else:
+elif VIDEO_ENABLED:
     warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling video screens.")    
     VIDEO_ENABLED = 0
 
