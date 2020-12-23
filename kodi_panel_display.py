@@ -502,8 +502,9 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                 response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
                 #print("Response: ", json.dumps(response))  # debug info
 
-                if ('details' in response['result'].keys() and
-                    'path' in response['result']['details'].keys()) :
+                if ('result'  in response.keys() and
+                    'details' in response['result'].keys() and
+                    'path'    in response['result']['details'].keys()) :
                     image_url = base_url + "/" + response['result']['details']['path']
                     #print("image_url : ", image_url) # debug info
 
