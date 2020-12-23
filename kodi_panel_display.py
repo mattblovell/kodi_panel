@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.03"
+PANEL_VER = "v1.04"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -502,11 +502,11 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                 response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
                 #print("Response: ", json.dumps(response))  # debug info
 
-                if ('result'  in response.keys() and
-                    'details' in response['result'].keys() and
-                    'path'    in response['result']['details'].keys()) :
+                try:
                     image_url = base_url + "/" + response['result']['details']['path']
                     #print("image_url : ", image_url) # debug info
+                except:
+                    pass
 
             r = requests.get(image_url, stream = True)
             # check that the retrieval was successful before proceeding
@@ -561,10 +561,11 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
             response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
             #print("Response: ", json.dumps(response))  # debug info
 
-            if ('details' in response['result'].keys() and
-                'path' in response['result']['details'].keys()) :
+            try:
                 image_url = base_url + "/" + response['result']['details']['path']
-                #print("image_url : ", image_url) # debug info
+                #print("image_url : ", image_url) # debug info                
+            except:
+                pass
 
             r = requests.get(image_url, stream = True)
             # check that the retrieval was successful before proceeding
@@ -1038,7 +1039,8 @@ def update_display():
     }
     response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
 
-    if (len(response['result']) == 0 or
+    if ((not 'result' in response.keys()) or
+        len(response['result']) == 0 or
         response['result'][0]['type'] == 'picture' or
         (response['result'][0]['type'] == 'video' and not VIDEO_ENABLED) or
         (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
@@ -1123,21 +1125,24 @@ def update_display():
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
-        video_info = response['result']
+        try:
+            video_info = response['result']
 
-        # See remarks in audio_screens() regarding calc_progress()
-        prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
+            # See remarks in audio_screens() regarding calc_progress()
+            prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
 
-        # There seems to be a hiccup in DLNA/UPnP playback in which a
-        # change (or stopping playback) causes a moment when
-        # nothing is actually playing, according to the Info Labels.
-        if ((video_info["VideoPlayer.Time"] == "00:00" or
-             video_info["VideoPlayer.Time"] == "00:00:00") and
-            video_info["VideoPlayer.Duration"] == "" and
-            video_info["VideoPlayer.Cover"] == ""):
+            # There seems to be a hiccup in DLNA/UPnP playback in which a
+            # change (or stopping playback) causes a moment when
+            # nothing is actually playing, according to the Info Labels.
+            if ((video_info["VideoPlayer.Time"] == "00:00" or
+                 video_info["VideoPlayer.Time"] == "00:00:00") and
+                video_info["VideoPlayer.Duration"] == "" and
+                video_info["VideoPlayer.Cover"] == ""):
+                pass
+            else:
+                video_screens(image, draw, video_info, prog)
+        except:
             pass
-        else:
-            video_screens(image, draw, video_info, prog)
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
@@ -1178,37 +1183,40 @@ def update_display():
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
-        track_info = response['result']
+        try:
+            track_info = response['result']
 
-        # Progress information in Kodi Leia must be fetch separately, via a
-        # JSON-RPC call like the following:
-        #
-        #   payload = {
-        #       "jsonrpc": "2.0",
-        #       "method"  : "Player.GetProperties",
-        #       "params"  : {
-        #           "playerid": 0,
-        #           "properties" : ["percentage"],
-        #       },
-        #       "id"      : "prog",
-        #   }
-        #
-        # This looks to be fixed in Kodi Matrix.  However, since we
-        # already have the current time and duration, let's just
-        # calculate the current position as a percentage.
-
-        prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
-
-        # There seems to be a hiccup in DLNA/UPnP playback in which a
-        # change (or stopping playback) causes a moment when
-        # nothing is actually playing, according to the Info Labels.
-        if ((track_info["MusicPlayer.Time"] == "00:00" or
-             track_info["MusicPlayer.Time"] == "00:00:00") and
-            track_info["MusicPlayer.Duration"] == "" and
-            track_info["MusicPlayer.Cover"] == ""):
+            # Progress information in Kodi Leia must be fetch separately, via a
+            # JSON-RPC call like the following:
+            #
+            #   payload = {
+            #       "jsonrpc": "2.0",
+            #       "method"  : "Player.GetProperties",
+            #       "params"  : {
+            #           "playerid": 0,
+            #           "properties" : ["percentage"],
+            #       },
+            #       "id"      : "prog",
+            #   }
+            #
+            # This looks to be fixed in Kodi Matrix.  However, since we
+            # already have the current time and duration, let's just
+            # calculate the current position as a percentage.
+            
+            prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
+            
+            # There seems to be a hiccup in DLNA/UPnP playback in which a
+            # change (or stopping playback) causes a moment when
+            # nothing is actually playing, according to the Info Labels.
+            if ((track_info["MusicPlayer.Time"] == "00:00" or
+                 track_info["MusicPlayer.Time"] == "00:00:00") and
+                track_info["MusicPlayer.Duration"] == "" and
+                track_info["MusicPlayer.Cover"] == ""):
+                pass
+            else:
+                audio_screens(image, draw, track_info, prog)
+        except:
             pass
-        else:
-            audio_screens(image, draw, track_info, prog)
 
     # Output to OLED/LCD display
     device.display(image)
