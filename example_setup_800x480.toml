@@ -354,9 +354,9 @@ size = 480
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
-posx = 788    # upper-left corner x-position
+posx = 786    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
-len  = 10     # pixel width for a vertical bar
+len  = 11     # pixel width for a vertical bar
 height = 476  # total height for the vertical bar
 
 
@@ -376,14 +376,14 @@ center_sm = 1
 [A_LAYOUT.A_NOTIME.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
 posy   = 12      # upper-left corner y position
-height = 8       # pixel height
+height = 11       # pixel height
 short_len = 292  # length when elapsed time matches 00:00 (min, seconds)
 long_len  = 292  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
 
 [[A_LAYOUT.A_NOTIME.fields]]
 name = "MusicPlayer.TrackNumber"
 posx = 420
-posy = 56
+posy = 58
 font = "font7S"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
@@ -398,8 +398,6 @@ fill = "color_7S"
 # and track number, in a small font.
 #
 
-# The duration NEVER has decending characters, so it can be somewhat
-# closer to the next row
 [[A_LAYOUT.A_NOTIME.fields]]
 name = "MusicPlayer.Duration"
 posx = 580
@@ -454,19 +452,16 @@ trunc = 1
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "artist"   # special treatment in audio_screens()
 posx  = 420
-posy  = 180
+posy  = 240
 font  = "font_sm"
 fill  = "color_artist"
-#trunc = 1
-wrap  = 1
-max_width = 375
-max_lines = 2
+trunc = 1
 
 
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "MusicPlayer.Album"
 posx  = 420
-posy  = 260
+posy  = 280
 font  = "font_sm"
 fill  = "white"
 wrap  = 1
