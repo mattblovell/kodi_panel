@@ -23,10 +23,10 @@
 
 # ----------------------------------------------------------------------------
 #
-# This file is a variant of kodi_panel.py that copies the Pillow image,
+# This file is a variant of kodi_panel that copies the Pillow image,
 # via luma.lcd, to a framebuffer.
 #
-# The first version of this file make use of Pytorinox's
+# The first version of this file made use of Pytorinox's
 # framebuffer.py.  However, the 2.0.0 release of luma.core includes a
 # new linux_framebuffer class.  Using it permits for fewer changes.
 #
