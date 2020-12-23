@@ -1104,7 +1104,7 @@ def update_display():
             truncate_line.cache_clear()
             text_wrap.cache_clear()
 
-        # Retrieve (almost) all desired info in a single JSON-RPC call
+        # Retrieve video InfoLabels in a single JSON-RPC call
         payload = {
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
@@ -1161,7 +1161,21 @@ def update_display():
             truncate_line.cache_clear()
             text_wrap.cache_clear()
 
-        # Retrieve (almost) all desired info in a single JSON-RPC call
+        # Retrieve all music InfoLabels in a single JSON-RPC call.
+        #
+        #   Unfortunately, Kodi Leia doesn't seem to capture the field
+        #   that JRiver Media Center offers up for its "Composer" tag,
+        #   namely
+        #
+        #      upnp:author role="Composer"
+        #
+        #   I've tried several variants with no success.
+        #
+        #   Also, BitsPerSample appears to be unreliable, as it can
+        #   get "stuck" at 32.  The SampleRate behaves better.  None
+        #   of these problems likely occur when playing back from a
+        #   Kodi-local library.
+        #
         payload = {
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
