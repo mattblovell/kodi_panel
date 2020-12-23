@@ -86,7 +86,7 @@ else:
     print("Settings file does not specify BASE_URL!  Stopping.")
     sys.exit(1)
 
-# Is Kodi running locally?    
+# Is Kodi running locally?
 _local_kodi = (base_url.startswith("http://localhost:") or
                base_url.startswith("https://localhost:"))
 
@@ -98,7 +98,7 @@ else:
     print("Settings file does not specify DISPLAY_WIDTH and DISPLAY_HEIGHT!  Stopping.")
     sys.exit(1)
 
-# State to prevent re-fetching cover art unnecessarily    
+# State to prevent re-fetching cover art unnecessarily
 _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
@@ -130,28 +130,28 @@ if "fonts" in config.settings.keys():
 else:
     print("Settings file does not provide a fonts table!  Stopping.")
     sys.exit(1)
-            
+
 
 if "font_main" in _fonts.keys():
     pass
 else:
     print("fonts table must specify a 'font_main' entry!  Stopping.")
-    sys.exit(1)            
+    sys.exit(1)
 
-    
+
 # Color lookup table
 if "COLORS" in config.settings.keys():
     _colors = config.settings.get("COLORS", {})
 else:
     print("Settings file does not provide a COLORS table!  Stopping.")
-    sys.exit(1)    
+    sys.exit(1)
 
 if ("color_progfg" in _colors.keys() and
     "color_progbg" in _colors.keys()):
     pass
 else:
     print("COLORS table must specify 'color_progfg' and 'color_progbg'!  Stopping.")
-    sys.exit(1)        
+    sys.exit(1)
 
 
 #
@@ -179,7 +179,7 @@ class ADisplay(Enum):
 # Populate enum based upon settings file
 if AUDIO_ENABLED:
     if ("ALAYOUT_NAMES" in config.settings.keys() and
-        "ALAYOUT_INITIAL" in config.settings.keys()):    
+        "ALAYOUT_INITIAL" in config.settings.keys()):
         for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
             extend_enum(ADisplay, value, index)
 
@@ -187,7 +187,7 @@ if AUDIO_ENABLED:
         audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
     else:
         warnings.warn("Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
-        print("Disabling audio screens (AUDIO_ENABLED=0)")        
+        print("Disabling audio screens (AUDIO_ENABLED=0)")
         AUDIO_ENABLED = 0
 
 
@@ -207,7 +207,7 @@ class VDisplay(Enum):
 
 if VIDEO_ENABLED:
     if ("VLAYOUT_NAMES" in config.settings.keys() and
-        "VLAYOUT_INITIAL" in config.settings.keys()):    
+        "VLAYOUT_INITIAL" in config.settings.keys()):
         # Populate enum based upon settings file
         for index, value in enumerate(config.settings["VLAYOUT_NAMES"]):
             extend_enum(VDisplay, value, index)
@@ -218,7 +218,7 @@ if VIDEO_ENABLED:
         warnings.warn("Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
         print("Disabling video screens (VIDEO_ENABLED=0)")
         AUDIO_ENABLED = 0
-        
+
 
 # Screen layouts
 # --------------------
@@ -266,7 +266,7 @@ elif AUDIO_ENABLED:
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 elif VIDEO_ENABLED:
-    warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")    
+    warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
     VIDEO_ENABLED = 0
 
 # Layout control for status screen, used by status_screen()
@@ -275,7 +275,7 @@ if ("STATUS_LAYOUT" in config.settings.keys()):
 else:
     warnings.warn("Cannot find any STATUS_LAYOUT screen settings!  Exiting.")
     sys.exit(1)
-    
+
 
 # GPIO assignments and display options
 # ------------------------------------
@@ -294,7 +294,14 @@ else:
 # at interrupt use.
 #
 USE_TOUCH      = config.settings.get("USE_TOUCH",False)
-TOUCH_INT      = config.settings.get("TOUCH_INT",0) 
+TOUCH_INT      = config.settings.get("TOUCH_INT",0)
+TOUCH_PULLUP   = config.settings.get("TOUCH_PULLUP",False)
+TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE",700) # milliseconds
+
+# Should the touch_callback() ISR attempt to invoke update_display()
+# directly?  Having the ISR take too long to execute is problematic on
+# the RPi Zero.
+TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE",False)
 
 # Internal state variables used to manage screen presses
 _kodi_active    = False
@@ -302,7 +309,7 @@ _screen_press   = False
 _screen_active  = False
 
 # status screen waketime, in seconds
-_screen_wake    = config.settings.get("SCREEN_WAKE_TIME", 25)    
+_screen_wake    = config.settings.get("SCREEN_WAKE_TIME", 25)
 _screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  (This
@@ -566,7 +573,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
 
             try:
                 image_url = base_url + "/" + response['result']['details']['path']
-                #print("image_url : ", image_url) # debug info                
+                #print("image_url : ", image_url) # debug info
             except:
                 pass
 
@@ -773,7 +780,7 @@ def audio_screens(image, draw, info, prog):
                 display_text =  codec_name[info['MusicPlayer.Codec']]
                 display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
                     info['MusicPlayer.SampleRate'] + ")"
-                
+
                 # render any label first
                 if "label" in txt_field[index]:
                     draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
@@ -782,7 +789,7 @@ def audio_screens(image, draw, info, prog):
                 draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                           display_text,
                           fill=txt_field[index]["fill"],
-                          font=txt_field[index]["font"])                
+                          font=txt_field[index]["font"])
 
         # special treatment for "artist"
         elif txt_field[index]["name"] == "artist":
@@ -992,6 +999,7 @@ def screen_on():
     else:
         device.backlight(True)
 
+
 def screen_off():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
@@ -1004,7 +1012,11 @@ def screen_off():
 #
 # Determine Kodi state and, if something of interest is playing,
 # retrieve all the relevant information and get it drawn.
-def update_display():
+#
+# The argument provides a mechanism for touch_int() to force
+# a direct update.
+#
+def update_display(touched=False):
     global _last_image_path
     global _last_thumb
     global _screen_press
@@ -1054,7 +1066,7 @@ def update_display():
         _last_image_time = None
         _last_thumb = None
 
-        if _screen_press:
+        if _screen_press or touched:
             _screen_press = False
             screen_on()
             _screen_active = True
@@ -1095,7 +1107,7 @@ def update_display():
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press:
+        if _screen_press or touched:
             _screen_press = False
             video_dmode = video_dmode.next()
             print(datetime.now(), "video display mode now", video_dmode.name)
@@ -1152,7 +1164,7 @@ def update_display():
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press:
+        if _screen_press or touched:
             _screen_press = False
             audio_dmode = audio_dmode.next()
             print(datetime.now(), "audio display mode now", audio_dmode.name)
@@ -1217,9 +1229,9 @@ def update_display():
             # This looks to be fixed in Kodi Matrix.  However, since we
             # already have the current time and duration, let's just
             # calculate the current position as a percentage.
-            
+
             prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
-            
+
             # There seems to be a hiccup in DLNA/UPnP playback in
             # which a track change (or stopping playback) causes a
             # moment when nothing is actually playing, according to
@@ -1240,18 +1252,25 @@ def update_display():
 
 
 # Interrupt callback target from RPi.GPIO for T_IRQ
+#
+#   Interesting threads on the RPi Forums:
+#
+#   Characterizing GPIO input pins (Jan 2016)
+#   https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=133740
+#
+#   GPIO callbacks occurring twice (Apr 2016)
+#   https://www.raspberrypi.org/forums/viewtopic.php?t=143478
+#
 def touch_callback(channel):
     global _screen_press
     global _kodi_active
-    _screen_press = _kodi_active
     #print(datetime.now(), "Touchscreen pressed")
-    # if _kodi_active:
-    #     try:
-    #         update_display()
-    #         _screen_press = False
-    #     except:
-    #         pass
-
+    if _kodi_active:
+        if TOUCH_CALL_UPDATE:
+            update_display(touched=True)
+        else:
+            _screen_press = _kodi_active
+    return
 
 def main(device_handle):
     global device
@@ -1270,9 +1289,12 @@ def main(device_handle):
     if (USE_TOUCH and not DEMO_MODE):
         print(datetime.now(), "Setting up touchscreen interrupt")
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(TOUCH_INT, GPIO.IN)
-        GPIO.add_event_detect(TOUCH_INT, GPIO.FALLING,
-                              callback=touch_callback, bouncetime=950)
+        if (TOUCH_PULLUP):
+            GPIO.setup(TOUCH_INT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        else:
+            GPIO.setup(TOUCH_INT, GPIO.IN)
+        GPIO.add_event_detect(TOUCH_INT, edge=GPIO.FALLING,
+                              callback=touch_callback, bouncetime=TOUCH_DEBOUNCE)
 
     # main communication loop
     while True:
@@ -1327,10 +1349,11 @@ def main(device_handle):
             # takes and then sleep whatever remains of that second.
 
             elapsed = time.time() - start_time
-            if elapsed < 1:
-                time.sleep(1 - elapsed)
+            if elapsed < 0.999:
+                time.sleep(0.999 - elapsed)
             else:
                 time.sleep(0.1)
+
 
 
 def shutdown():
