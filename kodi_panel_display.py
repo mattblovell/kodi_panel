@@ -314,12 +314,16 @@ _lock = threading.Lock()
 # which can result in flickering.  At present (Oct 2020), I cannot
 # recommend it.
 #
-# I have not yet found a way to take advantage of the C4's hardware
-# PWM simultaneous with using luma.lcd.
+# I have not yet found a way to take advantage of the Odroid C4's
+# hardware PWM simultaneous with using luma.lcd.
 #
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
 # should set it to False.
+#
+# As of Dec 2020, the framebuffer version of the script has an example
+# of using RPi hardware PWM without going through luma.lcd.  That
+# method uses a completely different set of variables, ignoring these.
 #
 USE_BACKLIGHT = config.settings.get("USE_BACKLIGHT",False)
 USE_PWM       = False
@@ -373,7 +377,7 @@ def truncate_line(line, font, max_width):
     # Leave room for ellipsis
     avail_width = max_width - font.getsize("\u2026")[0] + 6
 
-    # Now perform naive truncation.
+    # Now perform naive truncation
     t_width = font.getsize(new_text)[0]
     while (t_width > avail_width):
         truncating = 1
@@ -435,7 +439,6 @@ def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
         pil_draw.text((posx, posy), line, fill, font)
         posy = posy + line_height
     return
-
 
 
 # Draw a horizontal (by default) progress bar at the specified
@@ -665,7 +668,7 @@ def status_screen(draw, kodi_status, summary_string):
                       txt_field[index]["fill"], txt_field[index]["font"])
 
         elif txt_field[index]["name"] == "time_hrmin":
-            # time, in 7-segment font by default
+            # current time (in 7-segment LED font by default)
             time_parts = kodi_status['System.Time'].split(" ")
             time_width, time_height = draw.textsize(time_parts[0], txt_field[index]["font"])
             draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
@@ -686,9 +689,7 @@ def status_screen(draw, kodi_status, summary_string):
 
 
 
-# Audio info screens (shown when music is playing).  With the
-# introduction of the AUDIO_LAYOUT data structure, all 3 modes are
-# handled here in this function.
+# Audio info screens (shown when music is playing)
 #
 # First two arguments are Pillow Image and ImageDraw objects.
 # Third argument is a dictionary loaded from Kodi with relevant info fields.
@@ -852,7 +853,7 @@ def audio_screens(image, draw, info, prog):
 
 
 
-# Video info screens (shown when a video is playing).
+# Video info screens (shown when a video is playing)
 #
 # First two arguments are Pillow Image and ImageDraw objects.
 # Third argument is a dictionary loaded from Kodi with relevant info fields.
@@ -1219,9 +1220,10 @@ def update_display():
             
             prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
             
-            # There seems to be a hiccup in DLNA/UPnP playback in which a
-            # change (or stopping playback) causes a moment when
-            # nothing is actually playing, according to the Info Labels.
+            # There seems to be a hiccup in DLNA/UPnP playback in
+            # which a track change (or stopping playback) causes a
+            # moment when nothing is actually playing, according to
+            # the Info Labels.
             if ((track_info["MusicPlayer.Time"] == "00:00" or
                  track_info["MusicPlayer.Time"] == "00:00:00") and
                 track_info["MusicPlayer.Duration"] == "" and
@@ -1232,7 +1234,7 @@ def update_display():
         except:
             pass
 
-    # Output to OLED/LCD display
+    # Output to OLED/LCD display or framebuffer
     device.display(image)
     _lock.release()
 
@@ -1322,7 +1324,7 @@ def main(device_handle):
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
             # duration, we might as well measure how long the update
-            # took and then sleep whatever remains of that second.
+            # takes and then sleep whatever remains of that second.
 
             elapsed = time.time() - start_time
             if elapsed < 1:
