@@ -123,7 +123,7 @@ VLAYOUT_NAMES = [
 ]
 
 # Initial mode to use upon startup
-VLAYOUT_INITIAL = "V_FULLSCREEN"
+VLAYOUT_INITIAL = "V_DEFAULT"
 
 
 # Colors
@@ -279,6 +279,9 @@ font = "font_tiny"
 fill = "white"
 trunc = 1
 
+# NOTE: For UPnP/DLNA playback, Kodi Leia doesn't seem to capture
+#   dc:date.  Fortunately, the InfoLabel is left blank, unlike what
+#   happens for videos.
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
 posx = 580
@@ -414,6 +417,9 @@ font = "font_tiny"
 fill = "white"
 trunc = 1
 
+# NOTE: For UPnP/DLNA playback, Kodi Leia doesn't seem to capture
+#   dc:date.  Fortunately, the InfoLabel is left blank, unlike what
+#   happens for videos.
 [[A_LAYOUT.A_NOTIME.fields]]
 name = "MusicPlayer.Year"
 posx = 580
@@ -529,6 +535,10 @@ font  = "font_sm"
 fill  = "white"
 trunc = 1
 
+# NOTE: When playing a movie via UPnP/DLNA, Kodi Leia doesn't seem to
+#  get the release year parsed correctly.  All movies show a Year of
+#  1969.  If that is your primary path of playing video, perhaps this
+#  field should just be commented out
 [[V_LAYOUT.V_DEFAULT.fields]]
 name  = "VideoPlayer.Year"
 posx  = 340

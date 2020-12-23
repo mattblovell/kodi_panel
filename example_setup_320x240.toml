@@ -259,6 +259,9 @@ font = "font_tiny"
 fill = "white"
 trunc = 1
 
+# NOTE: For UPnP/DLNA playback, Kodi Leia doesn't seem to capture
+#   dc:date.  Fortunately, the InfoLabel is left blank, unlike what
+#   happens for videos.
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
 posx = 230
