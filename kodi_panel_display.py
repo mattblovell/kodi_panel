@@ -1245,12 +1245,12 @@ def touch_callback(channel):
     global _kodi_active
     _screen_press = _kodi_active
     #print(datetime.now(), "Touchscreen pressed")
-    if _kodi_active:
-        try:
-            update_display()
-            _screen_press = False
-        except:
-            pass
+    # if _kodi_active:
+    #     try:
+    #         update_display()
+    #         _screen_press = False
+    #     except:
+    #         pass
 
 
 def main(device_handle):
