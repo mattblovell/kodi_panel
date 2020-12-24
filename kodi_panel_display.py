@@ -103,10 +103,14 @@ _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
-_static_image     = None
-_last_track_num   = None
-_last_track_title = None
-_last_track_album = None
+# Re-use static portion of a screen
+_static_image       = None
+_last_track_num     = None
+_last_track_title   = None
+_last_track_album   = None
+_last_video_title   = None
+_last_video_time    = None
+_last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)
 _kodi_thumb      = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
@@ -866,7 +870,7 @@ def audio_screen_static(info):
         _last_thumb = None
 
         
-    # Text fields
+    # All the static text fields
     audio_text_fields(image, draw, info, dynamic=0)
 
     # Return new image
@@ -883,7 +887,7 @@ def audio_screen_dynamic(image, draw, info, prog):
     # Text fields
     audio_text_fields(image, draw, info, dynamic=1)
 
-    # progress bar
+    # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
             progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
@@ -939,72 +943,39 @@ def audio_screens(image, draw, info, prog):
     image.paste(_static_image, (0,0))        
     audio_screen_dynamic(image, draw, info, prog)
 
-    
-# Video info screens (shown when a video is playing)
-#
-# First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant info fields.
-# Fourth argument is a float representing progress through the video.
-#
-def video_screens(image, draw, info, prog):
-    global video_dmode
-    global _last_thumb
-    global _last_image_path
 
+
+
+# Render all video text fields, stepping through the entries from the
+# VIDEO_LAYOUT layout dictionary.
+#
+# The final argument determines whether one wants to render all of the
+# static fields or just the dynamic ones.  That permits this function
+# to be called by both
+#
+#   video_screen_static() and
+#   video_screen_dynamic()
+#
+def video_text_fields(image, draw, info, dynamic=False):
     # Get layout details for this mode
     layout = VIDEO_LAYOUT[video_dmode.name]
 
-    # retrieve cover image from Kodi, if it exists and needs a refresh
-    if "thumb" in layout.keys():
-        _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
-                                  layout["thumb"]["width"], layout["thumb"]["height"])
-        if _last_thumb:
-            if layout["thumb"].get("center",0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0]-_last_thumb.width)/2),
-                             int((_frame_size[1]-_last_thumb.height)/2)))
-            elif (layout["thumb"].get("center_sm", 0) and
-                  (_last_thumb.width < layout["thumb"]["width"] or
-                   _last_thumb.height < layout["thumb"]["height"])):
-                new_x = layout["thumb"]["posx"]
-                new_y = layout["thumb"]["posy"]
-                if _last_thumb.width < layout["thumb"]["width"]:
-                    new_x += int((layout["thumb"]["width"]/2) - (_last_thumb.width/2))
-                if _last_thumb.height < layout["thumb"]["height"]:
-                    new_y += int((layout["thumb"]["height"]/2) - (_last_thumb.height/2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
-    else:
-        _last_thumb = None
-
-    # progress bar
-    if (prog != -1 and "prog" in layout.keys()):
-        if "vertical" in layout["prog"].keys():
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["len"],
-                         layout["prog"]["height"],
-                         prog, vertical=True)
-        elif info['VideoPlayer.Time'].count(":") == 2:
-            # longer bar for longer displayed time
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["long_len"], layout["prog"]["height"],
-                         prog)
-        else:
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["short_len"], layout["prog"]["height"],
-                         prog)
-
-    # text fields, if there are any
-    if "fields" not in layout.keys():
-        return
-
-    txt_field = layout["fields"]
+    print("video_text_fields called with dynamic=", dynamic)
+    
+    txt_field = layout.get("fields", [])
     for index in range(len(txt_field)):
 
+        print("Examining field", txt_field[index]["name"])
+        
+        # Skip over the fields that aren't desired for
+        # this invocation
+        if dynamic:
+            if not txt_field[index].get("dynamic",0):
+                continue
+        else:
+            if txt_field[index].get("dynamic",0):
+                continue
+        
         # special treatment for audio codec, which gets a lookup
         if txt_field[index]["name"] == "acodec":
             if info['VideoPlayer.Codec'] in codec_name.keys():
@@ -1051,6 +1022,110 @@ def video_screens(image, draw, info, prog):
                               font=txt_field[index]["font"])
 
 
+
+# Render the static portion of video screens
+def video_screen_static(info):
+    global _last_thumb
+    global _last_image_path
+    
+    # Create a new image
+    image  = Image.new('RGB', (_frame_size), 'black')
+    draw   = ImageDraw.Draw(image)
+    
+    # Get layout details for this mode
+    layout = VIDEO_LAYOUT[video_dmode.name]
+
+    # retrieve cover image from Kodi, if it exists and needs a refresh
+    if "thumb" in layout.keys():
+        _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
+                                  layout["thumb"]["width"], layout["thumb"]["height"])
+        if _last_thumb:
+            if layout["thumb"].get("center",0):
+                image.paste(_last_thumb,
+                            (int((_frame_size[0]-_last_thumb.width)/2),
+                             int((_frame_size[1]-_last_thumb.height)/2)))
+            elif (layout["thumb"].get("center_sm", 0) and
+                  (_last_thumb.width < layout["thumb"]["width"] or
+                   _last_thumb.height < layout["thumb"]["height"])):
+                new_x = layout["thumb"]["posx"]
+                new_y = layout["thumb"]["posy"]
+                if _last_thumb.width < layout["thumb"]["width"]:
+                    new_x += int((layout["thumb"]["width"]/2) - (_last_thumb.width/2))
+                if _last_thumb.height < layout["thumb"]["height"]:
+                    new_y += int((layout["thumb"]["height"]/2) - (_last_thumb.height/2))
+                image.paste(_last_thumb, (new_x, new_y))
+            else:
+                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+    else:
+        _last_thumb = None    
+
+    # All the static text fields
+    video_text_fields(image, draw, info, dynamic=0)
+
+    # Return new image
+    return image    
+
+
+# Render the changing portion of video screens
+def video_screen_dynamic(image, draw, info, prog):
+
+    # Get layout details for this mode
+    layout = VIDEO_LAYOUT[video_dmode.name]
+
+    # Text fields
+    video_text_fields(image, draw, info, dynamic=1)
+
+    # Progress bar, if present
+    if (prog != -1 and "prog" in layout.keys()):
+        if "vertical" in layout["prog"].keys():
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["len"],
+                         layout["prog"]["height"],
+                         prog, vertical=True)
+        elif info['VideoPlayer.Time'].count(":") == 2:
+            # longer bar for longer displayed time
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["long_len"], layout["prog"]["height"],
+                         prog)
+        else:
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["short_len"], layout["prog"]["height"],
+                         prog)    
+
+    
+    
+# Video info screens (shown when a video is playing)
+#
+# First two arguments are Pillow Image and ImageDraw objects.
+# Third argument is a dictionary loaded from Kodi with relevant info fields.
+# Fourth argument is a float representing progress through the video.
+#
+def video_screens(image, draw, info, prog):
+    global _static_image
+    global _last_video_title
+    global _last_video_episode    
+    global _last_video_time
+
+    print("Starting video_screens")
+    
+    if (_static_image and
+        info["VideoPlayer.Title"]    == _last_video_title and
+        info["VideoPlayer.Episode"]  == _last_video_episode and        
+        info["VideoPlayer.Duration"] == _last_video_time):
+        pass
+    else:
+        _static_image = video_screen_static(info)
+        _last_video_title   = info["VideoPlayer.Title"]        
+        _last_video_episode = info["VideoPlayer.Episode"]        
+        _last_video_time    = info["VideoPlayer.Duration"]
+
+    # use _static_image as the starting point
+    image.paste(_static_image, (0,0))        
+    video_screen_dynamic(image, draw, info, prog)
+    print("Ending video_screens")
 
 
 # Given current position ([h:]m:s) and duration, calculate
@@ -1239,7 +1314,7 @@ def update_display(touched=False):
             else:
                 video_screens(image, draw, video_info, prog)
         except:
-            pass
+            raise
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
