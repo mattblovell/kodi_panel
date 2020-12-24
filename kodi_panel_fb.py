@@ -88,7 +88,9 @@ if __name__ == "__main__":
     try:
         kodi_panel_display.main(device)
     except KeyboardInterrupt:
+        kodi_panel_display.shutdown()
+        screen_on_pwm()
         if config.settings["USE_HW_PWM"]:
             os.system("echo 0 > /sys/class/pwm/pwmchip0/unexport")
-        kodi_panel_display.shutdown()
+
         pass
