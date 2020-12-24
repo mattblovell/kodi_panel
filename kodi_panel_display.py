@@ -959,13 +959,9 @@ def audio_screens(image, draw, info, prog):
 def video_text_fields(image, draw, info, dynamic=False):
     # Get layout details for this mode
     layout = VIDEO_LAYOUT[video_dmode.name]
-
-    print("video_text_fields called with dynamic=", dynamic)
     
     txt_field = layout.get("fields", [])
     for index in range(len(txt_field)):
-
-        print("Examining field", txt_field[index]["name"])
         
         # Skip over the fields that aren't desired for
         # this invocation
@@ -1108,8 +1104,6 @@ def video_screens(image, draw, info, prog):
     global _last_video_title
     global _last_video_episode    
     global _last_video_time
-
-    print("Starting video_screens")
     
     if (_static_image and
         info["VideoPlayer.Title"]    == _last_video_title and
@@ -1125,7 +1119,6 @@ def video_screens(image, draw, info, prog):
     # use _static_image as the starting point
     image.paste(_static_image, (0,0))        
     video_screen_dynamic(image, draw, info, prog)
-    print("Ending video_screens")
 
 
 # Given current position ([h:]m:s) and duration, calculate
