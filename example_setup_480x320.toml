@@ -218,6 +218,7 @@ posx = 245
 posy = 25
 font = "font7S"
 fill = "color_7S"
+dynamic = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
@@ -270,7 +271,6 @@ posx = 335
 posy = 138
 font = "font_tiny"
 fill = "white"
-
 
 #
 # Finally, the track title, album title, and artist appear below
@@ -358,7 +358,6 @@ height = 316  # total height for the vertical bar
 width  = 212
 height = 320
 center = 1
-
 
 
 # --------------------------------------------------------------------

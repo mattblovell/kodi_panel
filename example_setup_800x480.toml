@@ -240,6 +240,7 @@ posx = 420
 posy = 32
 font = "font7S"
 fill = "color_7S"
+dynamic = 1 
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
@@ -253,7 +254,6 @@ fill = "color_7S"
   lposy = 104
   lfont = "font_tiny"
   lfill = "white"
-
 
 #
 # This group of fields all appear to the right of the cover art
@@ -294,7 +294,6 @@ posy = 188
 font = "font_tiny"
 fill = "white"
 
-
 #
 # Finally, the track title in this layout appears below the cover art...
 #
@@ -306,7 +305,6 @@ posy  = 410
 font  = "font_bold"
 fill  = "white"
 trunc = 1
-
 
 #
 # ... while the album title and artist are moved over to the right of
@@ -430,11 +428,7 @@ posy = 114
 font = "font_tiny"
 fill = "white"
 
-
-#
-# Finally, the track title in this layout appears below the cover art...
-#
-
+# The track title in this layout appears below the cover art...
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
@@ -501,7 +495,6 @@ width  = 320
 height = 480
 center_sm = 1
 
-
 [V_LAYOUT.V_DEFAULT.prog]    # Progress Bar
 posx   = 340     # upper-left corner x position
 posy   = 7       # upper-left corner y position
@@ -515,7 +508,7 @@ posx = 340
 posy = 28
 font = "font7S"
 fill = "color_7S"
-
+dynamic = 1
 
 [[V_LAYOUT.V_DEFAULT.fields]]
 name  = "VideoPlayer.Title"

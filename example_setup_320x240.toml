@@ -218,6 +218,7 @@ posx = 148
 posy = 23
 font = "font7S"
 fill = "color_7S"
+dynamic = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
