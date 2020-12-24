@@ -103,6 +103,11 @@ _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
+_static_image     = None
+_last_track_num   = None
+_last_track_title = None
+_last_track_album = None
+
 # Thumbnail defaults (these now DO get resized as needed)
 _kodi_thumb      = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
 _default_thumb   = config.settings.get("DEFAULT_AUDIO",   "images/music_icon2_lg.png")
@@ -696,71 +701,35 @@ def status_screen(draw, kodi_status, summary_string):
 
 
 
-# Audio info screens (shown when music is playing)
+
+# Render all audio text fields, stepping through the entries from the
+# AUDIO_LAYOUT layout dictionary.
 #
-# First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant info fields.
-# Fourth argument is a float representing progress through the track.
+# The final argument determines whether one wants to render all of the
+# static fields or just the dynamic ones.  That permits this function
+# to be called by both
 #
-def audio_screens(image, draw, info, prog):
-    global audio_dmode
-    global _last_thumb
-    global _last_image_path
+#   audio_screen_static() and
+#   audio_screen_dynamic()
+#
+def audio_text_fields(image, draw, info, dynamic=False):
 
     # Get layout details for this mode
-    layout = AUDIO_LAYOUT[audio_dmode.name]
+    layout = AUDIO_LAYOUT[audio_dmode.name]            
 
-    # retrieve cover image from Kodi, if it exists and needs a refresh
-    if "thumb" in layout.keys():
-        _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
-                                  layout["thumb"]["size"], layout["thumb"]["size"])
-        if _last_thumb:
-            if layout["thumb"].get("center",0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0]-_last_thumb.width)/2),
-                             int((_frame_size[1]-_last_thumb.height)/2)))
-            elif (layout["thumb"].get("center_sm", 0) and
-                  (_last_thumb.width < layout["thumb"]["size"] or
-                   _last_thumb.height < layout["thumb"]["size"])):
-                new_x = layout["thumb"]["posx"]
-                new_y = layout["thumb"]["posy"]
-                if _last_thumb.width < layout["thumb"]["size"]:
-                    new_x += int((layout["thumb"]["size"]/2) - (_last_thumb.width/2))
-                if _last_thumb.height < layout["thumb"]["size"]:
-                    new_y += int((layout["thumb"]["size"]/2) - (_last_thumb.height/2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
-    else:
-        _last_thumb = None
-
-    # progress bar
-    if (prog != -1 and "prog" in layout.keys()):
-        if "vertical" in layout["prog"].keys():
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["len"],
-                         layout["prog"]["height"],
-                         prog, vertical=True)
-        elif info['MusicPlayer.Time'].count(":") == 2:
-            # longer bar for longer displayed time
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["long_len"], layout["prog"]["height"],
-                         prog)
-        else:
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["short_len"], layout["prog"]["height"],
-                         prog)
-
-    # text fields, if there are any
-    if "fields" not in layout.keys():
-        return
-
-    txt_field = layout["fields"]
+    # Text fields (all except for MusicPlayer.Time)
+    txt_field = layout.get("fields", [])
     for index in range(len(txt_field)):
-
+        
+        # Skip over the fields that aren't desired for
+        # this invocation
+        if dynamic:
+            if not txt_field[index].get("dynamic",0):
+                continue
+        else:
+            if txt_field[index].get("dynamic",0):
+                continue
+        
         # special treatment for "codec", which gets a lookup
         if txt_field[index]["name"] == "codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
@@ -856,10 +825,121 @@ def audio_screens(image, draw, info, prog):
                     draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
                               info[txt_field[index]["name"]],
                               fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                              font=txt_field[index]["font"])    
+
+    
+
+# Render the static portion of audio screens
+def audio_screen_static(info):
+    global _last_thumb
+    global _last_image_path
+    
+    # Create a new image
+    image  = Image.new('RGB', (_frame_size), 'black')
+    draw   = ImageDraw.Draw(image)
+    
+    # Get layout details for this mode
+    layout = AUDIO_LAYOUT[audio_dmode.name]
+
+    # retrieve cover image from Kodi, if it exists and needs a refresh
+    if "thumb" in layout.keys():
+        _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
+                                  layout["thumb"]["size"], layout["thumb"]["size"])
+        if _last_thumb:
+            if layout["thumb"].get("center",0):
+                image.paste(_last_thumb,
+                            (int((_frame_size[0]-_last_thumb.width)/2),
+                             int((_frame_size[1]-_last_thumb.height)/2)))
+            elif (layout["thumb"].get("center_sm", 0) and
+                  (_last_thumb.width < layout["thumb"]["size"] or
+                   _last_thumb.height < layout["thumb"]["size"])):
+                new_x = layout["thumb"]["posx"]
+                new_y = layout["thumb"]["posy"]
+                if _last_thumb.width < layout["thumb"]["size"]:
+                    new_x += int((layout["thumb"]["size"]/2) - (_last_thumb.width/2))
+                if _last_thumb.height < layout["thumb"]["size"]:
+                    new_y += int((layout["thumb"]["size"]/2) - (_last_thumb.height/2))
+                image.paste(_last_thumb, (new_x, new_y))
+            else:
+                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+    else:
+        _last_thumb = None
+
+        
+    # Text fields
+    audio_text_fields(image, draw, info, dynamic=0)
+
+    # Return new image
+    return image
+                            
+
+
+# Render the changing portion of audio screens
+def audio_screen_dynamic(image, draw, info, prog):
+
+    # Get layout details for this mode
+    layout = AUDIO_LAYOUT[audio_dmode.name]
+
+    # Text fields
+    audio_text_fields(image, draw, info, dynamic=1)
+
+    # progress bar
+    if (prog != -1 and "prog" in layout.keys()):
+        if "vertical" in layout["prog"].keys():
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["len"],
+                         layout["prog"]["height"],
+                         prog, vertical=True)
+        elif info['MusicPlayer.Time'].count(":") == 2:
+            # longer bar for longer displayed time
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["long_len"], layout["prog"]["height"],
+                         prog)
+        else:
+            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+                         layout["prog"]["posx"], layout["prog"]["posy"],
+                         layout["prog"]["short_len"], layout["prog"]["height"],
+                         prog)
 
 
 
+# Audio info screens (shown when music is playing)
+#
+# First two arguments are Pillow Image and ImageDraw objects.
+# Third argument is a dictionary loaded from Kodi with relevant info fields.
+# Fourth argument is a float representing progress through the track.
+#
+# The rendering is divided into two phases -- first all of the static
+# elements (on a new image) and then the dynamic text fields and
+# progress bar.  The static image gets reused in its entirety.
+#
+# Switching to this approach seems to keep the active loop at
+# less-than 20% CPU load for an RPi Zero W.
+#
+def audio_screens(image, draw, info, prog):
+    global _static_image
+    global _last_track_num
+    global _last_track_title
+    global _last_track_album
+
+    if (_static_image and
+        info["MusicPlayer.TrackNumber"] == _last_track_num and
+        info["MusicPlayer.Title"]       == _last_track_title and
+        info["MusicPlayer.Album"]       == _last_track_album):
+        pass
+    else:
+        _static_image = audio_screen_static(info)
+        _last_track_num   = info["MusicPlayer.TrackNumber"]
+        _last_track_title = info["MusicPlayer.Title"]
+        _last_track_album = info["MusicPlayer.Album"]
+
+    # use _static_image as the starting point
+    image.paste(_static_image, (0,0))        
+    audio_screen_dynamic(image, draw, info, prog)
+
+    
 # Video info screens (shown when a video is playing)
 #
 # First two arguments are Pillow Image and ImageDraw objects.
@@ -1019,6 +1099,7 @@ def screen_off():
 def update_display(touched=False):
     global _last_image_path
     global _last_thumb
+    global _static_image
     global _screen_press
     global _screen_active
     global _screen_offtime
@@ -1027,8 +1108,9 @@ def update_display(touched=False):
 
     _lock.acquire()
 
-    # Start with a blank slate
-    draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
+    # Start with a blank slate, if there's no static image
+    if (not (_kodi_active and _static_image)):
+        draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
 
     # Check if the _screen_active time has expired
     if (_screen_active and datetime.now() >= _screen_offtime):
@@ -1065,6 +1147,7 @@ def update_display(touched=False):
         _last_image_path = None
         _last_image_time = None
         _last_thumb = None
+        _static_image = None
 
         if _screen_press or touched:
             _screen_press = False
@@ -1114,6 +1197,7 @@ def update_display(touched=False):
             _last_image_path = None
             _last_image_time = None
             _last_thumb = None
+            _static_image = None
             truncate_line.cache_clear()
             text_wrap.cache_clear()
 
@@ -1171,6 +1255,7 @@ def update_display(touched=False):
             _last_image_path = None
             _last_image_time = None
             _last_thumb = None
+            _static_image = None
             truncate_line.cache_clear()
             text_wrap.cache_clear()
 
@@ -1244,7 +1329,7 @@ def update_display(touched=False):
             else:
                 audio_screens(image, draw, track_info, prog)
         except:
-            pass
+            raise
 
     # Output to OLED/LCD display or framebuffer
     device.display(image)
@@ -1342,6 +1427,11 @@ def main(device_handle):
                 print(datetime.now(), "Communication disrupted.")
                 _kodi_active = False
                 break
+            except (SystemExit):
+                shutdown()
+            except:
+                print("Unexpected error: ", sys.exc_info()[0])
+                raise
 
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
