@@ -4,7 +4,6 @@ under SIL Open Font License 1.1:
     https://www.keshikan.net/fonts-e.html
     https://github.com/keshikan/DSEG
 
-
 Other fonts are routinely distributed with Linux or originate from
 Google fonts:
 
