@@ -1,0 +1,4 @@
+Source for the DSEG 7-segment and 14-segment fonts, distributed
+under SIL Open Font License 1.1:
+
+    https://www.keshikan.net/fonts-e.html
