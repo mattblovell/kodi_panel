@@ -5,3 +5,22 @@ under SIL Open Font License 1.1:
     https://github.com/keshikan/DSEG
 
 
+Other fonts are routinely distributed with Linux or originate from
+Google fonts:
+
+    https://fonts.google.com/
+
+The Google-obtained fonts are the following:
+
+    Roboto, by Christian Robertson -- Apache License, Version 2.0
+    Cabin, by Impallari Type -- Open Font License
+
+The Apache License is available at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+A copy of the SIL Open Font License can be found in this directory
+and online at
+
+     https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
+
