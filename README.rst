@@ -18,7 +18,9 @@ occur over the network.
 **Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
 `CoreELEC <https://coreelec.org/>`_.  Kodi is a registered trademark
-of the XBMC Foundation.
+of the XBMC Foundation.  Fonts are redestributed under either the
+SIL Open Font License or Apache 2.0; see ``sources.txt`` for 
+further information.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
