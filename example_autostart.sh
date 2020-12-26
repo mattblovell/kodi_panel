@@ -2,7 +2,7 @@
 
 #
 # Example Kodi autostart file for kodi_panel.  Edit
-# as appropriate for your insallation.
+# as appropriate for your installation.
 #
 
 # Entware startup
