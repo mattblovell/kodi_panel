@@ -148,20 +148,18 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #    SpringGreen
 #    #00FF7A        green brightened with blue, somewhat LED-ish
 #    #00A3CC        light-ish blue
-#    #5F8EB4        darker blue (too dark, really)
 #    #00A0E3        blue, close to an LED
-#    #10a0e5        blue, with some red added
+#    #3399ff        skyblue
 #    #38bde8        Kodi logo's blue
 #  
 #   Artist
 #   ------
 #    yellow
-#    tan
 #    sandybrown
-#    #db9356        one tint darker than "sandybrown"
+#    tan
 #    #d6bb97        one tint brighter than "tan"
 #    #e7d0b5        several tints brigher than "tan"
-#    #efa332        somewhat orange
+#    #db9356        one tint darker than "sandybrown"
 #    #c7a579        one tint darker than "burlywood"
 #
 #    #e5d47d        one tint darker than lightgoldenrod
