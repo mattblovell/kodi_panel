@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.07"
+PANEL_VER = "v1.08"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -306,7 +306,8 @@ TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE",700) # milliseconds
 TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE",False)
 
 # Internal state variables used to manage screen presses
-_kodi_active    = False
+_kodi_connected = False
+_kodi_playing   = False
 _screen_press   = False
 _screen_active  = False
 
@@ -1162,6 +1163,7 @@ def screen_off():
 # a direct update.
 #
 def update_display(touched=False):
+    global _kodi_playing
     global _last_image_path
     global _last_thumb
     global _static_image
@@ -1174,13 +1176,14 @@ def update_display(touched=False):
     _lock.acquire()
 
     # Start with a blank slate, if there's no static image
-    if (not (_kodi_active and _static_image)):
+    if (not (_kodi_connected and _static_image)):
         draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
 
     # Check if the _screen_active time has expired
     if (_screen_active and datetime.now() >= _screen_offtime):
         _screen_active = False
-        screen_off()
+        if not _kodi_playing:
+            screen_off()
 
     # Ask Kodi whether anything is playing...
     #
@@ -1206,6 +1209,7 @@ def update_display(touched=False):
         (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
         # Nothing is playing or something for which no display screen
         # is available.
+        _kodi_playing = False
 
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
@@ -1251,6 +1255,7 @@ def update_display(touched=False):
     elif (response['result'][0]['type'] == 'video' and VIDEO_ENABLED):
         # Video is playing
         screen_on()
+        _kodi_playing = True        
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
@@ -1309,6 +1314,7 @@ def update_display(touched=False):
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
         screen_on()
+        _kodi_playing = True        
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
@@ -1413,13 +1419,13 @@ def update_display(touched=False):
 #
 def touch_callback(channel):
     global _screen_press
-    global _kodi_active
+    global _kodi_connected
     #print(datetime.now(), "Touchscreen pressed")
-    if _kodi_active:
+    if _kodi_connected:
         if TOUCH_CALL_UPDATE:
             update_display(touched=True)
         else:
-            _screen_press = _kodi_active
+            _screen_press = _kodi_connected
     return
 
 
@@ -1430,9 +1436,11 @@ def touch_callback(channel):
 #
 def main(device_handle):
     global device
-    global _kodi_active
+    global _kodi_connected
+    global _kodi_playing
     global _screen_press
-    _kodi_active = False
+    _kodi_connected = False
+    _kodi_playing   = False
 
     device = device_handle
 
@@ -1482,7 +1490,7 @@ def main(device_handle):
         screen_off()
 
         # Loop until Kodi goes away
-        _kodi_active = True
+        _kodi_connected = True
         _screen_press = False
         while True:
             try:
@@ -1496,7 +1504,8 @@ def main(device_handle):
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
-                _kodi_active = False
+                _kodi_connected = False
+                _kodi_playing   = False                
                 break
             except (SystemExit):
                 shutdown()
