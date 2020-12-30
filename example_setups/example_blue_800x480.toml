@@ -627,7 +627,7 @@ name = "version"        # special treatment
 posx = 145
 posy = 8
 font = "font_main"
-fill = "color_artist"
+fill = "yellow"
 
 
 [[STATUS_LAYOUT.fields]]
