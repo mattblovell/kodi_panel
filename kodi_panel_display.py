@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.06"
+PANEL_VER = "v1.07"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -153,13 +153,6 @@ if "COLORS" in config.settings.keys():
     _colors = config.settings.get("COLORS", {})
 else:
     print("Settings file does not provide a COLORS table!  Stopping.")
-    sys.exit(1)
-
-if ("color_progfg" in _colors.keys() and
-    "color_progbg" in _colors.keys()):
-    pass
-else:
-    print("COLORS table must specify 'color_progfg' and 'color_progbg'!  Stopping.")
     sys.exit(1)
 
 
@@ -893,19 +886,19 @@ def audio_screen_dynamic(image, draw, info, prog):
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
                          prog, vertical=True)
         elif info['MusicPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["long_len"], layout["prog"]["height"],
                          prog)
         else:
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["short_len"], layout["prog"]["height"],
                          prog)
@@ -1077,19 +1070,19 @@ def video_screen_dynamic(image, draw, info, prog):
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
         if "vertical" in layout["prog"].keys():
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["len"],
                          layout["prog"]["height"],
                          prog, vertical=True)
         elif info['VideoPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["long_len"], layout["prog"]["height"],
                          prog)
         else:
-            progress_bar(draw, _colors["color_progbg"], _colors["color_progfg"],
+            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
                          layout["prog"]["posx"], layout["prog"]["posy"],
                          layout["prog"]["short_len"], layout["prog"]["height"],
                          prog)

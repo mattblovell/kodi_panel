@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------
-# Setup file for kodi_panel using 480x320 resolution
+# Setup file for kodi_panel using 320x240 resolution
 #
 #   For documentation regarding TOML (Tom's Obvious Minimal Language),
 #   see references at https://toml.io/en/
@@ -22,8 +22,8 @@ BASE_URL = "http://localhost:8080"
 # Specify the size of the display in pixels.  These values get stored
 # into a tuple within kodi_panel and MUST match how the display (or
 # framebuffer) is configured.
-DISPLAY_WIDTH  = 480 
-DISPLAY_HEIGHT = 320 
+DISPLAY_WIDTH  = 320
+DISPLAY_HEIGHT = 240
 
 # GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.
@@ -45,7 +45,7 @@ DISPLAY_HEIGHT = 320
 #   Waveshare 4" HDMI (H):   GPIO25 (physical pin 22)
 #
 USE_TOUCH = true   # Set false to disable interrupt use
-TOUCH_INT = 17
+TOUCH_INT = 19
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
@@ -61,7 +61,6 @@ USE_BACKLIGHT = true
 # See example_setup_800x480.toml for possible hardware PWM
 # settings.
 
-
 # --------------------------------------------------------------------
 #
 # Info screens, colors, & fonts
@@ -71,7 +70,7 @@ USE_BACKLIGHT = true
 # the 800x480 example setup file for the additional dictionaries that
 # must be set for video info screens.
 ENABLE_AUDIO_SCREENS = true
-ENABLE_VIDEO_SCREENS = false
+ENABLE_VIDEO_SCREENS = true
 
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
@@ -96,12 +95,13 @@ ALAYOUT_NAMES = [
 ALAYOUT_INITIAL = "A_DEFAULT"
 
 
+
 # Video Layout Names
 #
 #   Similar to audio screen modes above
 #
 VLAYOUT_NAMES = [
-	"V_FULLSCREEN"  # movie poster
+	"V_FULLSCREEN",     # movie poster
 ]
 
 # Initial mode to use upon startup
@@ -116,11 +116,8 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #   "color_".  Color references without those initial characters just
 #   get passed through, without a lookup in this dictionary.
 #
-#   The two color_progbg and color_progfg colors MUST be defined.
-#
 [COLORS]
- color_progbg = '#424242'    # progress bar background (used 'dimgrey' for a while)
- color_progfg = '#00FF78'    # progress bar foreground / active portion
+ color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
  color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while) 
  color_artist = 'yellow'     # artist name
 
@@ -138,38 +135,38 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 # Standard fonts
 [[fonts]]
   name = "font_main"
-  path = "fonts/Roboto-Medium.ttf"
+  path = "fonts/FreeSans.ttf"
   size = 22
   encoding = 'unic'
 
 [[fonts]]
   name = "font_bold"
-  path = "fonts/RobotoCondensed-Regular.ttf"
-  size = 28
+  path = "fonts/FreeSansBold.ttf"
+  size = 22
   encoding = 'unic'
 
 [[fonts]]
   name = "font_sm"
-  path = "fonts/Roboto-Medium.ttf"
+  path = "fonts/FreeSans.ttf"
   size = 18
   encoding = 'unic'  
 
 [[fonts]]
   name = "font_tiny"
-  path = "fonts/Roboto-Medium.ttf"
-  size = 16
+  path = "fonts/FreeSans.ttf"
+  size = 11
   encoding = 'unic'  
 
 # 7-segment font used for elapsed time and track number
 [[fonts]]
   name = "font7S"
   path = "fonts/DSEG14Classic-Regular.ttf"
-  size = 40
+  size = 32
 
 [[fonts]]
   name = "font7S_sm"
   path = "fonts/DSEG14Classic-Regular.ttf"
-  size = 12
+  size = 11
 
 
 # --------------------------------------------------------------------
@@ -199,37 +196,39 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 
 [A_LAYOUT.A_DEFAULT.thumb]   # Artwork
 posx = 4
-posy = 4
-size = 228
+posy = 7
+size = 140
 # If artwork is smaller than the above size, should it be centered
 # where the fullsize artwork would have been placed?
-center_sm = 1    
+center_sm = 1  
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
-posx   = 245     # upper-left corner x position
+posx   = 150     # upper-left corner x position
 posy   = 7       # upper-left corner y position
 height = 8       # pixel height
-short_len = 134  # length when elapsed time matches 00:00 (min, seconds)
-long_len  = 208  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+short_len = 104  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 164  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+color_fg = "color_7S"
+color_bg = "color_gray"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
-posx = 245
-posy = 25
+posx = 148
+posy = 23
 font = "font7S"
 fill = "color_7S"
 dynamic = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.TrackNumber"
-posx = 245
-posy = 99
+posx = 148
+posy = 79
 font = "font7S"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
-  lposx = 245
-  lposy = 78
+  lposx = 148
+  lposy = 65
   lfont = "font_tiny"
   lfill = "white"
 
@@ -238,26 +237,24 @@ fill = "color_7S"
 # and track number, in a small font.
 #
 
-# The duration NEVER has decending characters, so it can be somewhat
-# closer to the next row
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Duration"
-posx = 335
-posy = 78
+posx = 230
+posy = 65
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "codec"   # special treatment in audio_screens()
-posx = 335
-posy = 98
+posx = 230
+posy = 79
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Genre"
-posx = 335
-posy = 118
+posx = 230
+posy = 93
 font = "font_tiny"
 fill = "white"
 trunc = 1
@@ -267,10 +264,11 @@ trunc = 1
 #   happens for videos.
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Year"
-posx = 335
-posy = 138
+posx = 230
+posy = 107
 font = "font_tiny"
 fill = "white"
+
 
 #
 # Finally, the track title, album title, and artist appear below
@@ -280,15 +278,15 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 236
-font  = "font_bold"
+posy  = 152
+font  = "font_main"
 fill  = "white"
 trunc = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Album"
 posx  = 4
-posy  = 271
+posy  = 180
 font  = "font_sm"
 fill  = "white"
 trunc = 1
@@ -296,7 +294,7 @@ trunc = 1
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "artist"   # special treatment in audio_screens()
 posx  = 4
-posy  = 295
+posy  = 205
 font  = "font_sm"
 fill  = "color_artist"
 trunc = 1
@@ -310,7 +308,7 @@ drop_unknown = 1
 
 [A_LAYOUT.A_FULLSCREEN.thumb]
 center = 1
-size = 320
+size = 235
 
 
 #
@@ -318,15 +316,16 @@ size = 320
 #
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
-size = 320
+size = 235
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
-posx = 468    # upper-left corner x-position
+posx = 308    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
 len  = 10     # pixel width for a vertical bar
-height = 316  # total height for the vertical bar
-
+height = 236  # total height for the vertical bar
+color_fg = "color_7S"
+color_bg = "color_gray"
 
 
 # --------------------------------------------------------------------
@@ -355,8 +354,8 @@ height = 316  # total height for the vertical bar
 #
 
 [V_LAYOUT.V_FULLSCREEN.thumb]   # artwork / movie poster
-width  = 212
-height = 320
+width  = 160
+height = 240
 center = 1
 
 
@@ -422,16 +421,3 @@ posy = 200
 font = "font_sm"
 fill = "white"
 
-[[STATUS_LAYOUT.fields]]
-name = "System.CpuFrequency"
-posx = 5
-posy = 225
-font = "font_sm"
-fill = "white"
-
-[[STATUS_LAYOUT.fields]]
-name = "kodi_version"  # special treatment
-posx = 5
-posy = 250
-font = "font_sm"
-fill = "white"
