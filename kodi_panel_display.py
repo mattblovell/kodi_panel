@@ -108,6 +108,7 @@ _static_image       = None
 _last_track_num     = None
 _last_track_title   = None
 _last_track_album   = None
+_last_track_time    = None
 _last_video_title   = None
 _last_video_time    = None
 _last_video_episode = None
@@ -926,17 +927,20 @@ def audio_screens(image, draw, info, prog):
     global _last_track_num
     global _last_track_title
     global _last_track_album
+    global _last_track_time
 
     if (_static_image and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
         info["MusicPlayer.Title"]       == _last_track_title and
-        info["MusicPlayer.Album"]       == _last_track_album):
+        info["MusicPlayer.Album"]       == _last_track_album and
+        info["MusicPlayer.Duration"]    == _last_track_time):
         pass
     else:
         _static_image = audio_screen_static(info)
         _last_track_num   = info["MusicPlayer.TrackNumber"]
         _last_track_title = info["MusicPlayer.Title"]
         _last_track_album = info["MusicPlayer.Album"]
+        _last_track_time  = info["MusicPlayer.Duration"]        
 
     # use _static_image as the starting point
     image.paste(_static_image, (0,0))
