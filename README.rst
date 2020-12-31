@@ -385,11 +385,12 @@ Case
 I adapted a 3D-printable "case" design to fit the 3.2-inch screen.  The design
 files are available on `Thingiverse <https://www.thingiverse.com/thing:4627423>`_.
 
-Here are two photos of the finished product:
+See the discussion below on IPS panels for another case option.  Here are two photos of the first case:
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case1.jpg
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/assembled_case2.jpg
+
 
 
 
@@ -460,6 +461,8 @@ support for a setup file. The details of creating a luma.lcd display, or
 setting up the framebuffer as a device, were also separated from the "draw with
 Pillow" portion of the script.
 
+With the slightly larger 4-inch display, a new case was needed.  Those
+new design files are also available on `Thingiverse <https://www.thingiverse.com/thing:4704093>`_.
 
 Movie Info
 **********
