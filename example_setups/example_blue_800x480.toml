@@ -51,7 +51,7 @@ TOUCH_INT = 25
 # On RPi Zero, the debounce time seems like it needs to be longer to
 # avoid a single screen press being interpreted as two events.
 # Other SBCs can leave this commented out.
-TOUCH_DEBOUNCE = 2000  # milliseconds
+TOUCH_DEBOUNCE = 900  # milliseconds
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays

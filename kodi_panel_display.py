@@ -1258,7 +1258,6 @@ def update_display(touched=False):
 
     elif (response['result'][0]['type'] == 'video' and VIDEO_ENABLED):
         # Video is playing
-        screen_on()
         _kodi_playing = True        
 
         # Change display modes upon any screen press, forcing a
@@ -1311,13 +1310,13 @@ def update_display(touched=False):
                 video_info["VideoPlayer.Cover"] == ""):
                 pass
             else:
+                screen_on()                
                 video_screens(image, draw, video_info, prog)
         except:
             raise
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
-        screen_on()
         _kodi_playing = True        
 
         # Change display modes upon any screen press, forcing a
@@ -1402,6 +1401,7 @@ def update_display(touched=False):
                 track_info["MusicPlayer.Cover"] == ""):
                 pass
             else:
+                screen_on()                
                 audio_screens(image, draw, track_info, prog)
         except:
             raise
