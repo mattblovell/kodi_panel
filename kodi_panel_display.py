@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.08"
+PANEL_VER = "v1.09"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -940,7 +940,7 @@ def audio_screens(image, draw, info, prog):
         _last_track_num   = info["MusicPlayer.TrackNumber"]
         _last_track_title = info["MusicPlayer.Title"]
         _last_track_album = info["MusicPlayer.Album"]
-        _last_track_time  = info["MusicPlayer.Duration"]        
+        _last_track_time  = info["MusicPlayer.Duration"]
 
     # use _static_image as the starting point
     image.paste(_static_image, (0,0))
@@ -1224,7 +1224,6 @@ def update_display(touched=False):
 
         if _screen_press or touched:
             _screen_press = False
-            screen_on()
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
@@ -1253,12 +1252,13 @@ def update_display(touched=False):
             }
             status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
             status_screen(draw, status_resp['result'], summary)
+            screen_on()
         else:
             screen_off()
 
     elif (response['result'][0]['type'] == 'video' and VIDEO_ENABLED):
         # Video is playing
-        _kodi_playing = True        
+        _kodi_playing = True
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
@@ -1310,14 +1310,14 @@ def update_display(touched=False):
                 video_info["VideoPlayer.Cover"] == ""):
                 pass
             else:
-                screen_on()                
                 video_screens(image, draw, video_info, prog)
+                screen_on()
         except:
             raise
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
-        _kodi_playing = True        
+        _kodi_playing = True
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
@@ -1401,8 +1401,8 @@ def update_display(touched=False):
                 track_info["MusicPlayer.Cover"] == ""):
                 pass
             else:
-                screen_on()                
                 audio_screens(image, draw, track_info, prog)
+                screen_on()
         except:
             raise
 
@@ -1509,7 +1509,7 @@ def main(device_handle):
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
                 _kodi_connected = False
-                _kodi_playing   = False                
+                _kodi_playing   = False
                 break
             except (SystemExit):
                 shutdown()
