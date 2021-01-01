@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.09"
+PANEL_VER = "v1.10"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -114,9 +114,10 @@ _last_video_time    = None
 _last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)
-_kodi_thumb      = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
-_default_thumb   = config.settings.get("DEFAULT_AUDIO",   "images/music_icon2_lg.png")
-_default_airplay = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
+_kodi_thumb            = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
+_default_audio_thumb   = config.settings.get("DEFAULT_AUDIO",   "images/music_icon2_lg.png")
+_default_video_thumb   = config.settings.get("DEFAULT_VIDEO",   "images/video_icon2.png")
+_default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
 # RegEx for recognizing AirPlay images (compiled once)
 _airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
@@ -483,9 +484,10 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 # same data, provided that the caller preserves and passes in
 # prev_image.
 #
-def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
+def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     global _last_image_path
     global _last_image_time
+    image_url     = None    
     image_set     = False
     resize_needed = False
 
@@ -493,6 +495,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
     thumb = None   # resized artwork
 
     if (cover_path != '' and
+        cover_path != 'DefaultVideoCover.png' and        
         cover_path != 'DefaultAlbumCover.png' and
         not _airtunes_re.match(cover_path)):
 
@@ -531,7 +534,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                     image_set     = True
                     resize_needed = True
                 except:
-                    cover = Image.open(_default_thumb)
+                    cover = Image.open(_default_audio_thumb)
                     prev_image = cover
                     image_set     = True
                     resize_needed = True
@@ -591,7 +594,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                     resize_needed   = True
                     _last_image_time = new_image_time
                 except:
-                    cover = Image.open(_default_thumb)
+                    cover = Image.open(_default_audio_thumb)
                     prev_image = cover
                     image_set     = True
                     resize_needed = True
@@ -610,10 +613,13 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height):
                 _last_image_path = airplay_thumb
                 resize_needed   = True
             else:
-                _last_image_path = _default_airplay
+                _last_image_path = _default_airplay_thumb
         else:
-            # default image when no artwork is available
-            _last_image_path = _default_thumb
+            # use default image when no artwork is available
+            if video:
+                _last_image_path = _default_video_thumb
+            else:
+                _last_image_path = _default_audio_thumb
 
         cover = Image.open(_last_image_path)
         prev_image = cover
@@ -1035,7 +1041,8 @@ def video_screen_static(info):
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
         _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
-                                  layout["thumb"]["width"], layout["thumb"]["height"])
+                                  layout["thumb"]["width"], layout["thumb"]["height"],
+                                  video=1)
         if _last_thumb:
             if layout["thumb"].get("center",0):
                 image.paste(_last_thumb,
