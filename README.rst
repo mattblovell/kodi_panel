@@ -382,8 +382,8 @@ the status screen.
 Case
 ****
 
-I adapted a 3D-printable "case" design to fit the 3.2-inch screen.  The design
-files are available on `Thingiverse <https://www.thingiverse.com/thing:4627423>`_.
+I adapted a 3D-printable "case" design to fit the 3.2-inch screen.  The 
+`design files <https://www.thingiverse.com/thing:4627423>`_ are available on Thingiverse.
 
 See the discussion below on IPS panels for another case option.  Here are two photos of the first case:
 
@@ -462,7 +462,7 @@ setting up the framebuffer as a device, were also separated from the "draw with
 Pillow" portion of the script.
 
 With the slightly larger 4-inch display, a new case was needed.  Those
-new design files are also available on `Thingiverse <https://www.thingiverse.com/thing:4704093>`_.
+`new design files <https://www.thingiverse.com/thing:4704093>`_ are also posted on Thingiverse.
 
 Movie Info
 **********
