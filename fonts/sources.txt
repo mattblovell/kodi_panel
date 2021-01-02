@@ -12,9 +12,10 @@ Google fonts:
 The Google-obtained fonts are the following:
 
     Roboto, by Christian Robertson -- Apache License, Version 2.0
+    Open Sans, by Steve Matteson -- Apache License, Version 2.0
     Cabin, by Impallari Type -- Open Font License
 
-The Apache License is available at
+The 2.0 Apache License is available at
 
      http://www.apache.org/licenses/LICENSE-2.0
 
