@@ -1541,7 +1541,7 @@ def main(device_handle):
             if elapsed < 0.999:
                 time.sleep(0.999 - elapsed)
             else:
-                time.sleep(0.1)
+                time.sleep(1.0)
 
 
 def shutdown():
