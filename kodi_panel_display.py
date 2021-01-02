@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.10"
+PANEL_VER = "v1.11"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -103,8 +103,12 @@ _last_image_path = None
 _last_thumb      = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
-# Re-use static portion of a screen
+# Re-use static portion of a screen.  The various _last_* variables
+# below are checked to determine when the static portion can be
+# reused.
 _static_image       = None
+_static_video       = False  # set True by video_screens(), False by audio_screens()
+
 _last_track_num     = None
 _last_track_title   = None
 _last_track_album   = None
@@ -487,7 +491,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     global _last_image_path
     global _last_image_time
-    image_url     = None    
+    image_url     = None
     image_set     = False
     resize_needed = False
 
@@ -495,7 +499,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     thumb = None   # resized artwork
 
     if (cover_path != '' and
-        cover_path != 'DefaultVideoCover.png' and        
+        cover_path != 'DefaultVideoCover.png' and
         cover_path != 'DefaultAlbumCover.png' and
         not _airtunes_re.match(cover_path)):
 
@@ -930,12 +934,13 @@ def audio_screen_dynamic(image, draw, info, prog):
 #
 def audio_screens(image, draw, info, prog):
     global _static_image
+    global _static_video
     global _last_track_num
     global _last_track_title
     global _last_track_album
     global _last_track_time
 
-    if (_static_image and
+    if (_static_image and (not _static_video) and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
         info["MusicPlayer.Title"]       == _last_track_title and
         info["MusicPlayer.Album"]       == _last_track_album and
@@ -943,6 +948,7 @@ def audio_screens(image, draw, info, prog):
         pass
     else:
         _static_image = audio_screen_static(info)
+        _static_video = False
         _last_track_num   = info["MusicPlayer.TrackNumber"]
         _last_track_title = info["MusicPlayer.Title"]
         _last_track_album = info["MusicPlayer.Album"]
@@ -1110,17 +1116,19 @@ def video_screen_dynamic(image, draw, info, prog):
 #
 def video_screens(image, draw, info, prog):
     global _static_image
+    global _static_video
     global _last_video_title
     global _last_video_episode
     global _last_video_time
 
-    if (_static_image and
+    if (_static_image and _static_video and
         info["VideoPlayer.Title"]    == _last_video_title and
         info["VideoPlayer.Episode"]  == _last_video_episode and
         info["VideoPlayer.Duration"] == _last_video_time):
         pass
     else:
         _static_image = video_screen_static(info)
+        _static_video = True
         _last_video_title   = info["VideoPlayer.Title"]
         _last_video_episode = info["VideoPlayer.Episode"]
         _last_video_time    = info["VideoPlayer.Duration"]
