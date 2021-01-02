@@ -261,9 +261,9 @@ center_sm = 1
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
-posy   = 5       # upper-left corner y position
+posy   = 8       # upper-left corner y position
 height = 12      # pixel height
-short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
+short_len = 196  # length when elapsed time matches 00:00 (min, seconds)
 long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
 color_fg = "color_7S"
 color_bg = "color_gray"
@@ -271,7 +271,7 @@ color_bg = "color_gray"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
 posx = 420
-posy = 32 
+posy = 36 
 font = "font7S"
 fill = "color_7S"
 dynamic = 1
@@ -337,7 +337,7 @@ fill = "white"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 410
+posy  = 408
 font  = "font_bold"
 fill  = "white"
 trunc = 1
@@ -477,7 +477,7 @@ fill = "white"
 [[A_LAYOUT.A_NOTIME.fields]]
 name  = "MusicPlayer.Title"
 posx  = 4
-posy  = 410
+posy  = 408
 font  = "font_bold"
 fill  = "white"
 trunc = 1
