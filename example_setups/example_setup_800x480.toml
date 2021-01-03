@@ -120,15 +120,35 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 # Video Layout Names
 #
-#   Similar to audio screen modes above
+#   Similar to audio screen modes above, except for this tidbit ...
 #
+
+# Should the layout for video screens be auto-selected (within the
+# video_screens() function) based upon which InfoLabel fields are
+# populated?
+#
+# If this flag is set to true, then VLAYOUT_NAMES *MUST* be populated
+# with entries that match the heuristic if-then that is used by
+# video_screens().  Fields or entries within each layout are all
+# rendered in the same manner, but the auto-selection choice permits
+# for distinct layouts for different media types.
+#
+# If this variable is to false or left undeclared, then video modes
+# just form a cycle that gets advanced via the touch interrupt.
+#
+# VLAYOUT_AUTOSELECT = false
+
+
+# Array of layout names
 VLAYOUT_NAMES = [
 	"V_DEFAULT",       # movie poster, movie name, elapsed time
 	"V_FULLSCREEN"     # movie poster
 ]
 
+
 # Initial mode to use upon startup
 VLAYOUT_INITIAL = "V_DEFAULT"
+
 
 
 # Colors

@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.11"
+PANEL_VER = "v1.12"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -222,10 +222,19 @@ if VIDEO_ENABLED:
 
         # At startup, use the default layout mode specified in settings
         video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
+
+        # Should video layout be auto-determined as part of video_screens()
+        # execution, based upon InfoLabel settings?
+        #
+        # This is different behavior than using the touch-interrupt to
+        # just cycle through the list of video modes, but seems warranted
+        # based on the differences that exist for Movies, TV, and PVR.
+        VIDEO_LAYOUT_AUTOSELECT = config.settings.get("VLAYOUT_AUTOSELECT", False)
+
     else:
         warnings.warn("Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
         print("Disabling video screens (VIDEO_ENABLED=0)")
-        AUDIO_ENABLED = 0
+        VIDEO_ENABLED = 0
 
 
 # Screen layouts
@@ -489,8 +498,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 # prev_image.
 #
 def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
-    global _last_image_path
-    global _last_image_time
+    global _last_image_path, _last_image_time
     image_url     = None
     image_set     = False
     resize_needed = False
@@ -725,10 +733,7 @@ def status_screen(draw, kodi_status, summary_string):
 # dictionary).  For the moment, I think it's simpler just to keep them
 # separate.
 #
-def audio_text_fields(image, draw, info, dynamic=False):
-
-    # Get layout details for this mode
-    layout = AUDIO_LAYOUT[audio_dmode.name]
+def audio_text_fields(image, draw, layout, info, dynamic=False):
 
     # Text fields (all except for MusicPlayer.Time)
     txt_field = layout.get("fields", [])
@@ -843,16 +848,16 @@ def audio_text_fields(image, draw, info, dynamic=False):
 
 
 # Render the static portion of audio screens
-def audio_screen_static(info):
-    global _last_thumb
-    global _last_image_path
+#
+#  First argument is the layout dictionary to use
+#  Second argument is a dictionary loaded from Kodi with relevant InfoLabels
+#
+def audio_screen_static(layout, info):
+    global _last_thumb, _last_image_path
 
     # Create a new image
     image  = Image.new('RGB', (_frame_size), 'black')
     draw   = ImageDraw.Draw(image)
-
-    # Get layout details for this mode
-    layout = AUDIO_LAYOUT[audio_dmode.name]
 
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
@@ -879,7 +884,7 @@ def audio_screen_static(info):
         _last_thumb = None
 
     # All the static text fields
-    audio_text_fields(image, draw, info, dynamic=0)
+    audio_text_fields(image, draw, layout, info, dynamic=0)
 
     # Return new image
     return image
@@ -887,13 +892,16 @@ def audio_screen_static(info):
 
 
 # Render the changing portion of audio screens
-def audio_screen_dynamic(image, draw, info, prog):
-
-    # Get layout details for this mode
-    layout = AUDIO_LAYOUT[audio_dmode.name]
+#
+#  First two arguments are Pillow Image and ImageDraw objects.
+#  Third argument is the layout dictionary to use
+#  Fourth argument is a dictionary loaded from Kodi with relevant InfoLabels.
+#  Fifth argument is a float representing progress through the audio file.
+#
+def audio_screen_dynamic(image, draw, layout, info, prog):
 
     # Dynamic text fields
-    audio_text_fields(image, draw, info, dynamic=1)
+    audio_text_fields(image, draw, layout, info, dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -919,26 +927,26 @@ def audio_screen_dynamic(image, draw, info, prog):
 
 # Audio info screens (shown when music is playing)
 #
-# First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant info fields.
-# Fourth argument is a float representing progress through the track.
+#  First two arguments are Pillow Image and ImageDraw objects.  Third
+#  argument is a dictionary loaded from Kodi with relevant info
+#  fields.  Fourth argument is a float representing progress through
+#  the track.
 #
-# The rendering is divided into two phases -- first all of the static
-# elements (on a new image) and then the dynamic text fields and
-# progress bar.  The static image gets reused when possible.
+#  The rendering is divided into two phases -- first all of the static
+#  elements (on a new image) and then the dynamic text fields and
+#  progress bar.  The static image gets reused when possible.
 #
-# Switching to this approach seems to keep the active update loop to
+#  Switching to this approach seems to keep the active update loop to
 #
 #   - around 20% CPU load for an RPi Zero W and
 #   - around 5% CPU load on an RPi 4.
 #
 def audio_screens(image, draw, info, prog):
-    global _static_image
-    global _static_video
-    global _last_track_num
-    global _last_track_title
-    global _last_track_album
-    global _last_track_time
+    global _static_image, _static_video
+    global _last_track_num, _last_track_title, _last_track_album, _last_track_time
+
+    # Determine what audio layout should be used
+    layout = AUDIO_LAYOUT[audio_dmode.name]
 
     if (_static_image and (not _static_video) and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
@@ -947,7 +955,7 @@ def audio_screens(image, draw, info, prog):
         info["MusicPlayer.Duration"]    == _last_track_time):
         pass
     else:
-        _static_image = audio_screen_static(info)
+        _static_image = audio_screen_static(layout, info)
         _static_video = False
         _last_track_num   = info["MusicPlayer.TrackNumber"]
         _last_track_title = info["MusicPlayer.Title"]
@@ -956,7 +964,7 @@ def audio_screens(image, draw, info, prog):
 
     # use _static_image as the starting point
     image.paste(_static_image, (0,0))
-    audio_screen_dynamic(image, draw, info, prog)
+    audio_screen_dynamic(image, draw, layout, info, prog)
 
 
 
@@ -970,9 +978,7 @@ def audio_screens(image, draw, info, prog):
 #   video_screen_static() and
 #   video_screen_dynamic()
 #
-def video_text_fields(image, draw, info, dynamic=False):
-    # Get layout details for this mode
-    layout = VIDEO_LAYOUT[video_dmode.name]
+def video_text_fields(image, draw, layout, info, dynamic=False):
 
     txt_field = layout.get("fields", [])
     for index in range(len(txt_field)):
@@ -1033,16 +1039,12 @@ def video_text_fields(image, draw, info, dynamic=False):
 
 
 # Render the static portion of video screens
-def video_screen_static(info):
-    global _last_thumb
-    global _last_image_path
+def video_screen_static(layout, info):
+    global _last_thumb, _last_image_path
 
     # Create a new image
     image  = Image.new('RGB', (_frame_size), 'black')
     draw   = ImageDraw.Draw(image)
-
-    # Get layout details for this mode
-    layout = VIDEO_LAYOUT[video_dmode.name]
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
@@ -1070,20 +1072,23 @@ def video_screen_static(info):
         _last_thumb = None
 
     # All the static text fields
-    video_text_fields(image, draw, info, dynamic=0)
+    video_text_fields(image, draw, layout, info, dynamic=0)
 
     # Return new image
     return image
 
 
 # Render the changing portion of video screens
-def video_screen_dynamic(image, draw, info, prog):
-
-    # Get layout details for this mode
-    layout = VIDEO_LAYOUT[video_dmode.name]
+#
+#  First two arguments are Pillow Image and ImageDraw objects.
+#  Third argument is the layout dictionary to use
+#  Fourth argument is a dictionary loaded from Kodi with relevant info fields.
+#  Fifth argument is a float representing progress through the video file.
+#
+def video_screen_dynamic(image, draw, layout, info, prog):
 
     # Dynamic text fields
-    video_text_fields(image, draw, info, dynamic=1)
+    video_text_fields(image, draw, layout, info, dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -1108,18 +1113,26 @@ def video_screen_dynamic(image, draw, info, prog):
 
 # Video info screens (shown when a video is playing)
 #
-# First two arguments are Pillow Image and ImageDraw objects.
-# Third argument is a dictionary loaded from Kodi with relevant info fields.
-# Fourth argument is a float representing progress through the video.
+#  First two arguments are Pillow Image and ImageDraw objects.
+#  Third argument is a dictionary loaded from Kodi with relevant info fields.
+#  Fourth argument is a float representing progress through the video.
 #
-# See static/dynamic description given for audio_screens()
+#  See static/dynamic description given for audio_screens()
 #
 def video_screens(image, draw, info, prog):
-    global _static_image
-    global _static_video
-    global _last_video_title
-    global _last_video_episode
-    global _last_video_time
+    global _static_image, _static_video
+    global _last_video_title, _last_video_episode, _last_video_time
+
+    # Determine what video layout should be used
+    layout = VIDEO_LAYOUT[video_dmode.name]
+
+    #
+    # NOTE: Heuristic to determine layout based upon populated
+    #       InfoLabels should be placed here.  Pick a new layout prior
+    #       to invoking video_screen_static and dynamic.
+    #
+    if VIDEO_LAYOUT_AUTOSELECT:
+        pass  # currently empty
 
     if (_static_image and _static_video and
         info["VideoPlayer.Title"]    == _last_video_title and
@@ -1127,7 +1140,7 @@ def video_screens(image, draw, info, prog):
         info["VideoPlayer.Duration"] == _last_video_time):
         pass
     else:
-        _static_image = video_screen_static(info)
+        _static_image = video_screen_static(layout, info)
         _static_video = True
         _last_video_title   = info["VideoPlayer.Title"]
         _last_video_episode = info["VideoPlayer.Episode"]
@@ -1135,7 +1148,7 @@ def video_screens(image, draw, info, prog):
 
     # use _static_image as the starting point
     image.paste(_static_image, (0,0))
-    video_screen_dynamic(image, draw, info, prog)
+    video_screen_dynamic(image, draw, layout, info, prog)
 
 
 # Given current position ([h:]m:s) and duration, calculate
@@ -1183,14 +1196,9 @@ def screen_off():
 #
 def update_display(touched=False):
     global _kodi_playing
-    global _last_image_path
-    global _last_thumb
-    global _static_image
-    global _screen_press
-    global _screen_active
-    global _screen_offtime
-    global audio_dmode
-    global video_dmode
+    global _last_image_path, _last_thumb, _static_image
+    global _screen_press, _screen_active, _screen_offtime
+    global audio_dmode, video_dmode
 
     _lock.acquire()
 
@@ -1280,14 +1288,15 @@ def update_display(touched=False):
         # mode-specific.
         if _screen_press or touched:
             _screen_press = False
-            video_dmode = video_dmode.next()
-            print(datetime.now(), "video display mode now", video_dmode.name)
-            _last_image_path = None
-            _last_image_time = None
-            _last_thumb = None
-            _static_image = None
-            truncate_line.cache_clear()
-            text_wrap.cache_clear()
+            if not VIDEO_LAYOUT_AUTOSELECT:
+                video_dmode = video_dmode.next()
+                print(datetime.now(), "video display mode now", video_dmode.name)
+                _last_image_path = None
+                _last_image_time = None
+                _last_thumb = None
+                _static_image = None
+                truncate_line.cache_clear()
+                text_wrap.cache_clear()
 
         # Retrieve video InfoLabels in a single JSON-RPC call
         payload = {
@@ -1297,13 +1306,17 @@ def update_display(touched=False):
                                     "VideoPlayer.TVShowTitle",
                                     "VideoPlayer.Season",
                                     "VideoPlayer.Episode",
+                                    "VideoPlayer.EpisodeName",
                                     "VideoPlayer.Duration",
                                     "VideoPlayer.Time",
                                     "VideoPlayer.Genre",
                                     "VideoPlayer.Year",
                                     "VideoPlayer.VideoCodec",
                                     "VideoPlayer.AudioCodec",
+                                    "VideoPlayer.ChannelName",
+                                    "VideoPlayer.ChannelNumberLabel",
                                     "VideoPlayer.Rating",
+                                    "VideoPlayer.ParentalRating",
                                     "VideoPlayer.Cover",
             ]},
             "id"      : 4,
@@ -1437,8 +1450,7 @@ def update_display(touched=False):
 #   https://www.raspberrypi.org/forums/viewtopic.php?t=143478
 #
 def touch_callback(channel):
-    global _screen_press
-    global _kodi_connected
+    global _screen_press, _kodi_connected
     #print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
         if TOUCH_CALL_UPDATE:
@@ -1455,8 +1467,7 @@ def touch_callback(channel):
 #
 def main(device_handle):
     global device
-    global _kodi_connected
-    global _kodi_playing
+    global _kodi_connected, _kodi_playing
     global _screen_press
     _kodi_connected = False
     _kodi_playing   = False
