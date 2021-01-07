@@ -165,6 +165,22 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #    #e5d47d        one tint darker than lightgoldenrod
 #    #ccbc6f        two tints darker than lightgoldenrod
 #
+#
+#  Searching around for information regarding the colors of old
+#  monochrome monitors, I also came across an image that claimed
+#  the following hex values were representative:
+#
+#   Amber          #FFB000   (600 nm)
+#   Light Amber    #FFCC00   (593 nm)
+#
+#   Green 1        #33FF00   (524 nm)
+#   Apple ][       #33FF33
+#   Green 2        #00FF33   (506 nm)
+#   Apple IIc      #66FF66
+#   Green 3        #00FF66   (502 nm)
+#
+#  
+#
 [COLORS]
  color_artist = '#ffd1a3'    # artist name
  color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
