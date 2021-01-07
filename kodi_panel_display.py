@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.12"
+PANEL_VER = "v1.13"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -676,45 +676,44 @@ def status_screen(draw, kodi_status, summary_string):
     if "fields" not in layout.keys():
         return
 
-    txt_field = layout["fields"]
-
-    for index in range(len(txt_field)):
-        if txt_field[index]["name"] == "version":
-            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+    txt_fields = layout.get("fields", [])
+    for field_info in txt_fields:
+        if field_info["name"] == "version":
+            draw.text((field_info["posx"],field_info["posy"]),
                       "kodi_panel " + PANEL_VER,
-                      txt_field[index]["fill"], txt_field[index]["font"])
+                      field_info["fill"], field_info["font"])
 
-        elif txt_field[index]["name"] == "summary":
-            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+        elif field_info["name"] == "summary":
+            draw.text((field_info["posx"],field_info["posy"]),
                       summary_string,
-                      txt_field[index]["fill"], txt_field[index]["font"])
+                      field_info["fill"], field_info["font"])
 
-        elif txt_field[index]["name"] == "kodi_version":
+        elif field_info["name"] == "kodi_version":
             kodi_version = kodi_status["System.BuildVersion"].split()[0]
             build_date   = kodi_status["System.BuildDate"]
-            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+            draw.text((field_info["posx"],field_info["posy"]),
                       "Kodi version: " + kodi_version + " (" + build_date + ")",
-                      txt_field[index]["fill"], txt_field[index]["font"])
+                      field_info["fill"], field_info["font"])
 
-        elif txt_field[index]["name"] == "time_hrmin":
+        elif field_info["name"] == "time_hrmin":
             # current time (in 7-segment LED font by default)
             time_parts = kodi_status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(time_parts[0], txt_field[index]["font"])
-            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+            time_width, time_height = draw.textsize(time_parts[0], field_info["font"])
+            draw.text((field_info["posx"],field_info["posy"]),
                       time_parts[0],
-                      txt_field[index]["fill"], txt_field[index]["font"])
-            draw.text((txt_field[index]["posx"] + time_width + 5, txt_field[index]["posy"]),
+                      field_info["fill"], field_info["font"])
+            draw.text((field_info["posx"] + time_width + 5, field_info["posy"]),
                       time_parts[1],
-                      txt_field[index]["fill"], txt_field[index]["smfont"])
+                      field_info["fill"], field_info["smfont"])
 
         else:
-            display_string = kodi_status[txt_field[index]["name"]]
-            if txt_field[index]["name"] in str_prefix.keys():
-                display_string = str_prefix[txt_field[index]["name"]] + display_string
+            display_string = kodi_status[field_info["name"]]
+            if field_info["name"] in str_prefix.keys():
+                display_string = str_prefix[field_info["name"]] + display_string
 
-            draw.text((txt_field[index]["posx"],txt_field[index]["posy"]),
+            draw.text((field_info["posx"],field_info["posy"]),
                       display_string,
-                      txt_field[index]["fill"], txt_field[index]["font"])
+                      field_info["fill"], field_info["font"])
 
 
 # Render all audio text fields, stepping through the entries from the
@@ -736,50 +735,50 @@ def status_screen(draw, kodi_status, summary_string):
 def audio_text_fields(image, draw, layout, info, dynamic=False):
 
     # Text fields (all except for MusicPlayer.Time)
-    txt_field = layout.get("fields", [])
-    for index in range(len(txt_field)):
+    txt_fields = layout.get("fields", [])
+    for field_info in txt_fields:
 
         # Skip over the fields that aren't desired for
         # this invocation
         if dynamic:
-            if not txt_field[index].get("dynamic",0):
+            if not field_info.get("dynamic",0):
                 continue
         else:
-            if txt_field[index].get("dynamic",0):
+            if field_info.get("dynamic",0):
                 continue
 
         # special treatment for "codec", which gets a lookup
-        if txt_field[index]["name"] == "codec":
+        if field_info["name"] == "codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
                 # render any label first
-                if "label" in txt_field[index]:
-                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
-                              txt_field[index]["label"],
-                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
-                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                if "label" in field_info:
+                    draw.text((field_info["lposx"], field_info["lposy"]),
+                              field_info["label"],
+                              fill=field_info["lfill"], font=field_info["lfont"])
+                draw.text((field_info["posx"], field_info["posy"]),
                           codec_name[info['MusicPlayer.Codec']],
-                          fill=txt_field[index]["fill"],
-                          font=txt_field[index]["font"])
+                          fill=field_info["fill"],
+                          font=field_info["font"])
 
         # special treatment for "full_codec"
-        elif txt_field[index]["name"] == "full_codec":
+        elif field_info["name"] == "full_codec":
             if info['MusicPlayer.Codec'] in codec_name.keys():
                 display_text =  codec_name[info['MusicPlayer.Codec']]
                 display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
                     info['MusicPlayer.SampleRate'] + ")"
 
                 # render any label first
-                if "label" in txt_field[index]:
-                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
-                              txt_field[index]["label"],
-                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
-                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                if "label" in field_info:
+                    draw.text((field_info["lposx"], field_info["lposy"]),
+                              field_info["label"],
+                              fill=field_info["lfill"], font=field_info["lfont"])
+                draw.text((field_info["posx"], field_info["posy"]),
                           display_text,
-                          fill=txt_field[index]["fill"],
-                          font=txt_field[index]["font"])
+                          fill=field_info["fill"],
+                          font=field_info["font"])
 
         # special treatment for "artist"
-        elif txt_field[index]["name"] == "artist":
+        elif field_info["name"] == "artist":
             display_string = None
             if info['MusicPlayer.Artist'] != "":
                 display_string = info['MusicPlayer.Artist']
@@ -787,63 +786,63 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                 display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
 
             if (display_string == "Unknown" and
-                txt_field[index].get("drop_unknown",0)):
+                field_info.get("drop_unknown",0)):
                 continue
 
             if display_string:
-                if "wrap" in txt_field[index].keys():
+                if "wrap" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     (field_info["posx"], field_info["posy"]),
                                      display_string,
-                                     max_width=txt_field[index]["max_width"],
-                                     max_lines=txt_field[index]["max_lines"],
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
-                elif "trunc" in txt_field[index].keys():
+                                     max_width=field_info["max_width"],
+                                     max_lines=field_info["max_lines"],
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
+                elif "trunc" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
+                                     (field_info["posx"], field_info["posy"]),
                                      display_string,
-                                     max_width=_frame_size[0] - txt_field[index]["posx"],
+                                     max_width=_frame_size[0] - field_info["posx"],
                                      max_lines=1,
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
                 else:
-                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                    draw.text((field_info["posx"], field_info["posy"]),
                               display_string,
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                              fill=field_info["fill"],
+                              font=field_info["font"])
 
         # all other text fields
         else:
-            if (txt_field[index]["name"] in info.keys() and
-                info[txt_field[index]["name"]] != ""):
+            if (field_info["name"] in info.keys() and
+                info[field_info["name"]] != ""):
                 # render any label first
-                if "label" in txt_field[index]:
-                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
-                              txt_field[index]["label"],
-                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                if "label" in field_info:
+                    draw.text((field_info["lposx"], field_info["lposy"]),
+                              field_info["label"],
+                              fill=field_info["lfill"], font=field_info["lfont"])
                 # now render the field itself
-                if "wrap" in txt_field[index].keys():
+                if "wrap" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],
-                                     max_width=txt_field[index]["max_width"],
-                                     max_lines=txt_field[index]["max_lines"],
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
-                elif "trunc" in txt_field[index].keys():
+                                     (field_info["posx"], field_info["posy"]),
+                                     info[field_info["name"]],
+                                     max_width=field_info["max_width"],
+                                     max_lines=field_info["max_lines"],
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
+                elif "trunc" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],
-                                     max_width=_frame_size[0] - txt_field[index]["posx"],
+                                     (field_info["posx"], field_info["posy"]),
+                                     info[field_info["name"]],
+                                     max_width=_frame_size[0] - field_info["posx"],
                                      max_lines=1,
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
                 else:
-                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
-                              info[txt_field[index]["name"]],
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                    draw.text((field_info["posx"], field_info["posy"]),
+                              info[field_info["name"]],
+                              fill=field_info["fill"],
+                              font=field_info["font"])
 
 
 
@@ -980,62 +979,62 @@ def audio_screens(image, draw, info, prog):
 #
 def video_text_fields(image, draw, layout, info, dynamic=False):
 
-    txt_field = layout.get("fields", [])
-    for index in range(len(txt_field)):
+    txt_fields = layout.get("fields", [])
+    for field_info in txt_fields:
 
         # Skip over the fields that aren't desired for
         # this invocation
         if dynamic:
-            if not txt_field[index].get("dynamic",0):
+            if not field_info.get("dynamic",0):
                 continue
         else:
-            if txt_field[index].get("dynamic",0):
+            if field_info.get("dynamic",0):
                 continue
 
         # special treatment for audio codec, which gets a lookup
-        if txt_field[index]["name"] == "acodec":
+        if field_info["name"] == "acodec":
             if info['VideoPlayer.Codec'] in codec_name.keys():
                 # render any label first
-                if "label" in txt_field[index]:
-                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
-                              txt_field[index]["label"],
-                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
-                draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
+                if "label" in field_info:
+                    draw.text((field_info["lposx"], field_info["lposy"]),
+                              field_info["label"],
+                              fill=field_info["lfill"], font=field_info["lfont"])
+                draw.text((field_info["posx"], field_info["posy"]),
                           codec_name[info['VideoPlayer.Codec']],
-                          fill=txt_field[index]["fill"],
-                          font=txt_field[index]["font"])
+                          fill=field_info["fill"],
+                          font=field_info["font"])
 
         # all other text fields
         else:
-            if (txt_field[index]["name"] in info.keys() and
-                info[txt_field[index]["name"]] != ""):
+            if (field_info["name"] in info.keys() and
+                info[field_info["name"]] != ""):
                 # render any label first
-                if "label" in txt_field[index]:
-                    draw.text((txt_field[index]["lposx"], txt_field[index]["lposy"]),
-                              txt_field[index]["label"],
-                              fill=txt_field[index]["lfill"], font=txt_field[index]["lfont"])
+                if "label" in field_info:
+                    draw.text((field_info["lposx"], field_info["lposy"]),
+                              field_info["label"],
+                              fill=field_info["lfill"], font=field_info["lfont"])
                 # now render the field itself
-                if "wrap" in txt_field[index].keys():
+                if "wrap" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],
-                                     max_width=txt_field[index]["max_width"],
-                                     max_lines=txt_field[index]["max_lines"],
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
-                elif "trunc" in txt_field[index].keys():
+                                     (field_info["posx"], field_info["posy"]),
+                                     info[field_info["name"]],
+                                     max_width=field_info["max_width"],
+                                     max_lines=field_info["max_lines"],
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
+                elif "trunc" in field_info.keys():
                     render_text_wrap(draw,
-                                     (txt_field[index]["posx"], txt_field[index]["posy"]),
-                                     info[txt_field[index]["name"]],
-                                     max_width=_frame_size[0] - txt_field[index]["posx"],
+                                     (field_info["posx"], field_info["posy"]),
+                                     info[field_info["name"]],
+                                     max_width=_frame_size[0] - field_info["posx"],
                                      max_lines=1,
-                                     fill=txt_field[index]["fill"],
-                                     font=txt_field[index]["font"])
+                                     fill=field_info["fill"],
+                                     font=field_info["font"])
                 else:
-                    draw.text((txt_field[index]["posx"], txt_field[index]["posy"]),
-                              info[txt_field[index]["name"]],
-                              fill=txt_field[index]["fill"],
-                              font=txt_field[index]["font"])
+                    draw.text((field_info["posx"], field_info["posy"]),
+                              info[field_info["name"]],
+                              fill=field_info["fill"],
+                              font=field_info["font"])
 
 
 # Render the static portion of video screens
