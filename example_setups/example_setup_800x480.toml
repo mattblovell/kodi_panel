@@ -120,21 +120,24 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 # Video Layout Names
 #
-#   Similar to audio screen modes above, except for this tidbit ...
+#   Similar to audio screen modes above, except for the
+#   following tidbit ...
 #
-
-# Should the layout for video screens be auto-selected (within the
-# video_screens() function) based upon which InfoLabel fields are
-# populated?
+#   Should the layout for video screens be auto-selected (within the
+#   video_screens() function) based upon which InfoLabel fields are
+#   populated?  If so, then set VLAYOUT_AUTOSELECT to true.
 #
-# If this flag is set to true, then VLAYOUT_NAMES *MUST* be populated
-# with entries that match the heuristic if-then that is used by
-# video_screens().  Fields or entries within each layout are all
-# rendered in the same manner, but the auto-selection choice permits
-# for distinct layouts for different media types.
+#   If that flag is set to true, then VLAYOUT_NAMES *MUST* be
+#   populated with entries that match the heuristic if-then that is
+#   used by video_screens().  Top-level entries must be as follows:
 #
-# If this variable is to false or left undeclared, then video modes
-# just form a cycle that gets advanced via the touch interrupt.
+#     - Whatever VLAYOUT_INITIAL specifies below, for Movies
+#     - "V_PVR", for PVR / Recorded TV shows
+#     - "V_TV_SHOW", for Library TV shows
+#
+#   If that variable is to false or left undeclared, then video modes
+#   just form a cycle that gets advanced via the touch interrupt, as
+#   happens for the audio screens.
 #
 # VLAYOUT_AUTOSELECT = false
 
@@ -227,6 +230,46 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #   audio_screens().  If a completely new text field is desired, then
 #   the JSON-RPC call made in update_display() needs to be updated as
 #   well.
+#
+#   All entries within the "fields" array below correspond to text
+#   fields, with the 'name' key generally corresponding to one of the
+#   retrieved InfoLabels.  Each entry is a little dictionary that can
+#   specify the following entries:
+#
+#      posx     X-coordinate for display (horizontal position)
+#      posy     Y-coordinate for display (vertical position)
+#      font     Font to use for rendering
+#      fill     Text color
+#
+#      dynamic  A boolean flag to true/1 to indicate that the
+#               field should be considered dynamic, re-drawn
+#               upon every update loop.
+#
+#      prefix   Optional string ahead of InfoLabel text
+#      suffix   Optional string following InfoLabel text
+#
+#      trunc    Flag indicating that single line string should
+#               truncated at the right-hand edge of the display
+#
+#      wrap     Flag indication that the string should be wrapped.
+#               When wrapping, further information is needed...
+#
+#      max_width  Maximum horizontal width string can occupy
+#      max_lines  Maximum number of lines to occupy; additional
+#                 text gets truncated on the final line
+#
+#      label    Separate text to display, with an independent
+#               font and independent fill color, when the InfoLabel
+#               is non-empty.  Labels require several additional
+#               keys, all of which start with "l".  These are
+#               still keys at the same level in the field's
+#               dictionary.
+#
+#      lposx    Horizontal position for label string
+#      lpoxy    Vertical position for label string
+#      lfont    Font for label string
+#      lfill    Font fill color for label string
+#
 #
 #   Special treatment exists for the 'codec' and 'artist' text fields.
 #

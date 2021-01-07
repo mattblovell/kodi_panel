@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.13"
+PANEL_VER = "v1.14"
 
 # Audio/Video codec lookup
 codec_name = {
@@ -285,6 +285,28 @@ if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
 elif VIDEO_ENABLED:
     warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
     VIDEO_ENABLED = 0
+
+# If video mode auto-selection is enabled, then V_LAYOUT
+# must have provided the following top-level entries
+#
+#    - Whatever the default VLAYOUT_INITIAL value specifies,
+#      which is assumed appropriate for movie playback.
+#
+#    - "V_PVR"
+#
+#    - "V_TV_SHOW"
+#
+# We check that condition here.
+
+if VIDEO_LAYOUT_AUTOSELECT:
+    if ("V_PVR" in VIDEO_LAYOUT.keys() and
+        "V_TV_SHOW" in VIDEO_LAYOUT.keys() and
+        config.settings["VLAYOUT_INITIAL"] in VIDEO_LAYOUT.keys()):
+        pass
+    else:
+        warnings.warn("Cannot find all required entries in V_LAYOUT screens to use VLAYOUT_AUTOSELECT.")
+        VIDEO_LAYOUT_AUTOSELECT = 0
+
 
 # Layout control for status screen, used by status_screen()
 if ("STATUS_LAYOUT" in config.settings.keys()):
@@ -659,13 +681,6 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 def status_screen(draw, kodi_status, summary_string):
     layout = STATUS_LAYOUT
 
-    str_prefix = {
-        "System.Date"           : "",
-        "System.Uptime"         : "Up: ",
-        "System.CPUTemperature" : "CPU: ",
-        "System.CpuFrequency"   : "Freq: ",
-    }
-
     # Kodi logo, if desired
     if "thumb" in layout.keys():
         kodi_icon = Image.open(_kodi_thumb)
@@ -707,10 +722,8 @@ def status_screen(draw, kodi_status, summary_string):
                       field_info["fill"], field_info["smfont"])
 
         else:
-            display_string = kodi_status[field_info["name"]]
-            if field_info["name"] in str_prefix.keys():
-                display_string = str_prefix[field_info["name"]] + display_string
-
+            display_string = (field_info.get("prefix","") + kodi_status[field_info["name"]] +
+                              field_info.get("suffix",""))
             draw.text((field_info["posx"],field_info["posy"]),
                       display_string,
                       field_info["fill"], field_info["font"])
@@ -780,10 +793,19 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
         # special treatment for "artist"
         elif field_info["name"] == "artist":
             display_string = None
+
+            # The following was an attempt to display Composer if
+            # Artist is blank.  The combination of JRiver Media Center
+            # and UPnP/DLNA playback via Kodi didn't quite permit this
+            # to work, unfortunately.
+
             if info['MusicPlayer.Artist'] != "":
-                display_string = info['MusicPlayer.Artist']
+                display_string = (field_info.get("prefix","") + info['MusicPlayer.Artist'] +
+                                  field_info.get("suffix",""))
             elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                display_string =  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
+                display_string = (field_info.get("prefix","") +
+                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
+                                  field_info.get("suffix",""))
 
             if (display_string == "Unknown" and
                 field_info.get("drop_unknown",0)):
@@ -821,11 +843,16 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
-                # now render the field itself
+
+                # now render the field itself, adding any specified
+                # prefix and suffix strings
+                display_string = (field_info.get("prefix","") + info[field_info["name"]] +
+                                  field_info.get("suffix",""))
+
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
-                                     info[field_info["name"]],
+                                     display_string,
                                      max_width=field_info["max_width"],
                                      max_lines=field_info["max_lines"],
                                      fill=field_info["fill"],
@@ -833,14 +860,14 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                 elif "trunc" in field_info.keys():
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
-                                     info[field_info["name"]],
+                                     display_string,
                                      max_width=_frame_size[0] - field_info["posx"],
                                      max_lines=1,
                                      fill=field_info["fill"],
                                      font=field_info["font"])
                 else:
                     draw.text((field_info["posx"], field_info["posy"]),
-                              info[field_info["name"]],
+                              display_string,
                               fill=field_info["fill"],
                               font=field_info["font"])
 
@@ -1013,11 +1040,16 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
-                # now render the field itself
+
+                # now render the field itself, adding any specified
+                # prefix and suffix strings
+                display_string = (field_info.get("prefix","") + info[field_info["name"]] +
+                                  field_info.get("suffix",""))
+
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
-                                     info[field_info["name"]],
+                                     display_string,
                                      max_width=field_info["max_width"],
                                      max_lines=field_info["max_lines"],
                                      fill=field_info["fill"],
@@ -1025,14 +1057,14 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
                 elif "trunc" in field_info.keys():
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
-                                     info[field_info["name"]],
+                                     display_string,
                                      max_width=_frame_size[0] - field_info["posx"],
                                      max_lines=1,
                                      fill=field_info["fill"],
                                      font=field_info["font"])
                 else:
                     draw.text((field_info["posx"], field_info["posy"]),
-                              info[field_info["name"]],
+                              display_string,
                               fill=field_info["fill"],
                               font=field_info["font"])
 
@@ -1125,13 +1157,15 @@ def video_screens(image, draw, info, prog):
     # Determine what video layout should be used
     layout = VIDEO_LAYOUT[video_dmode.name]
 
-    #
-    # NOTE: Heuristic to determine layout based upon populated
-    #       InfoLabels should be placed here.  Pick a new layout prior
-    #       to invoking video_screen_static and dynamic.
-    #
+    # Heuristic to determine layout based upon populated InfoLabels,
+    # if enabled via settings.
     if VIDEO_LAYOUT_AUTOSELECT:
-        pass  # currently empty
+        if info["VideoPlayer.ChannelName"] != '':
+            layout = VIDEO_LAYOUT["V_PVR"]     # PVR TV shows
+        elif info["VideoPlayer.TVShowTitle"] != '':
+            layout = VIDEO_LAYOUT["V_TV_SHOW"] # Library TV shows
+        else:
+            pass  # leave as-is, assumed good for Movies
 
     if (_static_image and _static_video and
         info["VideoPlayer.Title"]    == _last_video_title and
@@ -1306,12 +1340,15 @@ def update_display(touched=False):
                                     "VideoPlayer.Season",
                                     "VideoPlayer.Episode",
                                     "VideoPlayer.EpisodeName",
+                                    "VideoPlayer.PlotOutline",
+                                    "VideoPlayer.Plot",
                                     "VideoPlayer.Duration",
                                     "VideoPlayer.Time",
                                     "VideoPlayer.Genre",
                                     "VideoPlayer.Year",
                                     "VideoPlayer.VideoCodec",
                                     "VideoPlayer.AudioCodec",
+                                    "VideoPlayer.VideoResolution",
                                     "VideoPlayer.ChannelName",
                                     "VideoPlayer.ChannelNumberLabel",
                                     "VideoPlayer.Rating",
