@@ -474,6 +474,7 @@ posx = 5
 posy = 175
 font = "font_sm"
 fill = "white"
+prefix = "Up: "
 
 [[STATUS_LAYOUT.fields]]
 name = "System.CPUTemperature"
@@ -481,6 +482,7 @@ posx = 5
 posy = 200
 font = "font_sm"
 fill = "white"
+prefix = "CPU: "
 
 [[STATUS_LAYOUT.fields]]
 name = "System.CpuFrequency"
@@ -488,6 +490,7 @@ posx = 5
 posy = 225
 font = "font_sm"
 fill = "white"
+prefix = "Freq: "
 
 [[STATUS_LAYOUT.fields]]
 name = "kodi_version"  # special treatment
