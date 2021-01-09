@@ -698,7 +698,6 @@ posy = 250
 format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
 fill = "white"
-prefix = "CPU: "
 
 [[STATUS_LAYOUT.fields]]
 name = "kodi_version"  # special treatment

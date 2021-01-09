@@ -481,7 +481,6 @@ posy = 175
 format_str = "Up: {System.Uptime}"
 font = "font_sm"
 fill = "white"
-prefix = "Up: "
 
 [[STATUS_LAYOUT.fields]]
 name = "System.CPUTemperature"
