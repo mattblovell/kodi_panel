@@ -47,6 +47,7 @@ import os
 import threading
 import warnings
 
+from string import Template
 
 # kodi_panel settings
 import config
@@ -672,6 +673,31 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
         return None
 
 
+# Provide a mechanism for interpolation of format strings containing
+# InfoLabel fields denoted with curly braces.  For example, providing
+# substution for a string such as
+#
+#   Freq: {System.CpuFrequency}
+#
+# The normal python format_map() method balks at the above, since the
+# InfoLabel name, System.CpuFrequency, contains a dot or period.  The
+# normal string formatter allows one to invoke attributes (or methods)
+# for embedded variables.  We instead just want the whole curly-brace
+# expression treated as a string for use as a dictionary key.
+    
+_InfoLabel_re = re.compile(r'\{(\w*\.\w*)\}')
+
+def format_InfoLabels(orig_str, kodi_dict):
+    matches = set(_InfoLabel_re.findall(orig_str))
+    new_str = orig_str
+    for field in matches:
+        if field in kodi_dict.keys():
+            new_str = new_str.replace('{' + field + '}', kodi_dict[field])
+        else:
+            new_str = new_str.replace('{' + field + '}', '')                    
+    return new_str
+
+
 # Idle status screen (shown upon a screen press)
 #
 # First argument is a Pillow ImageDraw object.
@@ -680,7 +706,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 #
 def status_screen(draw, kodi_status, summary_string):
     layout = STATUS_LAYOUT
-
+        
     # Kodi logo, if desired
     if "thumb" in layout.keys():
         kodi_icon = Image.open(_kodi_thumb)
@@ -722,8 +748,13 @@ def status_screen(draw, kodi_status, summary_string):
                       field_info["fill"], field_info["smfont"])
 
         else:
-            display_string = (field_info.get("prefix","") + kodi_status[field_info["name"]] +
-                              field_info.get("suffix",""))
+            # Use format_str or prefix/suffic approach, in that order
+            if field_info.get("format_str",""):
+                display_string = format_InfoLabels( field_info["format_str"], kodi_status )
+            else:
+                display_string = (field_info.get("prefix","") + kodi_status[field_info["name"]] +
+                                  field_info.get("suffix",""))
+                
             draw.text((field_info["posx"],field_info["posy"]),
                       display_string,
                       field_info["fill"], field_info["font"])
@@ -790,22 +821,26 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                           fill=field_info["fill"],
                           font=field_info["font"])
 
-        # special treatment for "artist"
-        elif field_info["name"] == "artist":
+            # special treatment for "artist"
+        elif (field_info["name"] == "artist" and
+              info['MusicPlayer.Artist'] != ""):
             display_string = None
 
-            # The following was an attempt to display Composer if
-            # Artist is blank.  The combination of JRiver Media Center
-            # and UPnP/DLNA playback via Kodi didn't quite permit this
-            # to work, unfortunately.
-
-            if info['MusicPlayer.Artist'] != "":
-                display_string = (field_info.get("prefix","") + info['MusicPlayer.Artist'] +
-                                  field_info.get("suffix",""))
-            elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                display_string = (field_info.get("prefix","") +
-                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
-                                  field_info.get("suffix",""))
+            if field_info.get("format_str",""):
+                display_string = format_InfoLabels( field_info["format_str"], info )
+            else:
+                # The following was an attempt to display Composer if
+                # Artist is blank.  The combination of JRiver Media Center
+                # and UPnP/DLNA playback via Kodi didn't quite permit this
+                # to work, unfortunately.
+                
+                if info['MusicPlayer.Artist'] != "":
+                    display_string = (field_info.get("prefix","") + info['MusicPlayer.Artist'] +
+                                      field_info.get("suffix",""))
+                elif info['MusicPlayer.Property(Role.Composer)'] != "":
+                    display_string = (field_info.get("prefix","") +
+                                      "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
+                                      field_info.get("suffix",""))
 
             if (display_string == "Unknown" and
                 field_info.get("drop_unknown",0)):
@@ -838,16 +873,19 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
         else:
             if (field_info["name"] in info.keys() and
                 info[field_info["name"]] != ""):
+
                 # render any label first
                 if "label" in field_info:
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
 
-                # now render the field itself, adding any specified
-                # prefix and suffix strings
-                display_string = (field_info.get("prefix","") + info[field_info["name"]] +
-                                  field_info.get("suffix",""))
+                # Use format_str or prefix/suffic approach, in that order
+                if field_info.get("format_str",""):
+                    display_string = format_InfoLabels( field_info["format_str"], info )
+                else:
+                    display_string = (field_info.get("prefix","") + info[field_info["name"]] +
+                                      field_info.get("suffix",""))
 
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,
@@ -1041,10 +1079,12 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
 
-                # now render the field itself, adding any specified
-                # prefix and suffix strings
-                display_string = (field_info.get("prefix","") + info[field_info["name"]] +
-                                  field_info.get("suffix",""))
+                # Use format_str or prefix/suffic approach, in that order
+                if field_info.get("format_str",""):
+                    display_string = format_InfoLabels( field_info["format_str"], info )
+                else:
+                    display_string = (field_info.get("prefix","") + info[field_info["name"]] +
+                                      field_info.get("suffix",""))
 
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,

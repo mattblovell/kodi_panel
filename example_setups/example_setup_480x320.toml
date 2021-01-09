@@ -223,6 +223,12 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #      prefix   Optional string ahead of InfoLabel text
 #      suffix   Optional string following InfoLabel text
 #
+#      format_str Alternatively, rather than using prefix and suffix,
+#                 one has the option of using a format_str.  The
+#                 string should contain one or more InfoLabels to
+#                 substitute, enclosed within curly braces.  See the
+#                 status layout screen text fields for examples.
+#
 #      trunc    Flag indicating that single line string should
 #               truncated at the right-hand edge of the display
 #
@@ -472,6 +478,7 @@ fill = "white"
 name = "System.Uptime"
 posx = 5
 posy = 175
+format_str = "Up: {System.Uptime}"
 font = "font_sm"
 fill = "white"
 prefix = "Up: "
@@ -480,21 +487,13 @@ prefix = "Up: "
 name = "System.CPUTemperature"
 posx = 5
 posy = 200
+format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
 fill = "white"
-prefix = "CPU: "
-
-[[STATUS_LAYOUT.fields]]
-name = "System.CpuFrequency"
-posx = 5
-posy = 225
-font = "font_sm"
-fill = "white"
-prefix = "Freq: "
 
 [[STATUS_LAYOUT.fields]]
 name = "kodi_version"  # special treatment
 posx = 5
-posy = 250
+posy = 225
 font = "font_sm"
 fill = "white"
