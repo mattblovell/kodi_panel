@@ -473,8 +473,8 @@ size = 480
 vertical = 1
 posx = 786    # upper-left corner x-position
 posy = 1      # upper-left corner y-position
-len  = 12     # pixel width for a vertical bar
-height = 476  # total height for the vertical bar
+len  = 14     # pixel width for a vertical bar
+height = 478  # total height for the vertical bar
 color_fg = "color_7S"
 color_bg = "color_gray"
 
