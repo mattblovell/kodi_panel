@@ -467,7 +467,7 @@ size = 480
 
 # --------------------------------------------------------------------
 #
-# Fullscreen artwork with progress bar
+# Fullscreen artwork with progress bar and (a late addition) track num
 #
 [A_LAYOUT.A_FULL_PROG.thumb]
 center = 1
@@ -481,6 +481,19 @@ len  = 14     # pixel width for a vertical bar
 height = 478  # total height for the vertical bar
 color_fg = "color_7S"
 color_bg = "color_gray"
+
+[[A_LAYOUT.A_FULL_PROG.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 4
+posy = 32
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 4
+  lposy = 4
+  lfont = "font_tiny"
+  lfill = "white"
 
 
 # --------------------------------------------------------------------
