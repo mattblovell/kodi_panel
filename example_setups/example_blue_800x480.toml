@@ -51,7 +51,7 @@ TOUCH_INT = 25
 # On RPi Zero, the debounce time seems like it needs to be longer to
 # avoid a single screen press being interpreted as two events.
 # Other SBCs can leave this commented out.
-TOUCH_DEBOUNCE = 900  # milliseconds
+TOUCH_DEBOUNCE = 400  # milliseconds
 
 # The USE_BACKLIGHT boolean controls whether calls are made to
 # luma.lcd at all to change backlight state.  Users with OLED displays
@@ -185,6 +185,8 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #    #e5d47d        one tint darker than lightgoldenrod
 #    #ccbc6f        two tints darker than lightgoldenrod
 #
+#    #ffd1a3
+#
 #
 #  Searching around for information regarding the colors of old
 #  monochrome monitors, I also came across an image that claimed
@@ -199,10 +201,12 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #   Apple IIc      #66FF66
 #   Green 3        #00FF66   (502 nm)
 #
+#
+#  After lots o'indecision, I decided to go with the light amber!
 #  
 #
 [COLORS]
- color_artist = '#ffd1a3'    # artist name
+ color_artist = '#ffcc00'    # artist name
  color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
  color_7S     = '#3399ff'    # 7-Segment LED color, progress bar
 
