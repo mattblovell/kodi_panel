@@ -542,7 +542,8 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
             image_set = True
         else:
             _last_image_path = image_path
-            if image_path.startswith("http://"):
+            if (image_path.startswith("http://") or
+                image_path.startswith("https://")):
                 image_url = image_path
             else:
                 payload = {
