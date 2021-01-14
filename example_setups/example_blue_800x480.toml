@@ -741,7 +741,7 @@ name = "time_hrmin"     # special treatment
 posx = 145
 posy = 90
 font = "font7S"
-fill = "color_7S"
+fill = "#00FF78"
 smfont = "font7S_sm"    # used for AM / PM
 
 # The remaining fields all get populated via a special JSON-RPC query
