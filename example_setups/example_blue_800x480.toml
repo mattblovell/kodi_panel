@@ -230,9 +230,15 @@ VLAYOUT_INITIAL = "V_DEFAULT"
   size = 28 
   encoding = 'unic'
 
+# The "font_bold" below is what the layouts below all use for the
+# track title.  I am still trying to find a font that has good
+# readability at a distance while also being narrow (so as to display
+# a decent number of characters).
+
 [[fonts]]
   name = "font_bold"
-  path = "fonts/RobotoCondensed-Light.ttf"
+#  path = "fonts/RobotoCondensed-Light.ttf"
+  path = "fonts/ArchivoNarrow-Medium.ttf"  
   size = 54
   encoding = 'unic'
 
