@@ -1310,6 +1310,9 @@ def video_screens(image, draw, info, prog):
 
 # Given current position ([h:]m:s) and duration, calculate
 # percentage done as a float for progress bar display.
+#
+# A -1 return value causes the progress bar NOT to be rendered.
+#
 def calc_progress(time_str, duration_str):
     if (time_str == "" or duration_str == ""):
         return -1
@@ -1319,9 +1322,16 @@ def calc_progress(time_str, duration_str):
 
     cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
     total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
-    if (total_secs > 0 and
-        cur_secs <= total_secs):
-        return cur_secs/total_secs
+
+    # If either cur_secs or total_secs is negative, we fall through
+    # and return -1, hiding the progress bar.  We do explicitly cap
+    # the maximum progress that is possible at 1.
+    
+    if (cur_secs >= 0 and total_secs > 0):
+        if (cur_secs >= total_secs):
+            return 1
+        else:
+            return cur_secs/total_secs
     else:
         return -1
 
