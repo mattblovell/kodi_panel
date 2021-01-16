@@ -4,7 +4,8 @@
 #   Edit the WorkingDirectory below as appropriate for your
 #   installation.
 #
-#   On an RPi, this file should be copied to the directory
+#   On an RPi running Raspberry Pi OS, this file should be 
+#   copied to the directory
 #
 #     /etc/systemd/service
 #
@@ -16,6 +17,9 @@
 #
 #     sudo systemctl enable kodi_panel   # start upon boot
 #     sudo systemctl disable kodi_panel  # disable start at boot
+#
+#   If you are running a different OS, check systemd documentation
+#   for your platform for appropriate service file location.
 #
 
 [Unit]
