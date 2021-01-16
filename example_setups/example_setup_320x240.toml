@@ -138,13 +138,9 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #   video_screens() function) based upon which InfoLabel fields are
 #   populated?  If so, then set VLAYOUT_AUTOSELECT to true.
 #
-#   If that flag is set to true, then VLAYOUT_NAMES *MUST* be
+#   If that flag is set to true, then VLAYOUT_NAMES should be
 #   populated with entries that match the heuristic if-then that is
-#   used by video_screens().  Top-level entries must be as follows:
-#
-#     - Whatever VLAYOUT_INITIAL specifies below, for Movies
-#     - "V_PVR", for PVR / Recorded TV shows
-#     - "V_TV_SHOW", for Library TV shows
+#   used by video_screens().
 #
 #   If that variable is to false or left undeclared, then video modes
 #   just form a cycle that gets advanced via the touch interrupt, as
@@ -233,10 +229,8 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #   correspond to the ALAYOUT_NAMES list specified earlier in this
 #   file.
 #
-#   New top-level content requires corresponding changes to
-#   audio_screens().  If a completely new text field is desired, then
-#   the JSON-RPC call made in update_display() needs to be updated as
-#   well.
+#   If a completely new InfoLabel is desired, then one must also
+#   augment the AUDIO_LABELS list (see earlier in this file).
 #
 #   All entries within the "fields" array below correspond to text
 #   fields, with the 'name' key generally corresponding to one of the
@@ -439,10 +433,8 @@ color_bg = "color_gray"
 #   correspond to the VLAYOUT_NAMES list specified earlier in this
 #   file.
 #
-#   New top-level content requires corresponding changes to
-#   video_screens().  If a completely new text field is desired, then
-#   the JSON-RPC call made in update_display() needs to be updated as
-#   well.
+#   If a completely new InfoLabel is desired, then one must also
+#   augment the VIDEO_LABELS list (see earlier in this file).
 #
 #   Special treatment may exist for text fields within video_screens()
 #
