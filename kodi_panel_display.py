@@ -1420,7 +1420,7 @@ def update_display(touched=False):
                 "jsonrpc": "2.0",
                 "method"  : "XBMC.GetInfoLabels",
                 "params"  : {"labels": STATUS_LABELS },
-                "id"      : 10,
+                "id"      : "4s",
             }
             status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
             status_screen(draw, status_resp['result'], summary)
@@ -1452,7 +1452,7 @@ def update_display(touched=False):
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
             "params"  : {"labels": VIDEO_LABELS },
-            "id"      : 4,
+            "id"      : "4v",
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
@@ -1513,7 +1513,7 @@ def update_display(touched=False):
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
             "params"  : {"labels": AUDIO_LABELS },
-            "id"      : 4,
+            "id"      : "4a",
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
         #print("Response: ", json.dumps(response))
