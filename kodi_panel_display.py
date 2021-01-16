@@ -52,9 +52,11 @@ from string import Template
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.16"
+PANEL_VER = "v1.17"
 
-# Audio/Video codec lookup
+#
+# Audio/Video codec lookup table
+#
 codec_name = {
     "ac3"      : "DD",
     "eac3"     : "DD",
@@ -73,6 +75,69 @@ codec_name = {
     "BXA"      : "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
 }
+
+
+#
+# Default InfoLabels
+#
+#   These can be augmented via the setup.toml file.  Search further
+#   below for the updates that occur to these lists.
+#
+#   See https://kodi.wiki/view/InfoLabels for what is available.
+#
+#   Entries should NOT be removed if there is active code that
+#   assumes their existence in Kodi responses.
+#
+
+# Status screen information
+STATUS_LABELS = [
+    "System.Uptime",
+    "System.CPUTemperature",
+    "System.CpuFrequency",
+    "System.Date",
+    "System.Time",
+    "System.BuildVersion",
+    "System.BuildDate",
+    "System.FreeSpace",
+    ]
+
+# Audio screen information
+AUDIO_LABELS = [
+    "MusicPlayer.Title",
+    "MusicPlayer.Album",
+    "MusicPlayer.Artist",
+    "MusicPlayer.Time",
+    "MusicPlayer.Duration",
+    "MusicPlayer.TrackNumber",
+    "MusicPlayer.Property(Role.Composer)",
+    "MusicPlayer.Codec",
+    "MusicPlayer.BitsPerSample",
+    "MusicPlayer.SampleRate",
+    "MusicPlayer.Year",
+    "MusicPlayer.Genre",
+    "MusicPlayer.Cover",
+    ]
+
+# Video screen information
+VIDEO_LABELS = [
+    "VideoPlayer.Title",
+    "VideoPlayer.TVShowTitle",
+    "VideoPlayer.Season",
+    "VideoPlayer.Episode",
+    "VideoPlayer.EpisodeName",
+    "VideoPlayer.Duration",
+    "VideoPlayer.Time",
+    "VideoPlayer.Genre",
+    "VideoPlayer.Year",
+    "VideoPlayer.VideoCodec",
+    "VideoPlayer.AudioCodec",
+    "VideoPlayer.VideoResolution",
+    "VideoPlayer.ChannelName",
+    "VideoPlayer.ChannelNumberLabel",
+    "VideoPlayer.Rating",
+    "VideoPlayer.ParentalRating",
+    "VideoPlayer.Cover",
+    ]
 
 # ----------------------------------------------------------------------------
 
@@ -162,6 +227,24 @@ else:
     print("Settings file does not provide a COLORS table!  Stopping.")
     sys.exit(1)
 
+
+#
+# Check for any additional InfoLabels to retrieve
+#
+
+if ("STATUS_LABELS" in config.settings.keys() and
+    type(config.settings["STATUS_LABELS"]) == list):
+    STATUS_LABELS += config.settings["STATUS_LABELS"]
+
+if ("AUDIO_LABELS" in config.settings.keys() and
+    type(config.settings["AUDIO_LABELS"]) == list):
+    AUDDIO_LABELS += config.settings["AUDIO_LABELS"]    
+    
+if ("VIDEO_LABELS" in config.settings.keys() and
+    type(config.settings["VIDEO_LABELS"]) == list):
+    VIDEO_LABELS += config.settings["VIDEO_LABELS"]    
+        
+    
 
 #
 # Which display screens are enabled for use?
@@ -1336,15 +1419,7 @@ def update_display(touched=False):
             payload = {
                 "jsonrpc": "2.0",
                 "method"  : "XBMC.GetInfoLabels",
-                "params"  : {"labels": ["System.Uptime",
-                                        "System.CPUTemperature",
-                                        "System.CpuFrequency",
-                                        "System.Date",
-                                        "System.Time",
-                                        "System.BuildVersion",
-                                        "System.BuildDate",
-                                        "System.FreeSpace"
-                ]},
+                "params"  : {"labels": STATUS_LABELS },
                 "id"      : 10,
             }
             status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
@@ -1376,26 +1451,7 @@ def update_display(touched=False):
         payload = {
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
-            "params"  : {"labels": ["VideoPlayer.Title",
-                                    "VideoPlayer.TVShowTitle",
-                                    "VideoPlayer.Season",
-                                    "VideoPlayer.Episode",
-                                    "VideoPlayer.EpisodeName",
-                                    "VideoPlayer.PlotOutline",
-                                    "VideoPlayer.Plot",
-                                    "VideoPlayer.Duration",
-                                    "VideoPlayer.Time",
-                                    "VideoPlayer.Genre",
-                                    "VideoPlayer.Year",
-                                    "VideoPlayer.VideoCodec",
-                                    "VideoPlayer.AudioCodec",
-                                    "VideoPlayer.VideoResolution",
-                                    "VideoPlayer.ChannelName",
-                                    "VideoPlayer.ChannelNumberLabel",
-                                    "VideoPlayer.Rating",
-                                    "VideoPlayer.ParentalRating",
-                                    "VideoPlayer.Cover",
-            ]},
+            "params"  : {"labels": VIDEO_LABELS },
             "id"      : 4,
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
@@ -1456,20 +1512,7 @@ def update_display(touched=False):
         payload = {
             "jsonrpc": "2.0",
             "method"  : "XBMC.GetInfoLabels",
-            "params"  : {"labels": ["MusicPlayer.Title",
-                                    "MusicPlayer.Album",
-                                    "MusicPlayer.Artist",
-                                    "MusicPlayer.Time",
-                                    "MusicPlayer.Duration",
-                                    "MusicPlayer.TrackNumber",
-                                    "MusicPlayer.Property(Role.Composer)",
-                                    "MusicPlayer.Codec",
-                                    "MusicPlayer.BitsPerSample",
-                                    "MusicPlayer.SampleRate",
-                                    "MusicPlayer.Year",
-                                    "MusicPlayer.Genre",
-                                    "MusicPlayer.Cover",
-            ]},
+            "params"  : {"labels": AUDIO_LABELS },
             "id"      : 4,
         }
         response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()

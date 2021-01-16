@@ -73,6 +73,40 @@ USE_BACKLIGHT = true
 ENABLE_AUDIO_SCREENS = true
 ENABLE_VIDEO_SCREENS = false
 
+
+# The script has built-in lists of Kodi InfoLabels to retrieve for the
+# various screens that are possible, defined at the beginning of the
+# file.  Each list can be augmented, if needed, via the *_LABELS lists
+# below.
+#
+# To make use of this feature, uncomment the associated assignment and
+# add additional InfoLabels as strings.  Here is an example, although
+# both of the InfoLabels listed are part of the built-in set:
+#
+#    STATUS_LABELS = [
+#       "System.Date",
+#       "System.CPUTemperature"
+#     ]
+#
+#
+# See the Kodi wiki:
+#
+#    https://kodi.wiki/view/InfoLabels
+#
+# to see what InfoLabels are available; these can change from one
+# version of Kodi to another.
+#
+
+# List of additional InfoLabels to retrieve for status screen
+# STATUS_LABELS = []
+
+# List of additional InfoLabels to retrieve for audio screen(s)
+# AUDIO_LABELS = []
+
+# List of additional InfoLabels to retrieve for video screen(s)
+# VIDEO_LABELS = []
+
+
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
 KODI_THUMB      = "images/kodi_thumb.jpg"     # Kodi icon
