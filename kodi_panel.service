@@ -34,7 +34,7 @@ RestartSec=1
 User=pi
 KillSignal=SIGINT
 # Optional priority change for kodi_panel, uncomment if needed
-Nice=-18
+# Nice=-18
 WorkingDirectory=/home/pi/projects/kodi_panel
 Environment=PYTHONUNBUFFERED=1
 ExecStartPre=/bin/sleep 4
