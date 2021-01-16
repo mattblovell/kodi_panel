@@ -52,7 +52,7 @@ from string import Template
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.17"
+PANEL_VER = "v1.18"
 
 #
 # Audio/Video codec lookup table
@@ -85,8 +85,12 @@ codec_name = {
 #
 #   See https://kodi.wiki/view/InfoLabels for what is available.
 #
-#   Entries should NOT be removed if there is active code that
-#   assumes their existence in Kodi responses.
+#   Entries should NOT be removed if there is active code that assumes
+#   their existence in Kodi responses.
+#
+#   For instance, the MusicPlayer.Cover and VideoPlayer.Cover labels
+#   must be present if artwork is desired.  Current time and file
+#   duration must be present if a progress bar is desired.
 #
 
 # Status screen information
@@ -120,7 +124,9 @@ AUDIO_LABELS = [
 
 # Video screen information
 VIDEO_LABELS = [
+    "Player.Filenameandpath",      # used with video mode auto-selection
     "VideoPlayer.Title",
+    "VideoPlayer.OriginalTitle",    
     "VideoPlayer.TVShowTitle",
     "VideoPlayer.Season",
     "VideoPlayer.Episode",
@@ -369,27 +375,6 @@ if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
 elif VIDEO_ENABLED:
     warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
     VIDEO_ENABLED = 0
-
-# If video mode auto-selection is enabled, then V_LAYOUT
-# must have provided the following top-level entries
-#
-#    - Whatever the default VLAYOUT_INITIAL value specifies,
-#      which is assumed appropriate for movie playback.
-#
-#    - "V_PVR"
-#
-#    - "V_TV_SHOW"
-#
-# We check that condition here.
-
-if VIDEO_LAYOUT_AUTOSELECT:
-    if ("V_PVR" in VIDEO_LAYOUT.keys() and
-        "V_TV_SHOW" in VIDEO_LAYOUT.keys() and
-        config.settings["VLAYOUT_INITIAL"] in VIDEO_LAYOUT.keys()):
-        pass
-    else:
-        warnings.warn("Cannot find all required entries in V_LAYOUT screens to use VLAYOUT_AUTOSELECT.")
-        VIDEO_LAYOUT_AUTOSELECT = 0
 
 
 # Layout control for status screen, used by status_screen()
@@ -1282,14 +1267,38 @@ def video_screens(image, draw, info, prog):
     layout = VIDEO_LAYOUT[video_dmode.name]
 
     # Heuristic to determine layout based upon populated InfoLabels,
-    # if enabled via settings.
+    # if enabled via settings.  Originally suggested by @noggin and
+    # augmented by @nico1080 in CoreELEC Forum discussion.
+    #
+    # Entries within VIDEO_LAYOUT don't have to exist, as selection
+    # will just fall-through based on the key checks below.
+    #
+    # The heuristic is currently as follows:
+    #
+    #   Check                                    Use layout
+    #   -------------------------------------------------------
+    #   1. playing a pvr://recordings file       V_PVR
+    #   2. playing a pvr://channels file         V_LIVETV
+    #   3. TVShowTitle label is non-empty        V_TV_SHOW
+    #   4. OriginalTitle label is non-empty      V_MOVIE
+    #   -------------------------------------------------------    
+    #
+    
     if VIDEO_LAYOUT_AUTOSELECT:
-        if info["VideoPlayer.ChannelName"] != '':
+        if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
+            "V_PVR" in VIDEO_LAYOUT):
             layout = VIDEO_LAYOUT["V_PVR"]     # PVR TV shows
-        elif info["VideoPlayer.TVShowTitle"] != '':
+        elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
+              "V_LIVETV" in VIDEO_LAYOUT):
+            layout = VIDEO_LAYOUT["V_LIVETV"]  # live TV
+        elif (info["VideoPlayer.TVShowTitle"] != '' and
+              "V_TV_SHOW" in VIDEO_LAYOUT):
             layout = VIDEO_LAYOUT["V_TV_SHOW"] # Library TV shows
+        elif (info["VideoPlayer.OriginalTitle"] != '' and
+              "V_MOVIE" in VIDEO_LAYOUT):
+            layout = VIDEO_LAYOUT["V_MOVIE"]   # movie
         else:
-            pass  # leave as-is, assumed good for Movies
+            pass  # leave as-is, just use default selection
 
     if (_static_image and _static_video and
         info["VideoPlayer.Title"]    == _last_video_title and
