@@ -24,10 +24,10 @@
 # ----------------------------------------------------------------------------
 
 import sys
-try:
-    import RPi.GPIO as GPIO
-except ImportError:
-    pass
+#try:
+#    import RPi.GPIO as GPIO
+#except ImportError:
+#    pass
 
 from luma.core.device import device
 from PIL import Image
@@ -104,6 +104,13 @@ STATUS_LABELS = [
     "System.BuildVersion",
     "System.BuildDate",
     "System.FreeSpace",
+    "Weather.Conditions",
+    "Weather.Temperature",
+    "System.TotalUptime",
+    "System.Time(hh:mm:ss)",
+    "PVR.BackendDiskSpace",
+    "PVR.BackendTimers",
+    "PVR.BackendRecordings", 
     ]
 
 # Audio screen information
@@ -121,13 +128,18 @@ AUDIO_LABELS = [
     "MusicPlayer.Year",
     "MusicPlayer.Genre",
     "MusicPlayer.Cover",
+    "MusicPlayer.BitRate",
+    "MusicPlayer.BitsPerSample",
+    "MusicPlayer.SampleRate",
+    "MusicPlayer.Channels",
+    "MusicPlayer.PlaylistLength",
     ]
 
 # Video screen information
 VIDEO_LABELS = [
     "Player.Filenameandpath",      # used with video mode auto-selection
     "VideoPlayer.Title",
-    "VideoPlayer.OriginalTitle",    
+    "VideoPlayer.OriginalTitle",
     "VideoPlayer.TVShowTitle",
     "VideoPlayer.Season",
     "VideoPlayer.Episode",
@@ -144,6 +156,25 @@ VIDEO_LABELS = [
     "VideoPlayer.Rating",
     "VideoPlayer.ParentalRating",
     "VideoPlayer.Cover",
+    "VideoPlayer.AudioChannels",
+    "VideoPlayer.Duration",
+    "VideoPlayer.PlayCount",
+    "Player.FinishTime",
+    "System.Time(hh:mm:ss)",
+    "Player.chapter",
+    "Player.chaptercount",
+    "Player.chaptername",
+    "System.Date",
+    "System.Uptime",
+    "System.CPUTemperature",
+    "System.CpuFrequency",
+    "system.BuildVersion",
+    "System.BuildDate",
+    "System.Time",
+    "Weather.Conditions",
+    "Weather.Temperature",
+    "System.TotalUptime",
+    "VideoPlayer.TimeRemaining",
     ]
 
 # ----------------------------------------------------------------------------
@@ -245,13 +276,13 @@ if ("STATUS_LABELS" in config.settings.keys() and
 
 if ("AUDIO_LABELS" in config.settings.keys() and
     type(config.settings["AUDIO_LABELS"]) == list):
-    AUDDIO_LABELS += config.settings["AUDIO_LABELS"]    
-    
+    AUDDIO_LABELS += config.settings["AUDIO_LABELS"]
+
 if ("VIDEO_LABELS" in config.settings.keys() and
     type(config.settings["VIDEO_LABELS"]) == list):
-    VIDEO_LABELS += config.settings["VIDEO_LABELS"]    
-        
-    
+    VIDEO_LABELS += config.settings["VIDEO_LABELS"]
+
+
 
 #
 # Which display screens are enabled for use?
@@ -754,7 +785,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 # normal string formatter allows one to invoke attributes (or methods)
 # for embedded variables.  We instead just want the whole curly-brace
 # expression treated as a string for use as a dictionary key.
-    
+
 _InfoLabel_re = re.compile(r'\{(\w*\.\w*)\}')
 
 def format_InfoLabels(orig_str, kodi_dict):
@@ -764,7 +795,7 @@ def format_InfoLabels(orig_str, kodi_dict):
         if field in kodi_dict.keys():
             new_str = new_str.replace('{' + field + '}', kodi_dict[field])
         else:
-            new_str = new_str.replace('{' + field + '}', '')                    
+            new_str = new_str.replace('{' + field + '}', '')
     return new_str
 
 
@@ -776,7 +807,7 @@ def format_InfoLabels(orig_str, kodi_dict):
 #
 def status_screen(draw, kodi_status, summary_string):
     layout = STATUS_LAYOUT
-        
+
     # Kodi logo, if desired
     if "thumb" in layout.keys():
         kodi_icon = Image.open(_kodi_thumb)
@@ -824,7 +855,7 @@ def status_screen(draw, kodi_status, summary_string):
             else:
                 display_string = (field_info.get("prefix","") + kodi_status[field_info["name"]] +
                                   field_info.get("suffix",""))
-                
+
             draw.text((field_info["posx"],field_info["posy"]),
                       display_string,
                       field_info["fill"], field_info["font"])
@@ -903,7 +934,7 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                 # Artist is blank.  The combination of JRiver Media Center
                 # and UPnP/DLNA playback via Kodi didn't quite permit this
                 # to work, unfortunately.
-                
+
                 if info['MusicPlayer.Artist'] != "":
                     display_string = (field_info.get("prefix","") + info['MusicPlayer.Artist'] +
                                       field_info.get("suffix",""))
@@ -1291,9 +1322,9 @@ def video_screens(image, draw, info, prog):
     #   2. playing a pvr://channels file         V_LIVETV
     #   3. TVShowTitle label is non-empty        V_TV_SHOW
     #   4. OriginalTitle label is non-empty      V_MOVIE
-    #   -------------------------------------------------------    
+    #   -------------------------------------------------------
     #
-    
+
     if VIDEO_LAYOUT_AUTOSELECT:
         if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
             "V_PVR" in VIDEO_LAYOUT):
@@ -1345,7 +1376,7 @@ def calc_progress(time_str, duration_str):
     # If either cur_secs or total_secs is negative, we fall through
     # and return -1, hiding the progress bar.  We do explicitly cap
     # the maximum progress that is possible at 1.
-    
+
     if (cur_secs >= 0 and total_secs > 0):
         if (cur_secs >= total_secs):
             return 1
