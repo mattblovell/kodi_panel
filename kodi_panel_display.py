@@ -60,8 +60,10 @@ PANEL_VER = "v1.19"
 #
 codec_name = {
     "ac3"      : "DD",
-    "eac3"     : "DD",
+    "wvc1"     : "VC1",
+    "eac3"     : "DD+",
     "dtshd_ma" : "DTS-MA",
+    "dtshd_hra": "DTS-HRA",
     "dca"      : "DTS",
     "truehd"   : "DD-HD",
     "wmapro"   : "WMA",
@@ -75,6 +77,7 @@ codec_name = {
     "pcm_u8"   : "PCM",
     "BXA"      : "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
+    "h264"     : "x264"
 }
 
 
