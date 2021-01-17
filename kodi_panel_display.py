@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2020  Matthew Lovell
+# Copyright (c) 2020-21  Matthew Lovell and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+#
+# ----------------------------------------------------------------------------
 
 import sys
 try:
@@ -52,7 +53,7 @@ from string import Template
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.18"
+PANEL_VER = "v1.19"
 
 #
 # Audio/Video codec lookup table
