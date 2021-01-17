@@ -275,6 +275,59 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 
 
 # --------------------------------------------------------------------
+# Shared Elements
+#
+#   The intent of the shared_element table (which becomes a dictionary
+#   in Python) is to define display elements that can be used by
+#   multiple layouts.
+#
+#   The details of each entry must correspond to what one would
+#   normally populate within a layout (e.g., a textfield needs a name,
+#   posx, posy, font, fill, etc).
+#
+#   With any layout that desired to use such an element, one
+#   references it by the name (key) given to it within the
+#   shared_element table.  For instance, defining a shared progress
+#   bar and elapsed time display could be done as follows:
+#
+#     [shared_element.elapsed_time]
+#      name = "MusicPlayer.Time"
+#      posx = 420
+#      posy = 36 
+#      font = "font7S"
+#      fill = "color_7S"
+#      dynamic = 1
+#     
+#     [shared_element.progress_bar]
+#      posx   = 420   
+#      posy   = 8     
+#      height = 12    
+#      short_len = 196
+#      long_len  = 300
+#      color_fg = "color_7S"
+#      color_bg = "color_gray"
+#
+#   Given the above definitions, a layout can then include a shared
+#   element by refering to it by name (with no other keys listed).
+#   Here is an example, which includes one normal directly-specified
+#   element.
+#
+#     [A_LAYOUT.A_FULLSCREEN.thumb]
+#     center = 1
+#     size = 480
+#     
+#     [A_LAYOUT.A_FULLSCREEN.prog]
+#      shared_element = "progress_bar"
+#     
+#     [[A_LAYOUT.A_FULLSCREEN.fields]]
+#      shared_element = "elapsed_time"
+#
+#
+# [shared_element.replace_name]
+#
+
+
+# --------------------------------------------------------------------
 # Audio Screens
 #
 #   This data structure gets used by audio_screens() to control the

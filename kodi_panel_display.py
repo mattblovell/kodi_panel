@@ -53,7 +53,7 @@ from string import Template
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.19"
+PANEL_VER = "v1.20"
 
 #
 # Audio/Video codec lookup table
@@ -335,8 +335,26 @@ if VIDEO_ENABLED:
         VIDEO_ENABLED = 0
 
 
-# Screen layouts
-# --------------------
+
+# Shared Elements
+# ---------------
+#
+# Provide a lookup table such that elements can be shared across
+# multiple layouts.  Thanks to @nico1080 for the suggestion.
+
+_SHARED_ELEMENT = {}
+_USE_SHARED      = False
+
+if ("shared_element" in config.settings.keys() and
+    type(config.settings["shared_element"]) is dict):
+    _SHARED_ELEMENT = config.settings["shared_element"]
+
+if len(_SHARED_ELEMENT.keys()):
+    _USE_SHARED = True
+    
+        
+# Screen Layouts
+# --------------
 #
 # Fixup font and color entries now, so that further table lookups are
 # not necessary at run-time.
@@ -346,7 +364,12 @@ def fixup_layouts(nested_dict):
     newdict = copy.deepcopy(nested_dict)
     for key, value in nested_dict.items():
         if type(value) is dict:
-            newdict[key] = fixup_layouts(value)
+            if (_USE_SHARED and "shared_element" in value and
+                value["shared_element"] in _SHARED_ELEMENT):
+                #print("Looking up", value["shared_element"], "in _SHARED_ELEMENT dict")
+                newdict[key] = fixup_layouts( _SHARED_ELEMENT[value["shared_element"]] )
+            else:
+                newdict[key] = fixup_layouts(value)
         elif type(value) is list:
             newdict[key] = fixup_array(value)
         else:
@@ -365,7 +388,12 @@ def fixup_array(array):
     newarray = []
     for item in array:
         if type(item) is dict:
-            newarray.append(fixup_layouts(item))
+            if (_USE_SHARED and "shared_element" in item and
+                item["shared_element"] in _SHARED_ELEMENT):
+                #print("Looking up", item["shared_element"], "in _SHARED_ELEMENT dict")                
+                newarray.append(fixup_layouts( _SHARED_ELEMENT[item["shared_element"]] ))
+            else:            
+                newarray.append(fixup_layouts(item))
         else:
             newarray.append(item)
     return newarray
@@ -376,7 +404,7 @@ if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
 elif AUDIO_ENABLED:
     warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
     AUDIO_ENABLED = 0
-
+    
 # Used by video_screens() for all info screens
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
