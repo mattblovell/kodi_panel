@@ -17,7 +17,7 @@
 #   vt.global_cursor_default=0
 #
 # to the end of /boot/cmdline.txt will turn off that cursor.
-# Note that the cmdline.txt file must be just single line of text.
+# Note that the cmdline.txt file must be just a single line of text.
 #
 # ----------------------------------------------------------------------------
 #
