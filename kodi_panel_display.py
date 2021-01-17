@@ -110,7 +110,7 @@ STATUS_LABELS = [
     "System.Time(hh:mm:ss)",
     "PVR.BackendDiskSpace",
     "PVR.BackendTimers",
-    "PVR.BackendRecordings", 
+    "PVR.BackendRecordings",
     ]
 
 # Audio screen information
@@ -1461,11 +1461,12 @@ def update_display(touched=False):
         _last_image_time = None
         _last_thumb = None
         _static_image = None
+        _screen_active = True #to force status screen
 
-        if _screen_press or touched:
-            _screen_press = False
-            _screen_active = True
-            _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
+        #if _screen_press or touched:
+         #   _screen_press = False
+          #  _screen_active = True
+          #  _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
         if _screen_active:
             # Idle status screen
