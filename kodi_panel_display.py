@@ -60,8 +60,10 @@ PANEL_VER = "v1.19"
 #
 codec_name = {
     "ac3"      : "DD",
-    "eac3"     : "DD",
+    "wvc1"     : "VC1",
+    "eac3"     : "DD+",
     "dtshd_ma" : "DTS-MA",
+    "dtshd_hra": "DTS-HRA",
     "dca"      : "DTS",
     "truehd"   : "DD-HD",
     "wmapro"   : "WMA",
@@ -75,6 +77,7 @@ codec_name = {
     "pcm_u8"   : "PCM",
     "BXA"      : "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
+    "h264"     : "x264"
 }
 
 
@@ -1128,16 +1131,25 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
 
         # special treatment for audio codec, which gets a lookup
         if field_info["name"] == "acodec":
-            if info['VideoPlayer.Codec'] in codec_name.keys():
+            if info['VideoPlayer.AudioCodec'] in codec_name.keys():
                 # render any label first
                 if "label" in field_info:
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
                 draw.text((field_info["posx"], field_info["posy"]),
-                          codec_name[info['VideoPlayer.Codec']],
+                          codec_name[info['VideoPlayer.AudioCodec']],
                           fill=field_info["fill"],
                           font=field_info["font"])
+            else:
+               # render any label first
+               if "label" in field_info:
+                   draw.text((field_info["lposx"], field_info["lposy"]),
+                   field_info["label"],
+                   fill=field_info["lfill"], font=field_info["lfont"])
+               draw.text((field_info["posx"], field_info["posy"]),
+               info['VideoPlayer.AudioCodec'], fill=field_info["fill"],
+               font=field_info["font"])
 
         # all other text fields
         else:
