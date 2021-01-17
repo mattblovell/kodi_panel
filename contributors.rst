@@ -1,9 +1,8 @@
 Github
 ------
-Matthew Lovell
-
-@nico1080
+- Matthew Lovell
+- @nico1080
 
 CoreELEC Forums
 ---------------
-@noggin
+- @noggin
