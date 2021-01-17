@@ -58,6 +58,10 @@ PANEL_VER = "v1.19"
 #
 # Audio/Video codec lookup table
 #
+#   Should any collision in codec names occur, this table may have to
+#   be split for distinct audio and video codecs.  Until then, though,
+#   we can use it for both.
+#
 codec_name = {
     "ac3"      : "DD",
     "wvc1"     : "VC1",
@@ -897,21 +901,25 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
 
         # special treatment for "codec", which gets a lookup
         if field_info["name"] == "codec":
-            if info['MusicPlayer.Codec'] in codec_name.keys():
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-                draw.text((field_info["posx"], field_info["posy"]),
-                          codec_name[info['MusicPlayer.Codec']],
-                          fill=field_info["fill"],
-                          font=field_info["font"])
+            display_text = info['MusicPlayer.Codec']
+            if info['MusicPlayer.Codec'] in codec_name:
+                display_text = codec_name[info['MusicPlayer.Codec']]
+
+            # render any label first
+            if "label" in field_info:
+                draw.text((field_info["lposx"], field_info["lposy"]),
+                          field_info["label"],
+                          fill=field_info["lfill"], font=field_info["lfont"])
+
+            draw.text((field_info["posx"], field_info["posy"]),
+                      display_text,
+                      fill=field_info["fill"],
+                      font=field_info["font"])
 
         # special treatment for "full_codec"
         elif field_info["name"] == "full_codec":
-            if info['MusicPlayer.Codec'] in codec_name.keys():
-                display_text =  codec_name[info['MusicPlayer.Codec']]
+            if info['MusicPlayer.Codec'] in codec_name:
+                display_text = codec_name[info['MusicPlayer.Codec']]
                 display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
                     info['MusicPlayer.SampleRate'] + ")"
 
@@ -920,6 +928,7 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
+                    
                 draw.text((field_info["posx"], field_info["posy"]),
                           display_text,
                           fill=field_info["fill"],
@@ -1162,30 +1171,26 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
 
         # special treatment for audio codec, which gets a lookup
         if field_info["name"] == "acodec":
+            display_text = info['VideoPlayer.AudioCodec']            
             if info['VideoPlayer.AudioCodec'] in codec_name.keys():
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-                draw.text((field_info["posx"], field_info["posy"]),
-                          codec_name[info['VideoPlayer.AudioCodec']],
-                          fill=field_info["fill"],
-                          font=field_info["font"])
-            else:
-               # render any label first
-               if "label" in field_info:
-                   draw.text((field_info["lposx"], field_info["lposy"]),
-                   field_info["label"],
-                   fill=field_info["lfill"], font=field_info["lfont"])
-               draw.text((field_info["posx"], field_info["posy"]),
-               info['VideoPlayer.AudioCodec'], fill=field_info["fill"],
-               font=field_info["font"])
+                display_text = codec_name[info['VideoPlayer.AudioCodec']]
+                
+            # render any label first
+            if "label" in field_info:
+                draw.text((field_info["lposx"], field_info["lposy"]),
+                          field_info["label"],
+                          fill=field_info["lfill"], font=field_info["lfont"])
+
+            draw.text((field_info["posx"], field_info["posy"]),
+                      display_text,
+                      fill=field_info["fill"],
+                      font=field_info["font"])
 
         # all other text fields
         else:
             if (field_info["name"] in info.keys() and
                 info[field_info["name"]] != ""):
+
                 # render any label first
                 if "label" in field_info:
                     draw.text((field_info["lposx"], field_info["lposy"]),
