@@ -11,6 +11,14 @@
 # framebuffer.py.  However, the 2.0.0 release of luma.core includes a
 # new linux_framebuffer class.  Using it permits for fewer changes.
 #
+# After kodi_panel launches, the blinking cursor from the console may
+# still be visible.  On RPI systems adding
+#
+#   vt.global_cursor_default=0
+#
+# to the end of /boot/cmdline.txt will turn off that cursor.
+# Note that the cmdline.txt file must be just single line of text.
+#
 # ----------------------------------------------------------------------------
 #
 from luma.core import device
