@@ -199,18 +199,17 @@ _last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)
 _kodi_thumb = config.settings.get("KODI_THUMB", "images/kodi_thumb.jpg")
-_default_audio_thumb = config.settings.get(
-    "DEFAULT_AUDIO", "images/music_icon2_lg.png")
-_default_video_thumb = config.settings.get(
-    "DEFAULT_VIDEO", "images/video_icon2.png")
-_default_airplay_thumb = config.settings.get(
-    "DEFAULT_AIRPLAY", "images/airplay_thumb.png")
+_default_audio_thumb = config.settings.get("DEFAULT_AUDIO", "images/music_icon2_lg.png")
+_default_video_thumb = config.settings.get("DEFAULT_VIDEO", "images/video_icon2.png")
+_default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
 # RegEx for recognizing AirPlay images (compiled once)
 _airtunes_re = re.compile(
     r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
+#
 # Load all user-specified fonts
+#
 _fonts = {}
 if "fonts" in config.settings.keys():
     for user_font in config.settings["fonts"]:
@@ -225,11 +224,8 @@ if "fonts" in config.settings.keys():
                 )
         except OSError:
             print(
-                "Unable to load font ",
-                user_font["name"],
-                " with path '",
-                user_font["path"],
-                "'",
+                "Unable to load font ",  user_font["name"],
+                " with path '", user_font["path"], "'",
                 sep='')
             sys.exit("Exiting")
 else:
@@ -243,8 +239,9 @@ else:
     print("fonts table must specify a 'font_main' entry!  Stopping.")
     sys.exit(1)
 
-
+#
 # Color lookup table
+#
 if "COLORS" in config.settings.keys():
     _colors = config.settings.get("COLORS", {})
 else:
@@ -275,13 +272,13 @@ if ("VIDEO_LABELS" in config.settings.keys() and
 AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS", False)
 VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS", False)
 
+
 # Audio screen enumeration
 # ------------------------
 # The next() function serves to switch modes in response to screen
 # touches.  The list is intended to grow, as other ideas for layouts
 # are proposed.
 #
-
 
 class ADisplay(Enum):
     def next(self):
@@ -371,7 +368,8 @@ if len(_SHARED_ELEMENT.keys()):
 # --------------
 #
 # Fixup font and color entries now, so that further table lookups are
-# not necessary at run-time.
+# not necessary at run-time.  Also provide for shared element
+# replacement.
 #
 
 def fixup_layouts(nested_dict):
@@ -431,7 +429,6 @@ elif VIDEO_ENABLED:
     warnings.warn(
         "Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
     VIDEO_ENABLED = 0
-
 
 # Layout control for status screen, used by status_screen()
 if ("STATUS_LAYOUT" in config.settings.keys()):
@@ -499,7 +496,7 @@ _lock = threading.Lock()
 #
 USE_BACKLIGHT = config.settings.get("USE_BACKLIGHT", False)
 USE_PWM = False
-PWM_FREQ = 362      # frequency, presumably in Hz
+PWM_FREQ = 362       # frequency, presumably in Hz
 PWM_LEVEL = 75.0     # float value between 0 and 100
 
 # Are we running using luma.lcd's pygame demo mode?  This variable
@@ -815,7 +812,6 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 # expression treated as a string for use as a dictionary key.
 
 _InfoLabel_re = re.compile(r'\{(\w*\.\w*)\}')
-
 
 def format_InfoLabels(orig_str, kodi_dict):
     matches = set(_InfoLabel_re.findall(orig_str))
@@ -1286,11 +1282,11 @@ def video_screen_static(layout, info):
                 new_x = layout["thumb"]["posx"]
                 new_y = layout["thumb"]["posy"]
                 if _last_thumb.width < layout["thumb"]["width"]:
-                    new_x += int((layout["thumb"]["width"] /
-                                  2) - (_last_thumb.width / 2))
+                    new_x += int((layout["thumb"]["width"] / 2) -
+                                 (_last_thumb.width / 2))
                 if _last_thumb.height < layout["thumb"]["height"]:
-                    new_y += int((layout["thumb"]["height"] /
-                                  2) - (_last_thumb.height / 2))
+                    new_y += int((layout["thumb"]["height"] / 2) -
+                                 (_last_thumb.height / 2))
                 image.paste(_last_thumb, (new_x, new_y))
             else:
                 image.paste(
@@ -1599,7 +1595,7 @@ def update_display(touched=False):
             if ((video_info["VideoPlayer.Time"] == "00:00" or
                  video_info["VideoPlayer.Time"] == "00:00:00") and
                 video_info["VideoPlayer.Duration"] == "" and
-                    video_info["VideoPlayer.Cover"] == ""):
+                video_info["VideoPlayer.Cover"] == ""):
                 pass
             else:
                 video_screens(image, draw, video_info, prog)
