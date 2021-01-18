@@ -118,7 +118,9 @@ ENABLE_VIDEO_SCREENS = true
 #
 
 # List of additional InfoLabels to retrieve for status screen
-# STATUS_LABELS = []
+STATUS_LABELS = [
+   "System.OSVersionInfo"   
+]
 
 # List of additional InfoLabels to retrieve for audio screen(s)
 # AUDIO_LABELS = []
@@ -859,5 +861,12 @@ fill = "white"
 name = "kodi_version"  # special treatment
 posx = 5
 posy = 290
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.OSVersionInfo"
+posx = 5
+posy = 330
 font = "font_sm"
 fill = "white"
