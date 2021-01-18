@@ -48,12 +48,10 @@ import os
 import threading
 import warnings
 
-from string import Template
-
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.19"
+PANEL_VER = "v1.21"
 
 #
 # Audio/Video codec lookup table
@@ -63,25 +61,25 @@ PANEL_VER = "v1.19"
 #   we can use it for both.
 #
 codec_name = {
-    "ac3"      : "DD",
-    "wvc1"     : "VC1",
-    "eac3"     : "DD+",
-    "dtshd_ma" : "DTS-MA",
+    "ac3": "DD",
+    "wvc1": "VC1",
+    "eac3": "DD+",
+    "dtshd_ma": "DTS-MA",
     "dtshd_hra": "DTS-HRA",
-    "dca"      : "DTS",
-    "truehd"   : "DD-HD",
-    "wmapro"   : "WMA",
-    "mp3float" : "MP3",
-    "flac"     : "FLAC",
-    "alac"     : "ALAC",
-    "vorbis"   : "OggV",
-    "aac"      : "AAC",
+    "dca": "DTS",
+    "truehd": "DD-HD",
+    "wmapro": "WMA",
+    "mp3float": "MP3",
+    "flac": "FLAC",
+    "alac": "ALAC",
+    "vorbis": "OggV",
+    "aac": "AAC",
     "pcm_s16be": "PCM",
-    "mp2"      : "MP2",
-    "pcm_u8"   : "PCM",
-    "BXA"      : "AirPlay",    # used with AirPlay
+    "mp2": "MP2",
+    "pcm_u8": "PCM",
+    "BXA": "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
-    "h264"     : "x264"
+    "h264": "x264"
 }
 
 
@@ -120,6 +118,7 @@ STATUS_LABELS = [
     "PVR.BackendRecordings",
     ]
 
+
 # Audio screen information
 AUDIO_LABELS = [
     "MusicPlayer.Title",
@@ -141,6 +140,7 @@ AUDIO_LABELS = [
     "MusicPlayer.Channels",
     "MusicPlayer.PlaylistLength",
     ]
+
 
 # Video screen information
 VIDEO_LABELS = [
@@ -184,6 +184,7 @@ VIDEO_LABELS = [
     "VideoPlayer.TimeRemaining",
     ]
 
+
 # ----------------------------------------------------------------------------
 
 #
@@ -191,8 +192,8 @@ VIDEO_LABELS = [
 #
 if "BASE_URL" in config.settings.keys():
     base_url = config.settings["BASE_URL"]
-    rpc_url  = base_url + "/jsonrpc"
-    headers  = {'content-type': 'application/json'}
+    rpc_url = base_url + "/jsonrpc"
+    headers = {'content-type': 'application/json'}
 else:
     print("Settings file does not specify BASE_URL!  Stopping.")
     sys.exit(1)
@@ -202,42 +203,47 @@ _local_kodi = (base_url.startswith("http://localhost:") or
                base_url.startswith("https://localhost:"))
 
 # Image handling
-if ("DISPLAY_WIDTH"  in config.settings.keys() and
-    "DISPLAY_HEIGHT" in config.settings.keys()):
-    _frame_size      = (config.settings["DISPLAY_WIDTH"], config.settings["DISPLAY_HEIGHT"])
+if ("DISPLAY_WIDTH" in config.settings.keys() and
+        "DISPLAY_HEIGHT" in config.settings.keys()):
+    _frame_size = (
+        config.settings["DISPLAY_WIDTH"],
+        config.settings["DISPLAY_HEIGHT"])
 else:
     print("Settings file does not specify DISPLAY_WIDTH and DISPLAY_HEIGHT!  Stopping.")
     sys.exit(1)
 
 # State to prevent re-fetching cover art unnecessarily
 _last_image_path = None
-_last_thumb      = None
+_last_thumb = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
 # Re-use static portion of a screen.  The various _last_* variables
 # below are checked to determine when the static portion can be
 # reused.
-_static_image       = None
-_static_video       = False  # set True by video_screens(), False by audio_screens()
+_static_image = None
+_static_video = False  # set True by video_screens(), False by audio_screens()
 
-_last_track_num     = None
-_last_track_title   = None
-_last_track_album   = None
-_last_track_time    = None
-_last_video_title   = None
-_last_video_time    = None
+_last_track_num = None
+_last_track_title = None
+_last_track_album = None
+_last_track_time = None
+_last_video_title = None
+_last_video_time = None
 _last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)
-_kodi_thumb            = config.settings.get("KODI_THUMB",      "images/kodi_thumb.jpg")
-_default_audio_thumb   = config.settings.get("DEFAULT_AUDIO",   "images/music_icon2_lg.png")
-_default_video_thumb   = config.settings.get("DEFAULT_VIDEO",   "images/video_icon2.png")
+_kodi_thumb = config.settings.get("KODI_THUMB", "images/kodi_thumb.jpg")
+_default_audio_thumb = config.settings.get("DEFAULT_AUDIO", "images/music_icon2_lg.png")
+_default_video_thumb = config.settings.get("DEFAULT_VIDEO", "images/video_icon2.png")
 _default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
 # RegEx for recognizing AirPlay images (compiled once)
-_airtunes_re = re.compile(r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+_airtunes_re = re.compile(
+    r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
+#
 # Load all user-specified fonts
+#
 _fonts = {}
 if "fonts" in config.settings.keys():
     for user_font in config.settings["fonts"]:
@@ -251,7 +257,10 @@ if "fonts" in config.settings.keys():
                     user_font["path"], user_font["size"]
                 )
         except OSError:
-            print("Unable to load font ", user_font["name"], " with path '", user_font["path"], "'", sep='')
+            print(
+                "Unable to load font ",  user_font["name"],
+                " with path '", user_font["path"], "'",
+                sep='')
             sys.exit("Exiting")
 else:
     print("Settings file does not provide a fonts table!  Stopping.")
@@ -264,8 +273,9 @@ else:
     print("fonts table must specify a 'font_main' entry!  Stopping.")
     sys.exit(1)
 
-
+#
 # Color lookup table
+#
 if "COLORS" in config.settings.keys():
     _colors = config.settings.get("COLORS", {})
 else:
@@ -278,15 +288,16 @@ else:
 #
 
 if ("STATUS_LABELS" in config.settings.keys() and
-    type(config.settings["STATUS_LABELS"]) == list):
+        type(config.settings["STATUS_LABELS"]) == list):
     STATUS_LABELS += config.settings["STATUS_LABELS"]
 
 if ("AUDIO_LABELS" in config.settings.keys() and
-    type(config.settings["AUDIO_LABELS"]) == list):
-    AUDDIO_LABELS += config.settings["AUDIO_LABELS"]
+
+        type(config.settings["AUDIO_LABELS"]) == list):
+    AUDIO_LABELS += config.settings["AUDIO_LABELS"]
 
 if ("VIDEO_LABELS" in config.settings.keys() and
-    type(config.settings["VIDEO_LABELS"]) == list):
+        type(config.settings["VIDEO_LABELS"]) == list):
     VIDEO_LABELS += config.settings["VIDEO_LABELS"]
 
 
@@ -294,8 +305,9 @@ if ("VIDEO_LABELS" in config.settings.keys() and
 #
 # Which display screens are enabled for use?
 #
-AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS",False)
-VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS",False)
+AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS", False)
+VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS", False)
+
 
 # Audio screen enumeration
 # ------------------------
@@ -313,17 +325,19 @@ class ADisplay(Enum):
             index = 0
         return members[index]
 
+
 # Populate enum based upon settings file
 if AUDIO_ENABLED:
     if ("ALAYOUT_NAMES" in config.settings.keys() and
-        "ALAYOUT_INITIAL" in config.settings.keys()):
+            "ALAYOUT_INITIAL" in config.settings.keys()):
         for index, value in enumerate(config.settings["ALAYOUT_NAMES"]):
             extend_enum(ADisplay, value, index)
 
         # At startup, use the default layout mode specified in settings
         audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
     else:
-        warnings.warn("Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
+        warnings.warn(
+            "Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
         print("Disabling audio screens (AUDIO_ENABLED=0)")
         AUDIO_ENABLED = 0
 
@@ -342,9 +356,10 @@ class VDisplay(Enum):
             index = 0
         return members[index]
 
+
 if VIDEO_ENABLED:
     if ("VLAYOUT_NAMES" in config.settings.keys() and
-        "VLAYOUT_INITIAL" in config.settings.keys()):
+            "VLAYOUT_INITIAL" in config.settings.keys()):
         # Populate enum based upon settings file
         for index, value in enumerate(config.settings["VLAYOUT_NAMES"]):
             extend_enum(VDisplay, value, index)
@@ -358,32 +373,58 @@ if VIDEO_ENABLED:
         # This is different behavior than using the touch-interrupt to
         # just cycle through the list of video modes, but seems warranted
         # based on the differences that exist for Movies, TV, and PVR.
-        VIDEO_LAYOUT_AUTOSELECT = config.settings.get("VLAYOUT_AUTOSELECT", False)
+        VIDEO_LAYOUT_AUTOSELECT = config.settings.get(
+            "VLAYOUT_AUTOSELECT", False)
 
     else:
-        warnings.warn("Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
+        warnings.warn(
+            "Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
         print("Disabling video screens (VIDEO_ENABLED=0)")
         VIDEO_ENABLED = 0
 
 
-# Screen layouts
-# --------------------
+# Shared Elements
+# ---------------
+#
+# Provide a lookup table such that elements can be shared across
+# multiple layouts.  Thanks to @nico1080 for the suggestion.
+
+_SHARED_ELEMENT = {}
+_USE_SHARED = False
+
+if ("shared_element" in config.settings.keys() and
+        type(config.settings["shared_element"]) is dict):
+    _SHARED_ELEMENT = config.settings["shared_element"]
+
+if len(_SHARED_ELEMENT.keys()):
+    _USE_SHARED = True
+
+
+# Screen Layouts
+# --------------
 #
 # Fixup font and color entries now, so that further table lookups are
-# not necessary at run-time.
+# not necessary at run-time.  Also provide for shared element
+# replacement.
 #
 
 def fixup_layouts(nested_dict):
     newdict = copy.deepcopy(nested_dict)
     for key, value in nested_dict.items():
         if type(value) is dict:
-            newdict[key] = fixup_layouts(value)
+            if (_USE_SHARED and "shared_element" in value and
+                    value["shared_element"] in _SHARED_ELEMENT):
+                # print("Looking up", value["shared_element"], "in _SHARED_ELEMENT dict")
+                newdict[key] = fixup_layouts(
+                    _SHARED_ELEMENT[value["shared_element"]])
+            else:
+                newdict[key] = fixup_layouts(value)
         elif type(value) is list:
             newdict[key] = fixup_array(value)
         else:
             if ((key.startswith("color") or key == "lcolor" or
                  key == "fill" or key == "lfill") and
-                value.startswith("color_")):
+                    value.startswith("color_")):
                 # Lookup color
                 newdict[key] = _colors[value]
             elif (key == "font" or key == "lfont" or
@@ -392,29 +433,38 @@ def fixup_layouts(nested_dict):
                 newdict[key] = _fonts[value]
     return newdict
 
+
 def fixup_array(array):
     newarray = []
     for item in array:
         if type(item) is dict:
-            newarray.append(fixup_layouts(item))
+            if (_USE_SHARED and "shared_element" in item and
+                    item["shared_element"] in _SHARED_ELEMENT):
+                # print("Looking up", item["shared_element"], "in _SHARED_ELEMENT dict")
+                newarray.append(fixup_layouts(
+                    _SHARED_ELEMENT[item["shared_element"]]))
+            else:
+                newarray.append(fixup_layouts(item))
         else:
             newarray.append(item)
     return newarray
+
 
 # Used by audio_screens() for all info screens
 if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
     AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
 elif AUDIO_ENABLED:
-    warnings.warn("Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
+    warnings.warn(
+        "Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
     AUDIO_ENABLED = 0
 
 # Used by video_screens() for all info screens
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 elif VIDEO_ENABLED:
-    warnings.warn("Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
+    warnings.warn(
+        "Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
     VIDEO_ENABLED = 0
-
 
 # Layout control for status screen, used by status_screen()
 if ("STATUS_LAYOUT" in config.settings.keys()):
@@ -440,24 +490,24 @@ else:
 # The USE_TOUCH boolean can be set False to disable all attempts
 # at interrupt use.
 #
-USE_TOUCH      = config.settings.get("USE_TOUCH",False)
-TOUCH_INT      = config.settings.get("TOUCH_INT",0)
-TOUCH_PULLUP   = config.settings.get("TOUCH_PULLUP",False)
-TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE",700) # milliseconds
+USE_TOUCH = config.settings.get("USE_TOUCH", False)
+TOUCH_INT = config.settings.get("TOUCH_INT", 0)
+TOUCH_PULLUP = config.settings.get("TOUCH_PULLUP", False)
+TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE", 700)  # milliseconds
 
 # Should the touch_callback() ISR attempt to invoke update_display()
 # directly?  Having the ISR take too long to execute is problematic on
 # the RPi Zero.
-TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE",False)
+TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE", False)
 
 # Internal state variables used to manage screen presses
 _kodi_connected = False
-_kodi_playing   = False
-_screen_press   = False
-_screen_active  = False
+_kodi_playing = False
+_screen_press = False
+_screen_active = False
 
 # status screen waketime, in seconds
-_screen_wake    = config.settings.get("SCREEN_WAKE_TIME", 25)
+_screen_wake = config.settings.get("SCREEN_WAKE_TIME", 25)
 _screen_offtime = datetime.now()
 
 # Provide a lock to ensure update_display() is single-threaded.  (This
@@ -480,10 +530,10 @@ _lock = threading.Lock()
 # of using RPi hardware PWM without going through luma.lcd.  That
 # method uses a completely different set of variables, ignoring these.
 #
-USE_BACKLIGHT = config.settings.get("USE_BACKLIGHT",False)
-USE_PWM       = False
-PWM_FREQ      = 362      # frequency, presumably in Hz
-PWM_LEVEL     = 75.0     # float value between 0 and 100
+USE_BACKLIGHT = config.settings.get("USE_BACKLIGHT", False)
+USE_PWM = False
+PWM_FREQ = 362       # frequency, presumably in Hz
+PWM_LEVEL = 75.0     # float value between 0 and 100
 
 # Are we running using luma.lcd's pygame demo mode?  This variable
 # gets modified directly by kodi_panel_demo.py.
@@ -493,8 +543,8 @@ DEMO_MODE = False
 # ----------------------------------------------------------------------------
 
 # Finally, create the needed Pillow objects
-image  = Image.new('RGB', (_frame_size), 'black')
-draw   = ImageDraw.Draw(image)
+image = Image.new('RGB', (_frame_size), 'black')
+draw = ImageDraw.Draw(image)
 
 
 # ----------------------------------------------------------------------------
@@ -517,16 +567,10 @@ def truncate_line(line, font, max_width):
     # leaving some margin.
     t_width = font.getsize(line)[0]
     if t_width <= max_width:
-        new_result = {
-            "str"        : line,
-            "result"     : line,
-            "truncating" : 0,
-            "font"       : font
-        }
         return line
 
     avg_char = len(new_text) / t_width
-    num_chars = int( max_width / avg_char ) + 4
+    num_chars = int(max_width / avg_char) + 4
     new_text = new_text[0:num_chars]
 
     # Leave room for ellipsis
@@ -565,7 +609,8 @@ def text_wrap(text, font, max_width, max_lines=None):
         # append every word to a line while its width is shorter than max width
         while i < len(words):
             line = ''
-            while i < len(words) and font.getsize(line + words[i])[0] <= max_width:
+            while i < len(words) and font.getsize(
+                    line + words[i])[0] <= max_width:
                 line = line + words[i] + " "
                 i += 1
             if not line:
@@ -574,10 +619,10 @@ def text_wrap(text, font, max_width, max_lines=None):
             # when the line gets longer than the max width do not append the word,
             # add the line to the lines array
             lines.append(line)
-            if max_lines and len(lines) >= max_lines-1:
+            if max_lines and len(lines) >= max_lines - 1:
                 break
 
-        if max_lines and len(lines) >= max_lines-1 and i < len(words):
+        if max_lines and len(lines) >= max_lines - 1 and i < len(words):
             lines.append(truncate_line(" ".join(words[i:]), font, max_width))
 
     return lines
@@ -599,20 +644,21 @@ def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
 # Draw a horizontal (by default) progress bar at the specified
 # location, filling from left to right.  A vertical bar can be drawn
 # if specified, filling from bottom to top.
-def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False):
-    pil_draw.rectangle((x,y, x+w, y+h),fill=bgcolor)
+def progress_bar(pil_draw, bgcolor, color, x, y,
+                 w, h, progress, vertical=False):
+    pil_draw.rectangle((x, y, x + w, y + h), fill=bgcolor)
 
     if progress <= 0:
         progress = 0.01
-    if progress >1:
+    if progress > 1:
         progress = 1
 
     if vertical:
-        dh = h*progress
-        pil_draw.rectangle((x,y+h-dh,x+w,y+h),fill=color)
+        dh = h * progress
+        pil_draw.rectangle((x, y + h - dh, x + w, y + h), fill=color)
     else:
-        dw = w*progress
-        pil_draw.rectangle((x,y, x+dw, y+h),fill=color)
+        dw = w * progress
+        pil_draw.rectangle((x, y, x + dw, y + h), fill=color)
 
 
 # Retrieve cover art or a default thumbnail.  Cover art gets resized
@@ -629,20 +675,19 @@ def progress_bar(pil_draw, bgcolor, color, x, y, w, h, progress, vertical=False)
 #
 def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     global _last_image_path, _last_image_time
-    image_url     = None
-    image_set     = False
+    image_url = None
+    image_set = False
     resize_needed = False
 
     cover = None   # retrieved artwork, original size
-    thumb = None   # resized artwork
 
     if (cover_path != '' and
         cover_path != 'DefaultVideoCover.png' and
         cover_path != 'DefaultAlbumCover.png' and
-        not _airtunes_re.match(cover_path)):
+            not _airtunes_re.match(cover_path)):
 
         image_path = cover_path
-        #print("image_path : ", image_path) # debug info
+        # print("image_path : ", image_path) # debug info
 
         if (image_path == _last_image_path and prev_image):
             # Fall through and just return prev_image
@@ -650,36 +695,38 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
         else:
             _last_image_path = image_path
             if (image_path.startswith("http://") or
-                image_path.startswith("https://")):
+                    image_path.startswith("https://")):
                 image_url = image_path
             else:
                 payload = {
                     "jsonrpc": "2.0",
-                    "method"  : "Files.PrepareDownload",
-                    "params"  : {"path": image_path},
-                    "id"      : 5,
+                    "method": "Files.PrepareDownload",
+                    "params": {"path": image_path},
+                    "id": 5,
                 }
-                response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-                #print("Response: ", json.dumps(response))  # debug info
+                response = requests.post(
+                    rpc_url, data=json.dumps(payload), headers=headers).json()
+                # print("Response: ", json.dumps(response))  # debug info
 
                 try:
-                    image_url = base_url + "/" + response['result']['details']['path']
-                    #print("image_url : ", image_url) # debug info
-                except:
+                    image_url = base_url + "/" + \
+                        response['result']['details']['path']
+                    # print("image_url : ", image_url) # debug info
+                except BaseException:
                     pass
 
-            r = requests.get(image_url, stream = True)
+            r = requests.get(image_url, stream=True)
             # check that the retrieval was successful before proceeding
             if r.status_code == 200:
                 try:
                     r.raw.decode_content = True
                     cover = Image.open(io.BytesIO(r.content))
-                    image_set     = True
+                    image_set = True
                     resize_needed = True
-                except:
+                except BaseException:
                     cover = Image.open(_default_audio_thumb)
                     prev_image = cover
-                    image_set     = True
+                    image_set = True
                     resize_needed = True
 
     # Airplay artwork
@@ -691,59 +738,65 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     #
     if (not image_set and
         _airtunes_re.match(cover_path) and
-        not _local_kodi):
+            not _local_kodi):
 
         image_path = cover_path
-        #print("image_path : ", image_path) # debug info
+        # print("image_path : ", image_path) # debug info
         payload = {
             "jsonrpc": "2.0",
-            "method"  : "Files.GetFileDetails",
-            "params"  : {"file": image_path,
-                         "properties" : ["lastmodified"]
-                         },
-            "id"      : "5b",
+            "method": "Files.GetFileDetails",
+            "params": {"file": image_path,
+                       "properties": ["lastmodified"]
+                       },
+            "id": "5b",
         }
-        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        #print("Airplay image details: ", json.dumps(response))  # debug info
+        response = requests.post(
+            rpc_url,
+            data=json.dumps(payload),
+            headers=headers).json()
+        # print("Airplay image details: ", json.dumps(response))  # debug info
         new_image_time = None
         try:
             new_image_time = response['result']['filedetails']['lastmodified']
-        except:
+        except BaseException:
             pass
         # print("new_image_time", new_image_time)  # debug info
         if (new_image_time and new_image_time != _last_image_time):
             payload = {
                 "jsonrpc": "2.0",
-                "method"  : "Files.PrepareDownload",
-                "params"  : {"path": image_path},
-                "id"      : "5c",
+                "method": "Files.PrepareDownload",
+                "params": {"path": image_path},
+                "id": "5c",
             }
-            response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-            #print("Response: ", json.dumps(response))  # debug info
+            response = requests.post(
+                rpc_url,
+                data=json.dumps(payload),
+                headers=headers).json()
+            # print("Response: ", json.dumps(response))  # debug info
 
             try:
-                image_url = base_url + "/" + response['result']['details']['path']
-                #print("image_url : ", image_url) # debug info
-            except:
+                image_url = base_url + "/" + \
+                    response['result']['details']['path']
+                # print("image_url : ", image_url) # debug info
+            except BaseException:
                 pass
 
-            r = requests.get(image_url, stream = True)
+            r = requests.get(image_url, stream=True)
             # check that the retrieval was successful before proceeding
             if r.status_code == 200:
                 try:
                     r.raw.decode_content = True
                     cover = Image.open(io.BytesIO(r.content))
-                    image_set       = True
-                    resize_needed   = True
+                    image_set = True
+                    resize_needed = True
                     _last_image_time = new_image_time
-                except:
+                except BaseException:
                     cover = Image.open(_default_audio_thumb)
                     prev_image = cover
-                    image_set     = True
+                    image_set = True
                     resize_needed = True
         else:
             image_set = True
-
 
     # Finally, if we still don't have anything, check if we are local
     # to Kodi and Airplay artwork can just be opened.  Otherwise, use
@@ -751,10 +804,11 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     if not image_set:
         resize_needed = True
         if _airtunes_re.match(cover_path):
-            airplay_thumb = "/storage/.kodi/temp/" + _airtunes_re.match(cover_path).group(1)
+            airplay_thumb = "/storage/.kodi/temp/" + \
+                _airtunes_re.match(cover_path).group(1)
             if os.path.isfile(airplay_thumb):
                 _last_image_path = airplay_thumb
-                resize_needed   = True
+                resize_needed = True
             else:
                 _last_image_path = _default_airplay_thumb
         else:
@@ -819,7 +873,10 @@ def status_screen(draw, kodi_status, summary_string):
     if "thumb" in layout.keys():
         kodi_icon = Image.open(_kodi_thumb)
         kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
-        image.paste(kodi_icon, (layout["thumb"]["posx"], layout["thumb"]["posy"] ))
+        image.paste(
+            kodi_icon,
+            (layout["thumb"]["posx"],
+             layout["thumb"]["posy"]))
 
     # go through all text fields, if any
     if "fields" not in layout.keys():
@@ -828,27 +885,29 @@ def status_screen(draw, kodi_status, summary_string):
     txt_fields = layout.get("fields", [])
     for field_info in txt_fields:
         if field_info["name"] == "version":
-            draw.text((field_info["posx"],field_info["posy"]),
+            draw.text((field_info["posx"], field_info["posy"]),
                       "kodi_panel " + PANEL_VER,
                       field_info["fill"], field_info["font"])
 
         elif field_info["name"] == "summary":
-            draw.text((field_info["posx"],field_info["posy"]),
+            draw.text((field_info["posx"], field_info["posy"]),
                       summary_string,
                       field_info["fill"], field_info["font"])
 
         elif field_info["name"] == "kodi_version":
             kodi_version = kodi_status["System.BuildVersion"].split()[0]
-            build_date   = kodi_status["System.BuildDate"]
-            draw.text((field_info["posx"],field_info["posy"]),
-                      "Kodi version: " + kodi_version + " (" + build_date + ")",
+            build_date = kodi_status["System.BuildDate"]
+            draw.text((field_info["posx"], field_info["posy"]),
+                      "Kodi version: " + kodi_version +
+                      " (" + build_date + ")",
                       field_info["fill"], field_info["font"])
 
         elif field_info["name"] == "time_hrmin":
             # current time (in 7-segment LED font by default)
             time_parts = kodi_status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(time_parts[0], field_info["font"])
-            draw.text((field_info["posx"],field_info["posy"]),
+            time_width, time_height = draw.textsize(
+                time_parts[0], field_info["font"])
+            draw.text((field_info["posx"], field_info["posy"]),
                       time_parts[0],
                       field_info["fill"], field_info["font"])
             draw.text((field_info["posx"] + time_width + 5, field_info["posy"]),
@@ -857,13 +916,15 @@ def status_screen(draw, kodi_status, summary_string):
 
         else:
             # Use format_str or prefix/suffic approach, in that order
-            if field_info.get("format_str",""):
-                display_string = format_InfoLabels( field_info["format_str"], kodi_status )
+            if field_info.get("format_str", ""):
+                display_string = format_InfoLabels(
+                    field_info["format_str"], kodi_status)
             else:
-                display_string = (field_info.get("prefix","") + kodi_status[field_info["name"]] +
-                                  field_info.get("suffix",""))
+                display_string = (field_info.get("prefix", "") + kodi_status[field_info["name"]] +
+                                  field_info.get("suffix", ""))
 
-            draw.text((field_info["posx"],field_info["posy"]),
+            draw.text((field_info["posx"], field_info["posy"]),
+
                       display_string,
                       field_info["fill"], field_info["font"])
 
@@ -893,10 +954,10 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
         # Skip over the fields that aren't desired for
         # this invocation
         if dynamic:
-            if not field_info.get("dynamic",0):
+            if not field_info.get("dynamic", 0):
                 continue
         else:
-            if field_info.get("dynamic",0):
+            if field_info.get("dynamic", 0):
                 continue
 
         # special treatment for "codec", which gets a lookup
@@ -928,7 +989,7 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                     draw.text((field_info["lposx"], field_info["lposy"]),
                               field_info["label"],
                               fill=field_info["lfill"], font=field_info["lfont"])
-                    
+
                 draw.text((field_info["posx"], field_info["posy"]),
                           display_text,
                           fill=field_info["fill"],
@@ -939,8 +1000,9 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
               info['MusicPlayer.Artist'] != ""):
             display_string = None
 
-            if field_info.get("format_str",""):
-                display_string = format_InfoLabels( field_info["format_str"], info )
+            if field_info.get("format_str", ""):
+                display_string = format_InfoLabels(
+                    field_info["format_str"], info)
             else:
                 # The following was an attempt to display Composer if
                 # Artist is blank.  The combination of JRiver Media Center
@@ -948,15 +1010,15 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                 # to work, unfortunately.
 
                 if info['MusicPlayer.Artist'] != "":
-                    display_string = (field_info.get("prefix","") + info['MusicPlayer.Artist'] +
-                                      field_info.get("suffix",""))
+                    display_string = (field_info.get("prefix", "") + info['MusicPlayer.Artist'] +
+                                      field_info.get("suffix", ""))
                 elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                    display_string = (field_info.get("prefix","") +
+                    display_string = (field_info.get("prefix", "") +
                                       "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
-                                      field_info.get("suffix",""))
+                                      field_info.get("suffix", ""))
 
             if (display_string == "Unknown" and
-                field_info.get("drop_unknown",0)):
+                    field_info.get("drop_unknown", 0)):
                 continue
 
             if display_string:
@@ -972,7 +1034,8 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
                                      display_string,
-                                     max_width=_frame_size[0] - field_info["posx"],
+                                     max_width=_frame_size[0] -
+                                     field_info["posx"],
                                      max_lines=1,
                                      fill=field_info["fill"],
                                      font=field_info["font"])
@@ -985,7 +1048,7 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
         # all other text fields
         else:
             if (field_info["name"] in info.keys() and
-                info[field_info["name"]] != ""):
+                    info[field_info["name"]] != ""):
 
                 # render any label first
                 if "label" in field_info:
@@ -994,11 +1057,12 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                               fill=field_info["lfill"], font=field_info["lfont"])
 
                 # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str",""):
-                    display_string = format_InfoLabels( field_info["format_str"], info )
+                if field_info.get("format_str", ""):
+                    display_string = format_InfoLabels(
+                        field_info["format_str"], info)
                 else:
-                    display_string = (field_info.get("prefix","") + info[field_info["name"]] +
-                                      field_info.get("suffix",""))
+                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
+                                      field_info.get("suffix", ""))
 
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,
@@ -1012,7 +1076,8 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
                                      display_string,
-                                     max_width=_frame_size[0] - field_info["posx"],
+                                     max_width=_frame_size[0] -
+                                     field_info["posx"],
                                      max_lines=1,
                                      fill=field_info["fill"],
                                      font=field_info["font"])
@@ -1021,7 +1086,6 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
                               display_string,
                               fill=field_info["fill"],
                               font=field_info["font"])
-
 
 
 # Render the static portion of audio screens
@@ -1033,30 +1097,35 @@ def audio_screen_static(layout, info):
     global _last_thumb, _last_image_path
 
     # Create a new image
-    image  = Image.new('RGB', (_frame_size), 'black')
-    draw   = ImageDraw.Draw(image)
+    image = Image.new('RGB', (_frame_size), 'black')
+    draw = ImageDraw.Draw(image)
 
     # retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
         _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
                                   layout["thumb"]["size"], layout["thumb"]["size"])
         if _last_thumb:
-            if layout["thumb"].get("center",0):
+            if layout["thumb"].get("center", 0):
                 image.paste(_last_thumb,
-                            (int((_frame_size[0]-_last_thumb.width)/2),
-                             int((_frame_size[1]-_last_thumb.height)/2)))
+                            (int((_frame_size[0] - _last_thumb.width) / 2),
+                             int((_frame_size[1] - _last_thumb.height) / 2)))
             elif (layout["thumb"].get("center_sm", 0) and
                   (_last_thumb.width < layout["thumb"]["size"] or
                    _last_thumb.height < layout["thumb"]["size"])):
                 new_x = layout["thumb"]["posx"]
                 new_y = layout["thumb"]["posy"]
                 if _last_thumb.width < layout["thumb"]["size"]:
-                    new_x += int((layout["thumb"]["size"]/2) - (_last_thumb.width/2))
+                    new_x += int((layout["thumb"]["size"] /
+                                  2) - (_last_thumb.width / 2))
                 if _last_thumb.height < layout["thumb"]["size"]:
-                    new_y += int((layout["thumb"]["size"]/2) - (_last_thumb.height/2))
+                    new_y += int((layout["thumb"]["size"] /
+                                  2) - (_last_thumb.height / 2))
                 image.paste(_last_thumb, (new_x, new_y))
             else:
-                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+                image.paste(
+                    _last_thumb,
+                    (layout["thumb"]["posx"],
+                     layout["thumb"]["posy"]))
     else:
         _last_thumb = None
 
@@ -1065,7 +1134,6 @@ def audio_screen_static(layout, info):
 
     # Return new image
     return image
-
 
 
 # Render the changing portion of audio screens
@@ -1101,7 +1169,6 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
                          prog)
 
 
-
 # Audio info screens (shown when music is playing)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.  Third
@@ -1127,22 +1194,21 @@ def audio_screens(image, draw, info, prog):
 
     if (_static_image and (not _static_video) and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
-        info["MusicPlayer.Title"]       == _last_track_title and
-        info["MusicPlayer.Album"]       == _last_track_album and
-        info["MusicPlayer.Duration"]    == _last_track_time):
+        info["MusicPlayer.Title"] == _last_track_title and
+        info["MusicPlayer.Album"] == _last_track_album and
+            info["MusicPlayer.Duration"] == _last_track_time):
         pass
     else:
         _static_image = audio_screen_static(layout, info)
         _static_video = False
-        _last_track_num   = info["MusicPlayer.TrackNumber"]
+        _last_track_num = info["MusicPlayer.TrackNumber"]
         _last_track_title = info["MusicPlayer.Title"]
         _last_track_album = info["MusicPlayer.Album"]
-        _last_track_time  = info["MusicPlayer.Duration"]
+        _last_track_time = info["MusicPlayer.Duration"]
 
     # use _static_image as the starting point
-    image.paste(_static_image, (0,0))
+    image.paste(_static_image, (0, 0))
     audio_screen_dynamic(image, draw, layout, info, prog)
-
 
 
 # Render all video text fields, stepping through the entries from the
@@ -1163,18 +1229,18 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
         # Skip over the fields that aren't desired for
         # this invocation
         if dynamic:
-            if not field_info.get("dynamic",0):
+            if not field_info.get("dynamic", 0):
                 continue
         else:
-            if field_info.get("dynamic",0):
+            if field_info.get("dynamic", 0):
                 continue
 
         # special treatment for audio codec, which gets a lookup
         if field_info["name"] == "acodec":
-            display_text = info['VideoPlayer.AudioCodec']            
+            display_text = info['VideoPlayer.AudioCodec']
             if info['VideoPlayer.AudioCodec'] in codec_name.keys():
                 display_text = codec_name[info['VideoPlayer.AudioCodec']]
-                
+
             # render any label first
             if "label" in field_info:
                 draw.text((field_info["lposx"], field_info["lposy"]),
@@ -1189,7 +1255,7 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
         # all other text fields
         else:
             if (field_info["name"] in info.keys() and
-                info[field_info["name"]] != ""):
+                    info[field_info["name"]] != ""):
 
                 # render any label first
                 if "label" in field_info:
@@ -1198,11 +1264,12 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
                               fill=field_info["lfill"], font=field_info["lfont"])
 
                 # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str",""):
-                    display_string = format_InfoLabels( field_info["format_str"], info )
+                if field_info.get("format_str", ""):
+                    display_string = format_InfoLabels(
+                        field_info["format_str"], info)
                 else:
-                    display_string = (field_info.get("prefix","") + info[field_info["name"]] +
-                                      field_info.get("suffix",""))
+                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
+                                      field_info.get("suffix", ""))
 
                 if "wrap" in field_info.keys():
                     render_text_wrap(draw,
@@ -1216,7 +1283,8 @@ def video_text_fields(image, draw, layout, info, dynamic=False):
                     render_text_wrap(draw,
                                      (field_info["posx"], field_info["posy"]),
                                      display_string,
-                                     max_width=_frame_size[0] - field_info["posx"],
+                                     max_width=_frame_size[0] -
+                                     field_info["posx"],
                                      max_lines=1,
                                      fill=field_info["fill"],
                                      font=field_info["font"])
@@ -1232,8 +1300,8 @@ def video_screen_static(layout, info):
     global _last_thumb, _last_image_path
 
     # Create a new image
-    image  = Image.new('RGB', (_frame_size), 'black')
-    draw   = ImageDraw.Draw(image)
+    image = Image.new('RGB', (_frame_size), 'black')
+    draw = ImageDraw.Draw(image)
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
@@ -1241,22 +1309,27 @@ def video_screen_static(layout, info):
                                   layout["thumb"]["width"], layout["thumb"]["height"],
                                   video=1)
         if _last_thumb:
-            if layout["thumb"].get("center",0):
+            if layout["thumb"].get("center", 0):
                 image.paste(_last_thumb,
-                            (int((_frame_size[0]-_last_thumb.width)/2),
-                             int((_frame_size[1]-_last_thumb.height)/2)))
+                            (int((_frame_size[0] - _last_thumb.width) / 2),
+                             int((_frame_size[1] - _last_thumb.height) / 2)))
             elif (layout["thumb"].get("center_sm", 0) and
                   (_last_thumb.width < layout["thumb"]["width"] or
                    _last_thumb.height < layout["thumb"]["height"])):
                 new_x = layout["thumb"]["posx"]
                 new_y = layout["thumb"]["posy"]
                 if _last_thumb.width < layout["thumb"]["width"]:
-                    new_x += int((layout["thumb"]["width"]/2) - (_last_thumb.width/2))
+                    new_x += int((layout["thumb"]["width"] / 2) -
+                                 (_last_thumb.width / 2))
                 if _last_thumb.height < layout["thumb"]["height"]:
-                    new_y += int((layout["thumb"]["height"]/2) - (_last_thumb.height/2))
+                    new_y += int((layout["thumb"]["height"] / 2) -
+                                 (_last_thumb.height / 2))
                 image.paste(_last_thumb, (new_x, new_y))
             else:
-                image.paste(_last_thumb, (layout["thumb"]["posx"], layout["thumb"]["posy"]))
+                image.paste(
+                    _last_thumb,
+                    (layout["thumb"]["posx"],
+                     layout["thumb"]["posy"]))
     else:
         _last_thumb = None
 
@@ -1335,14 +1408,14 @@ def video_screens(image, draw, info, prog):
 
     if VIDEO_LAYOUT_AUTOSELECT:
         if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
-            "V_PVR" in VIDEO_LAYOUT):
+                "V_PVR" in VIDEO_LAYOUT):
             layout = VIDEO_LAYOUT["V_PVR"]     # PVR TV shows
         elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
               "V_LIVETV" in VIDEO_LAYOUT):
             layout = VIDEO_LAYOUT["V_LIVETV"]  # live TV
         elif (info["VideoPlayer.TVShowTitle"] != '' and
               "V_TV_SHOW" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_TV_SHOW"] # Library TV shows
+            layout = VIDEO_LAYOUT["V_TV_SHOW"]  # Library TV shows
         elif (info["VideoPlayer.OriginalTitle"] != '' and
               "V_MOVIE" in VIDEO_LAYOUT):
             layout = VIDEO_LAYOUT["V_MOVIE"]   # movie
@@ -1350,19 +1423,19 @@ def video_screens(image, draw, info, prog):
             pass  # leave as-is, just use default selection
 
     if (_static_image and _static_video and
-        info["VideoPlayer.Title"]    == _last_video_title and
-        info["VideoPlayer.Episode"]  == _last_video_episode and
-        info["VideoPlayer.Duration"] == _last_video_time):
+        info["VideoPlayer.Title"] == _last_video_title and
+        info["VideoPlayer.Episode"] == _last_video_episode and
+            info["VideoPlayer.Duration"] == _last_video_time):
         pass
     else:
         _static_image = video_screen_static(layout, info)
         _static_video = True
-        _last_video_title   = info["VideoPlayer.Title"]
+        _last_video_title = info["VideoPlayer.Title"]
         _last_video_episode = info["VideoPlayer.Episode"]
-        _last_video_time    = info["VideoPlayer.Duration"]
+        _last_video_time = info["VideoPlayer.Duration"]
 
     # use _static_image as the starting point
-    image.paste(_static_image, (0,0))
+    image.paste(_static_image, (0, 0))
     video_screen_dynamic(image, draw, layout, info, prog)
 
 
@@ -1378,8 +1451,16 @@ def calc_progress(time_str, duration_str):
             1 <= duration_str.count(":") <= 2):
         return -1
 
-    cur_secs   = sum(int(x) * 60 ** i for i, x in enumerate(reversed(time_str.split(':'))))
-    total_secs = sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration_str.split(':'))))
+    cur_secs = sum(
+        int(x) * 60 ** i for i,
+        x in enumerate(
+            reversed(
+                time_str.split(':'))))
+    total_secs = sum(
+        int(x) * 60 ** i for i,
+        x in enumerate(
+            reversed(
+                duration_str.split(':'))))
 
     # If either cur_secs or total_secs is negative, we fall through
     # and return -1, hiding the progress bar.  We do explicitly cap
@@ -1389,7 +1470,7 @@ def calc_progress(time_str, duration_str):
         if (cur_secs >= total_secs):
             return 1
         else:
-            return cur_secs/total_secs
+            return cur_secs / total_secs
     else:
         return -1
 
@@ -1429,7 +1510,8 @@ def update_display(touched=False):
 
     # Start with a blank slate, if there's no static image
     if (not (_kodi_connected and _static_image)):
-        draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
+        draw.rectangle(
+            [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
 
     # Check if the _screen_active time has expired
     if (_screen_active and datetime.now() >= _screen_offtime):
@@ -1449,16 +1531,19 @@ def update_display(touched=False):
     #
     payload = {
         "jsonrpc": "2.0",
-        "method"  : "Player.GetActivePlayers",
-        "id"      : 3,
+        "method": "Player.GetActivePlayers",
+        "id": 3,
     }
-    response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+    response = requests.post(
+        rpc_url,
+        data=json.dumps(payload),
+        headers=headers).json()
 
-    if ((not 'result' in response.keys()) or
+    if ('result' not in response.keys() or
         len(response['result']) == 0 or
         response['result'][0]['type'] == 'picture' or
         (response['result'][0]['type'] == 'video' and not VIDEO_ENABLED) or
-        (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
+            (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
         # Nothing is playing or something for which no display screen
         # is available.
         _kodi_playing = False
@@ -1487,11 +1572,14 @@ def update_display(touched=False):
 
             payload = {
                 "jsonrpc": "2.0",
-                "method"  : "XBMC.GetInfoLabels",
-                "params"  : {"labels": STATUS_LABELS },
-                "id"      : "4s",
+                "method": "XBMC.GetInfoLabels",
+                "params": {"labels": STATUS_LABELS},
+                "id": "4s",
             }
-            status_resp = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+            status_resp = requests.post(
+                rpc_url,
+                data=json.dumps(payload),
+                headers=headers).json()
             status_screen(draw, status_resp['result'], summary)
             screen_on()
         else:
@@ -1508,7 +1596,10 @@ def update_display(touched=False):
             _screen_press = False
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
-                print(datetime.now(), "video display mode now", video_dmode.name)
+                print(
+                    datetime.now(),
+                    "video display mode now",
+                    video_dmode.name)
                 _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
@@ -1519,17 +1610,22 @@ def update_display(touched=False):
         # Retrieve video InfoLabels in a single JSON-RPC call
         payload = {
             "jsonrpc": "2.0",
-            "method"  : "XBMC.GetInfoLabels",
-            "params"  : {"labels": VIDEO_LABELS },
-            "id"      : "4v",
+            "method": "XBMC.GetInfoLabels",
+            "params": {"labels": VIDEO_LABELS},
+            "id": "4v",
         }
-        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        #print("Response: ", json.dumps(response))
+        response = requests.post(
+            rpc_url,
+            data=json.dumps(payload),
+            headers=headers).json()
+        # print("Response: ", json.dumps(response))
         try:
             video_info = response['result']
 
             # See remarks in audio_screens() regarding calc_progress()
-            prog = calc_progress(video_info["VideoPlayer.Time"], video_info["VideoPlayer.Duration"])
+            prog = calc_progress(
+                video_info["VideoPlayer.Time"],
+                video_info["VideoPlayer.Duration"])
 
             # There seems to be a hiccup in DLNA/UPnP playback in which a
             # change (or stopping playback) causes a moment when
@@ -1542,7 +1638,7 @@ def update_display(touched=False):
             else:
                 video_screens(image, draw, video_info, prog)
                 screen_on()
-        except:
+        except BaseException:
             raise
 
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
@@ -1580,12 +1676,15 @@ def update_display(touched=False):
         #
         payload = {
             "jsonrpc": "2.0",
-            "method"  : "XBMC.GetInfoLabels",
-            "params"  : {"labels": AUDIO_LABELS },
-            "id"      : "4a",
+            "method": "XBMC.GetInfoLabels",
+            "params": {"labels": AUDIO_LABELS},
+            "id": "4a",
         }
-        response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
-        #print("Response: ", json.dumps(response))
+        response = requests.post(
+            rpc_url,
+            data=json.dumps(payload),
+            headers=headers).json()
+        # print("Response: ", json.dumps(response))
         try:
             track_info = response['result']
 
@@ -1606,7 +1705,9 @@ def update_display(touched=False):
             # already have the current time and duration, let's just
             # calculate the current position as a percentage.
 
-            prog = calc_progress(track_info["MusicPlayer.Time"], track_info["MusicPlayer.Duration"])
+            prog = calc_progress(
+                track_info["MusicPlayer.Time"],
+                track_info["MusicPlayer.Duration"])
 
             # There seems to be a hiccup in DLNA/UPnP playback in
             # which a track change (or stopping playback) causes a
@@ -1615,12 +1716,12 @@ def update_display(touched=False):
             if ((track_info["MusicPlayer.Time"] == "00:00" or
                  track_info["MusicPlayer.Time"] == "00:00:00") and
                 track_info["MusicPlayer.Duration"] == "" and
-                track_info["MusicPlayer.Cover"] == ""):
+                    track_info["MusicPlayer.Cover"] == ""):
                 pass
             else:
                 audio_screens(image, draw, track_info, prog)
                 screen_on()
-        except:
+        except BaseException:
             raise
 
     # Output to OLED/LCD display or framebuffer
@@ -1640,7 +1741,7 @@ def update_display(touched=False):
 #
 def touch_callback(channel):
     global _screen_press, _kodi_connected
-    #print(datetime.now(), "Touchscreen pressed")
+    # print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
         if TOUCH_CALL_UPDATE:
             update_display(touched=True)
@@ -1659,7 +1760,7 @@ def main(device_handle):
     global _kodi_connected, _kodi_playing
     global _screen_press
     _kodi_connected = False
-    _kodi_playing   = False
+    _kodi_playing = False
 
     device = device_handle
 
@@ -1682,30 +1783,37 @@ def main(device_handle):
     # main communication loop
     while True:
         screen_on()
-        draw.rectangle([(0,0), (_frame_size[0],_frame_size[1])], 'black', 'black')
-        draw.text(( 5, 5), "Waiting to connect with Kodi...",  fill='white', font=_fonts["font_main"])
+        draw.rectangle(
+            [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
+        draw.text((5, 5), "Waiting to connect with Kodi...",
+                  fill='white', font=_fonts["font_main"])
         device.display(image)
 
         while True:
             # ensure Kodi is up and accessible
             payload = {
                 "jsonrpc": "2.0",
-                "method"  : "JSONRPC.Ping",
-                "id"      : 2,
+                "method": "JSONRPC.Ping",
+                "id": 2,
             }
 
             try:
-                response = requests.post(rpc_url, data=json.dumps(payload), headers=headers).json()
+                response = requests.post(
+                    rpc_url, data=json.dumps(payload), headers=headers).json()
                 if response['result'] != 'pong':
-                    print(datetime.now(), "Kodi not available via HTTP-transported JSON-RPC.  Waiting...")
+                    print(
+                        datetime.now(),
+                        "Kodi not available via HTTP-transported JSON-RPC.  Waiting...")
                     time.sleep(5)
                 else:
                     break
-            except:
+            except BaseException:
                 time.sleep(5)
                 pass
 
-        print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
+        print(
+            datetime.now(),
+            "Connected with Kodi.  Entering update_display() loop.")
         screen_off()
 
         # Loop until Kodi goes away
@@ -1724,11 +1832,11 @@ def main(device_handle):
                     requests.exceptions.ConnectionError):
                 print(datetime.now(), "Communication disrupted.")
                 _kodi_connected = False
-                _kodi_playing   = False
+                _kodi_playing = False
                 break
             except (SystemExit):
                 shutdown()
-            except:
+            except BaseException:
                 print("Unexpected error: ", sys.exc_info()[0])
                 raise
 
