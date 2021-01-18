@@ -579,7 +579,17 @@ max_lines = 4
 #   Special treatment may exist for text fields within video_screens()
 #
 # --------------------------------------------------------------------
+[shared_element.elapsed_time]
 
+#
+[shared_element.progress_bar]
+posx   = 330     # upper-left corner x position
+posy   = 7       # upper-left corner y position
+height = 15       # pixel height
+short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+color_fg = "color_7S"
+color_bg = "color_gray"
 #
 # Default video info
 #
@@ -592,13 +602,7 @@ height = 480
 center_sm = 1
 
 [V_LAYOUT.V_DEFAULT.prog]    # Progress Bar
-posx   = 330     # upper-left corner x position
-posy   = 7       # upper-left corner y position
-height = 15       # pixel height
-short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
-long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
-color_fg = "color_7S"
-color_bg = "color_gray"
+shared_element = "progress_bar"
 
 [[V_LAYOUT.V_DEFAULT.fields]]
 name = "VideoPlayer.Time"
@@ -767,13 +771,7 @@ dynamic = 1
 
 
 [V_LAYOUT.V_PVR.prog]    # Progress Bar
-posx   = 330     # upper-left corner x position
-posy   = 7       # upper-left corner y position
-height = 15       # pixel height
-short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
-long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
-color_fg = "color_7S"
-color_bg = "color_gray"
+shared_element = "progress_bar"
 
 [[V_LAYOUT.V_PVR.fields]]
 name = "VideoPlayer.Time"
@@ -860,6 +858,8 @@ fill = "color_7S"
 format_str = "End: {Player.FinishTime}     Current: {System.Time}"
 dynamic = 1
 
+[V_LAYOUT.V_TV_SHOW.prog]    # Progress Bar
+shared_element = "progress_bar"
 
 [[V_LAYOUT.V_TV_SHOW.fields]]
 name = "Player.FinishTime"
@@ -870,6 +870,9 @@ fill = "color_7S"
 prefix = "série "
 suffix = ""
 dynamic = 1
+
+[V_LAYOUT.V_LIVETV.prog]    # Progress Bar
+shared_element = "progress_bar"
 
 [[V_LAYOUT.V_LIVETV.fields]]
 name = "Player.FinishTime"
@@ -899,13 +902,7 @@ height = 480
 center_sm = 1
 
 [V_LAYOUT.V_MOVIE.prog]    # Progress Bar
-posx   = 330     # upper-left corner x position
-posy   = 7       # upper-left corner y position
-height = 15       # pixel height
-short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
-long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
-color_fg = "color_7S"
-color_bg = "color_gray"
+shared_element = "progress_bar"
 
 [[V_LAYOUT.V_MOVIE.fields]]
 name = "VideoPlayer.Time"
