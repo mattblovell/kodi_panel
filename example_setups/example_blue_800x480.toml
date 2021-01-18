@@ -585,7 +585,7 @@ fill = "color_7S"
 
 # --------------------------------------------------------------------
 #
-# The A_NOTIME screen servers primarily as an example, It is similar
+# The A_NOTIME screen serves primarily as an example, It is similar
 # to the default (audio) info screen, but without the elapsed time
 # display.
 #
