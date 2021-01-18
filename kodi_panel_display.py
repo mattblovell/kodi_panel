@@ -24,10 +24,10 @@
 # ----------------------------------------------------------------------------
 
 import sys
-try:
-    import RPi.GPIO as GPIO
-except ImportError:
-    pass
+#try:
+#    import RPi.GPIO as GPIO
+#except ImportError:
+#    pass
 
 from luma.core.device import device
 from PIL import Image
@@ -109,7 +109,15 @@ STATUS_LABELS = [
     "System.BuildVersion",
     "System.BuildDate",
     "System.FreeSpace",
-]
+    "Weather.Conditions",
+    "Weather.Temperature",
+    "System.TotalUptime",
+    "System.Time(hh:mm:ss)",
+    "PVR.BackendDiskSpace",
+    "PVR.BackendTimers",
+    "PVR.BackendRecordings",
+    ]
+
 
 # Audio screen information
 AUDIO_LABELS = [
@@ -126,7 +134,13 @@ AUDIO_LABELS = [
     "MusicPlayer.Year",
     "MusicPlayer.Genre",
     "MusicPlayer.Cover",
-]
+    "MusicPlayer.BitRate",
+    "MusicPlayer.BitsPerSample",
+    "MusicPlayer.SampleRate",
+    "MusicPlayer.Channels",
+    "MusicPlayer.PlaylistLength",
+    ]
+
 
 # Video screen information
 VIDEO_LABELS = [
@@ -149,7 +163,27 @@ VIDEO_LABELS = [
     "VideoPlayer.Rating",
     "VideoPlayer.ParentalRating",
     "VideoPlayer.Cover",
-]
+    "VideoPlayer.AudioChannels",
+    "VideoPlayer.Duration",
+    "VideoPlayer.PlayCount",
+    "Player.FinishTime",
+    "System.Time(hh:mm:ss)",
+    "Player.chapter",
+    "Player.chaptercount",
+    "Player.chaptername",
+    "System.Date",
+    "System.Uptime",
+    "System.CPUTemperature",
+    "System.CpuFrequency",
+    "system.BuildVersion",
+    "System.BuildDate",
+    "System.Time",
+    "Weather.Conditions",
+    "Weather.Temperature",
+    "System.TotalUptime",
+    "VideoPlayer.TimeRemaining",
+    ]
+
 
 # ----------------------------------------------------------------------------
 
@@ -258,12 +292,14 @@ if ("STATUS_LABELS" in config.settings.keys() and
     STATUS_LABELS += config.settings["STATUS_LABELS"]
 
 if ("AUDIO_LABELS" in config.settings.keys() and
+
         type(config.settings["AUDIO_LABELS"]) == list):
     AUDIO_LABELS += config.settings["AUDIO_LABELS"]
 
 if ("VIDEO_LABELS" in config.settings.keys() and
         type(config.settings["VIDEO_LABELS"]) == list):
     VIDEO_LABELS += config.settings["VIDEO_LABELS"]
+
 
 
 #
@@ -888,6 +924,7 @@ def status_screen(draw, kodi_status, summary_string):
                                   field_info.get("suffix", ""))
 
             draw.text((field_info["posx"], field_info["posy"]),
+
                       display_string,
                       field_info["fill"], field_info["font"])
 
@@ -1517,11 +1554,12 @@ def update_display(touched=False):
         _last_image_time = None
         _last_thumb = None
         _static_image = None
+        _screen_active = True #to force status screen
 
-        if _screen_press or touched:
-            _screen_press = False
-            _screen_active = True
-            _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
+        #if _screen_press or touched:
+         #   _screen_press = False
+          #  _screen_active = True
+          #  _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
         if _screen_active:
             # Idle status screen
