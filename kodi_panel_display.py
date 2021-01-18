@@ -48,8 +48,6 @@ import os
 import threading
 import warnings
 
-from string import Template
-
 # kodi_panel settings
 import config
 
@@ -382,7 +380,7 @@ def fixup_layouts(nested_dict):
         if type(value) is dict:
             if (_USE_SHARED and "shared_element" in value and
                     value["shared_element"] in _SHARED_ELEMENT):
-                #print("Looking up", value["shared_element"], "in _SHARED_ELEMENT dict")
+                # print("Looking up", value["shared_element"], "in _SHARED_ELEMENT dict")
                 newdict[key] = fixup_layouts(
                     _SHARED_ELEMENT[value["shared_element"]])
             else:
@@ -408,7 +406,7 @@ def fixup_array(array):
         if type(item) is dict:
             if (_USE_SHARED and "shared_element" in item and
                     item["shared_element"] in _SHARED_ELEMENT):
-                #print("Looking up", item["shared_element"], "in _SHARED_ELEMENT dict")
+                # print("Looking up", item["shared_element"], "in _SHARED_ELEMENT dict")
                 newarray.append(fixup_layouts(
                     _SHARED_ELEMENT[item["shared_element"]]))
             else:
@@ -1508,7 +1506,7 @@ def update_display(touched=False):
         data=json.dumps(payload),
         headers=headers).json()
 
-    if ((not 'result' in response.keys()) or
+    if ('result' not in response.keys() or
         len(response['result']) == 0 or
         response['result'][0]['type'] == 'picture' or
         (response['result'][0]['type'] == 'video' and not VIDEO_ENABLED) or
@@ -1652,7 +1650,7 @@ def update_display(touched=False):
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
-        #print("Response: ", json.dumps(response))
+        # print("Response: ", json.dumps(response))
         try:
             track_info = response['result']
 
@@ -1709,7 +1707,7 @@ def update_display(touched=False):
 #
 def touch_callback(channel):
     global _screen_press, _kodi_connected
-    #print(datetime.now(), "Touchscreen pressed")
+    # print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
         if TOUCH_CALL_UPDATE:
             update_display(touched=True)
