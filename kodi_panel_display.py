@@ -53,7 +53,7 @@ from string import Template
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.20"
+PANEL_VER = "v1.21"
 
 #
 # Audio/Video codec lookup table
