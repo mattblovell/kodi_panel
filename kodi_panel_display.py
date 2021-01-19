@@ -573,23 +573,26 @@ def element_empty(image, draw, info, field, screen_mode, layout_name):
 # common names.
 
 def element_codec(image, draw, info, field, screen_mode, layout_name):
-    if (screen_mode == ScreenMode.AUDIO and
-        'MusicPlayer.Codec' in info):
+    if 'MusicPlayer.Codec' in info:
         if info['MusicPlayer.Codec'] in codec_name:
             return codec_name[info['MusicPlayer.Codec']]
         else:
             return info['MusicPlayer.Codec']
-
-    elif (screen_mode == ScreenMode.VIDEO and
-          'VideoPlayer.AudioCodec' in info):
-        if info['VideoPlayer.AudioCodec'] in codec_name.keys():
-            return codec_name[info['VideoPlayer.AudioCodec']]
-        else:
-            return info['VideoPlayer.AudioCodec']
-        
     else:
         return ""
 
+
+# Similar function for AudioCodec lookup when playing video
+
+def element_acodec(image, draw, info, field, screen_mode, layout_name):
+    if 'VideoPlayer.AudioCodec' in info:
+        if info['VideoPlayer.AudioCodec'] in codec_name.keys():
+            return codec_name[info['VideoPlayer.AudioCodec']]
+        else:
+            return info['VideoPlayer.AudioCodec']        
+    else:
+        return ""
+    
 
 # Construct a string containing both the friendly codec name and, in
 # parenthesis, the bit depth and sample rate for the codec.
@@ -697,7 +700,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
     
 ELEMENT_CB = {
     'codec'      : element_codec,
-    'acodec'     : element_codec,
+    'acodec'     : element_acodec,
     'full_codec' : element_full_codec,
     'artist'     : element_audio_artist,
 
