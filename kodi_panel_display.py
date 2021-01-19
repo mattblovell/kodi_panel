@@ -618,7 +618,6 @@ def element_full_codec(image, draw, info, field, screen_mode, layout_name):
         return ""
 
 
-
 # Process an audio file's listed Artist, instead displaying the
 # Composer parenthetically if the artist field is empty.
 #
@@ -654,7 +653,38 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
 
 
 
-    
+# Return string with current kodi_panel version    
+def element_version(image, draw, info, field, screen_mode, layout_name):
+    return "kodi_panel " + PANEL_VER
+
+
+# Return a friendlier version of Kodi build information
+def element_kodi_version(image, draw, info, field, screen_mode, layout_name):
+    if ("System.BuildVersion" in info and
+        "System.BuildDate" in info):
+        kodi_version = info["System.BuildVersion"].split()[0]
+        build_date   = info["System.BuildDate"]
+        return "Kodi version: " + kodi_version + " (" + build_date + ")"
+    else:
+        return ""
+
+
+# Render current time and, in what should be a smaller font, AM/PM.
+# Return an empty string so as not to confuse the caller.
+def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
+    if "System.Time" in info:
+        time_parts = info['System.Time'].split(" ")
+        time_width, time_height = draw.textsize(time_parts[0], field["font"])
+        draw.text((field_info["posx"], field["posy"]),
+                  time_parts[0],
+                  field["fill"], field["font"])
+        draw.text((field["posx"] + time_width + 5, field["posy"]),
+                  time_parts[1],
+                  field["fill"], field["smfont"])
+
+    return ""
+        
+
 # Dictionary of element callback functions, with each key
 # corresponding to either the "name" specified for a textfield (within
 # a layout's array of such textfields).
@@ -670,10 +700,15 @@ ELEMENT_CB = {
     'acodec'     : element_codec,
     'full_codec' : element_full_codec,
     'artist'     : element_audio_artist,
+
+    # Status screen fields
+    'version'      : element_version,
+    'kodi_version' : element_kodi_version,
+    'time_hrmin'   : element_time_hrmin,
     }
     
 
-
+# ----------------------------------------------------------------------------
 
 # Text wrapping from public blog post
 #
