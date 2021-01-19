@@ -985,6 +985,110 @@ def format_InfoLabels(orig_str, kodi_dict):
     return new_str
 
 
+
+# Render all text fields, stepping through the fields array from
+# the layout dictionary that is passed in.
+#
+# The final argument determines whether one wants to render all of the
+# static fields or just the dynamic ones.  That, together with the
+# screen_mode argument, permits this function to be called by
+#
+#   audio_screen_static() and audio_screen_dynamic()
+#   video_screen_static() and video_screen_dynamic()
+#
+# Full set of arguments is as follows:
+#
+#  image        Image object for Pillow
+#  draw         ImageDraw object, tied to image
+#  layout       Layout dictionary to use for screen update
+#  info         Dictionary containing Kodi InfoLabel response
+#  layout_name  Name, as a string, for the in-use layout
+#  screen_mode  Enumerated type indicating AUDIO, VIDEO, or STATUS
+#  dynamic      Boolean flag, set for dynamic screen updates
+#  
+#
+def text_fields(image, draw, layout, info, layout_name, screen_mode, dynamic=False):
+
+    # Text fields (all except for MusicPlayer.Time)
+    txt_fields = layout.get("fields", [])
+    for field_info in txt_fields:
+        display_string = None
+        
+        # Skip over the fields that aren't desired for this
+        # invocation, based on static vs dynamic
+        if dynamic:
+            if not field_info.get("dynamic", 0):
+                continue
+        else:
+            if field_info.get("dynamic", 0):
+                continue
+
+        # Check for any defined callback functions.  If an entry
+        # exists in the lookup table, invoke the specified function
+        # with all of the arguments discussed in earlier comments.
+
+        if field_info["name"] in ELEMENT_CB:
+            display_string = ELEMENT_CB[field_info["name"]](
+                image,             # Image instance
+                draw,              # ImageDraw instance
+                info,              # Kodo InfoLabel response
+                field_info,        # layout details for field
+                screen_mode,       # screen mode, as enum
+                audio_dmode.name   # layout name, as string
+            )
+            # print("Invoked CB for ", field_info["name"],"; received back '", display_string, "'")
+            
+        else:
+            if (field_info["name"] in info.keys() and
+                info[field_info["name"]] != ""):
+
+                # Use format_str or prefix/suffic approach, in that order
+                if field_info.get("format_str", ""):
+                    display_string = format_InfoLabels(
+                        field_info["format_str"], info)
+                else:
+                    display_string = (field_info.get("prefix", "") +
+                                      info[field_info["name"]] +
+                                      field_info.get("suffix", ""))
+                
+
+        # if the string to display is empty, move on to the next field,
+        # otherwise render it.
+        if (not display_string or display_string == ""):
+            continue
+
+        # render any label first
+        if "label" in field_info:
+            draw.text((field_info["lposx"], field_info["lposy"]),
+                      field_info["label"],
+                      fill=field_info["lfill"], font=field_info["lfont"])
+
+        if "wrap" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=field_info["max_width"],
+                             max_lines=field_info["max_lines"],
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        elif "trunc" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=_frame_size[0] -
+                             field_info["posx"],
+                             max_lines=1,
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        else:
+            draw.text((field_info["posx"], field_info["posy"]),
+                      display_string,
+                      fill=field_info["fill"],
+                      font=field_info["font"])
+
+
+
+
 # Idle status screen (shown upon a screen press)
 #
 # First argument is a Pillow ImageDraw object.
@@ -1053,101 +1157,6 @@ def status_screen(draw, kodi_status, summary_string):
                       field_info["fill"], field_info["font"])
 
 
-# Render all audio text fields, stepping through the entries from the
-# AUDIO_LAYOUT layout dictionary.
-#
-# The final argument determines whether one wants to render all of the
-# static fields or just the dynamic ones.  That permits this function
-# to be called by both
-#
-#   audio_screen_static() and
-#   audio_screen_dynamic()
-#
-# The audio_text_fields() and video_text_fields() functions could be
-# combined if one settled upon a suitable method for dealing with all
-# of the "special case" fields (and pull from the appropriate *_LAYOUT
-# dictionary).  For the moment, I think it's simpler just to keep them
-# separate.
-#
-def audio_text_fields(image, draw, layout, info, dynamic=False):
-
-    # Text fields (all except for MusicPlayer.Time)
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-        display_string = None
-        
-        # Skip over the fields that aren't desired for this
-        # invocation, based on static vs dynamic
-        if dynamic:
-            if not field_info.get("dynamic", 0):
-                continue
-        else:
-            if field_info.get("dynamic", 0):
-                continue
-
-        # Check for any defined callback functions.  If an entry
-        # exists in the lookup table, invoke the specified function
-        # with all of the arguments discussed in earlier comments.
-
-        if field_info["name"] in ELEMENT_CB:
-            display_string = ELEMENT_CB[field_info["name"]](
-                image,             # Image instance
-                draw,              # ImageDraw instance
-                info,              # Kodo InfoLabel response
-                field_info,        # layout details for field
-                ScreenMode.AUDIO,  # screen mode, as enum
-                audio_dmode.name   # layout name, as string
-            )
-            # print("Invoked CB for ", field_info["name"],"; received back '", display_string, "'")
-            
-        else:
-            if (field_info["name"] in info.keys() and
-                info[field_info["name"]] != ""):
-
-                # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str", ""):
-                    display_string = format_InfoLabels(
-                        field_info["format_str"], info)
-                else:
-                    display_string = (field_info.get("prefix", "") +
-                                      info[field_info["name"]] +
-                                      field_info.get("suffix", ""))
-                
-
-        # if the string to display is empty, move on to the next field,
-        # otherwise render it.
-        if (not display_string or display_string == ""):
-            continue
-
-        # render any label first
-        if "label" in field_info:
-            draw.text((field_info["lposx"], field_info["lposy"]),
-                      field_info["label"],
-                      fill=field_info["lfill"], font=field_info["lfont"])
-
-        if "wrap" in field_info.keys():
-            render_text_wrap(draw,
-                             (field_info["posx"], field_info["posy"]),
-                             display_string,
-                             max_width=field_info["max_width"],
-                             max_lines=field_info["max_lines"],
-                             fill=field_info["fill"],
-                             font=field_info["font"])
-        elif "trunc" in field_info.keys():
-            render_text_wrap(draw,
-                             (field_info["posx"], field_info["posy"]),
-                             display_string,
-                             max_width=_frame_size[0] -
-                             field_info["posx"],
-                             max_lines=1,
-                             fill=field_info["fill"],
-                             font=field_info["font"])
-        else:
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_string,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
-
 
             
 # Render the static portion of audio screens
@@ -1192,7 +1201,11 @@ def audio_screen_static(layout, info):
         _last_thumb = None
 
     # All the static text fields
-    audio_text_fields(image, draw, layout, info, dynamic=0)
+    text_fields(image, draw,
+                layout, info,
+                audio_dmode.name, ScreenMode.AUDIO,
+                dynamic=0)
+    
 
     # Return new image
     return image
@@ -1208,7 +1221,10 @@ def audio_screen_static(layout, info):
 def audio_screen_dynamic(image, draw, layout, info, prog):
 
     # Dynamic text fields
-    audio_text_fields(image, draw, layout, info, dynamic=1)
+    text_fields(image, draw,
+                layout, info,
+                audio_dmode.name, ScreenMode.AUDIO,
+                dynamic=1)    
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
