@@ -526,11 +526,14 @@ draw = ImageDraw.Draw(image)
 # ----------------------------------------------------------------------------
 
 
-# Callback functions for "special treatment" of textfields or other
-# screen elements.
+# Element callback functions
+# --------------------------
 #
-# Each function listed in this dictionary must accept the following 6
-# arguments:
+# These callbacks take the place of the earlier "special treatment" of
+# textfields.
+#
+# Each function listed in the ELEMENT_CB dictionary must accept the
+# following 6 arguments:
 #
 #   image        Image object instance for Pillow
 #
@@ -542,7 +545,7 @@ draw = ImageDraw.Draw(image)
 #   field        dictionary containing layout information, originating
 #                from the setup.toml file
 #
-#   screen_mode  instance of Screen_Mode enumerated type, specifying
+#   screen_mode  instance of ScreenMode enumerated type, specifying
 #                whether screen is STATUS, AUDIO, or VIDEO
 #
 #   layout_name  string specifying in-use layout name
@@ -570,14 +573,14 @@ def element_empty(image, draw, info, field, screen_mode, layout_name):
 # common names.
 
 def element_codec(image, draw, info, field, screen_mode, layout_name):
-    if (screen_mode == Screen_Mode.AUDIO and
+    if (screen_mode == ScreenMode.AUDIO and
         'MusicPlayer.Codec' in info):
         if info['MusicPlayer.Codec'] in codec_name:
             return codec_name[info['MusicPlayer.Codec']]
         else:
             return info['MusicPlayer.Codec']
 
-    elif (screen_mode == Screen_Mode.VIDEO and
+    elif (screen_mode == ScreenMode.VIDEO and
           'VideoPlayer.AudioCodec' in info):
         if info['VideoPlayer.AudioCodec'] in codec_name.keys():
             return codec_name[info['VideoPlayer.AudioCodec']]
@@ -599,7 +602,7 @@ def element_codec(image, draw, info, field, screen_mode, layout_name):
 # This is intended to be an audio-only callback.
 
 def element_full_codec(image, draw, info, field, screen_mode, layout_name):
-    if (screen_mode == Screen_Mode.AUDIO and
+    if (screen_mode == ScreenMode.AUDIO and
         'MusicPlayer.Codec' in info):
 
         if info['MusicPlayer.Codec'] in codec_name:
@@ -625,7 +628,7 @@ def element_full_codec(image, draw, info, field, screen_mode, layout_name):
 # Kodi's UPnP field parsing is incomplete.
 
 def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
-    if screen_mode == Screen_Mode.AUDIO:
+    if screen_mode == ScreenMode.AUDIO:
         if field.get("format_str", ""):
             display_string = format_InfoLabels(field["format_str"], info)
         else:
@@ -1071,9 +1074,10 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
     # Text fields (all except for MusicPlayer.Time)
     txt_fields = layout.get("fields", [])
     for field_info in txt_fields:
-
-        # Skip over the fields that aren't desired for
-        # this invocation
+        display_string = None
+        
+        # Skip over the fields that aren't desired for this
+        # invocation, based on static vs dynamic
         if dynamic:
             if not field_info.get("dynamic", 0):
                 continue
@@ -1081,134 +1085,71 @@ def audio_text_fields(image, draw, layout, info, dynamic=False):
             if field_info.get("dynamic", 0):
                 continue
 
-        # special treatment for "codec", which gets a lookup
-        if field_info["name"] == "codec":
-            display_text = info['MusicPlayer.Codec']
-            if info['MusicPlayer.Codec'] in codec_name:
-                display_text = codec_name[info['MusicPlayer.Codec']]
+        # Check for any defined callback functions.  If an entry
+        # exists in the lookup table, invoke the specified function
+        # with all of the arguments discussed in earlier comments.
 
-            # render any label first
-            if "label" in field_info:
-                draw.text((field_info["lposx"], field_info["lposy"]),
-                          field_info["label"],
-                          fill=field_info["lfill"], font=field_info["lfont"])
-
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_text,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
-
-        # special treatment for "full_codec"
-        elif field_info["name"] == "full_codec":
-            if info['MusicPlayer.Codec'] in codec_name:
-                display_text = codec_name[info['MusicPlayer.Codec']]
-                display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
-                    info['MusicPlayer.SampleRate'] + ")"
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-
-                draw.text((field_info["posx"], field_info["posy"]),
-                          display_text,
-                          fill=field_info["fill"],
-                          font=field_info["font"])
-
-            # special treatment for "artist"
-        elif (field_info["name"] == "artist" and
-              info['MusicPlayer.Artist'] != ""):
-            display_string = None
-
-            if field_info.get("format_str", ""):
-                display_string = format_InfoLabels(
-                    field_info["format_str"], info)
-            else:
-                # The following was an attempt to display Composer if
-                # Artist is blank.  The combination of JRiver Media Center
-                # and UPnP/DLNA playback via Kodi didn't quite permit this
-                # to work, unfortunately.
-
-                if info['MusicPlayer.Artist'] != "":
-                    display_string = (field_info.get("prefix", "") + info['MusicPlayer.Artist'] +
-                                      field_info.get("suffix", ""))
-                elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                    display_string = (field_info.get("prefix", "") +
-                                      "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
-                                      field_info.get("suffix", ""))
-
-            if (display_string == "Unknown" and
-                    field_info.get("drop_unknown", 0)):
-                continue
-
-            if display_string:
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
-
-        # all other text fields
+        if field_info["name"] in ELEMENT_CB:
+            display_string = ELEMENT_CB[field_info["name"]](
+                image,             # Image instance
+                draw,              # ImageDraw instance
+                info,              # Kodo InfoLabel response
+                field_info,        # layout details for field
+                ScreenMode.AUDIO,  # screen mode, as enum
+                audio_dmode.name   # layout name, as string
+            )
+            # print("Invoked CB for ", field_info["name"],"; received back '", display_string, "'")
+            
         else:
             if (field_info["name"] in info.keys() and
-                    info[field_info["name"]] != ""):
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
+                info[field_info["name"]] != ""):
 
                 # Use format_str or prefix/suffic approach, in that order
                 if field_info.get("format_str", ""):
                     display_string = format_InfoLabels(
                         field_info["format_str"], info)
                 else:
-                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
+                    display_string = (field_info.get("prefix", "") +
+                                      info[field_info["name"]] +
                                       field_info.get("suffix", ""))
+                
 
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
+        # if the string to display is empty, move on to the next field,
+        # otherwise render it.
+        if (not display_string or display_string == ""):
+            continue
+
+        # render any label first
+        if "label" in field_info:
+            draw.text((field_info["lposx"], field_info["lposy"]),
+                      field_info["label"],
+                      fill=field_info["lfill"], font=field_info["lfont"])
+
+        if "wrap" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=field_info["max_width"],
+                             max_lines=field_info["max_lines"],
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        elif "trunc" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=_frame_size[0] -
+                             field_info["posx"],
+                             max_lines=1,
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        else:
+            draw.text((field_info["posx"], field_info["posy"]),
+                      display_string,
+                      fill=field_info["fill"],
+                      font=field_info["font"])
 
 
+            
 # Render the static portion of audio screens
 #
 #  First argument is the layout dictionary to use
