@@ -712,12 +712,12 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 
 
 # Dictionaries of element and string callback functions, with each key
-# corresponding to the "name" specified for a textfield (within a
-# layout's array of such textfields).
+# corresponding to the "name" specified for a field (within a layout's
+# array named "fields").
 #
 # Scripts that are making use of kodi_panel_display can change the
-# function assigned to the entries below and add entirely new
-# key/value pairs.  Prior to invoking
+# function assigned to the entries below or add entirely new key/value
+# pairs.  Prior to invoking
 #
 #   kodi_panel_display.main(device)
 #
@@ -751,8 +751,11 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #
 #    1. Not making use of "thumb" or "prog" in their layouts.
 #
-#    2. Providing equivalent, customized functionality via their
-#       own element callback functions, adding to ELEMENT_CB.
+#    2. Providing equivalent, customized functionality via their own
+#       element callback functions, adding to ELEMENT_CB.  (The new
+#       functions must take some care if referencing any variables
+#       declared in this module's namespace, but such uses are
+#       certainly possible.)
 #
 #    3. Invoking those callbacks by name within the fields
 #       array of their layouts.
