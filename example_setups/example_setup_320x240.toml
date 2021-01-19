@@ -166,7 +166,7 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #
 [COLORS]
  color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
- color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while) 
+ color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while)
  color_artist = 'yellow'     # artist name
 
 
@@ -197,13 +197,13 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
   name = "font_sm"
   path = "fonts/FreeSans.ttf"
   size = 18
-  encoding = 'unic'  
+  encoding = 'unic'
 
 [[fonts]]
   name = "font_tiny"
   path = "fonts/FreeSans.ttf"
   size = 11
-  encoding = 'unic'  
+  encoding = 'unic'
 
 # 7-segment font used for elapsed time and track number
 [[fonts]]
@@ -236,15 +236,15 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #     [shared_element.elapsed_time]
 #      name = "MusicPlayer.Time"
 #      posx = 420
-#      posy = 36 
+#      posy = 36
 #      font = "font7S"
 #      fill = "color_7S"
 #      dynamic = 1
-#     
+#
 #     [shared_element.progress_bar]
-#      posx   = 420   
-#      posy   = 8     
-#      height = 12    
+#      posx   = 420
+#      posy   = 8
+#      height = 12
 #      short_len = 196
 #      long_len  = 300
 #      color_fg = "color_7S"
@@ -258,10 +258,10 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #     [A_LAYOUT.A_FULLSCREEN.thumb]
 #     center = 1
 #     size = 480
-#     
+#
 #     [A_LAYOUT.A_FULLSCREEN.prog]
 #      shared_element = "progress_bar"
-#     
+#
 #     [[A_LAYOUT.A_FULLSCREEN.fields]]
 #      shared_element = "elapsed_time"
 #
@@ -309,6 +309,11 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #                 substitute, enclosed within curly braces.  See the
 #                 status layout screen text fields for examples.
 #
+#                 Terms to be substituted can also make use of any
+#                 entries defined within the string-manipulation
+#                 callback table (see the STRING_CB dictionary in
+#                 kodi_panel_display.py)
+#
 #      trunc    Flag indicating that single line string should
 #               truncated at the right-hand edge of the display
 #
@@ -332,8 +337,9 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #      lfill    Font fill color for label string
 #
 #
-#
-#   Special treatment exists for the 'codec' and 'artist' text fields.
+#   Internal callbacks are used for the 'codec' and 'artist' text
+#   fields.  End-user scripts are free to augment or modify the
+#   callback tables (look for ELEMENT_CB and STRING_CB).
 #
 # --------------------------------------------------------------------
 
@@ -347,7 +353,7 @@ posy = 7
 size = 140
 # If artwork is smaller than the above size, should it be centered
 # where the fullsize artwork would have been placed?
-center_sm = 1  
+center_sm = 1
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 150     # upper-left corner x position
@@ -392,7 +398,7 @@ font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name = "codec"   # special treatment in audio_screens()
+name = "codec"   # internal callback
 posx = 230
 posy = 79
 font = "font_tiny"
@@ -416,7 +422,6 @@ posy = 107
 font = "font_tiny"
 fill = "white"
 
-
 #
 # Finally, the track title, album title, and artist appear below
 # the cover art.
@@ -439,7 +444,7 @@ fill  = "white"
 trunc = 1
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name  = "artist"   # special treatment in audio_screens()
+name  = "artist"   # internal callback
 posx  = 4
 posy  = 205
 font  = "font_sm"
@@ -490,8 +495,6 @@ color_bg = "color_gray"
 #   If a completely new InfoLabel is desired, then one must also
 #   augment the VIDEO_LABELS list (see earlier in this file).
 #
-#   Special treatment may exist for text fields within video_screens()
-#
 # --------------------------------------------------------------------
 
 #
@@ -511,7 +514,7 @@ center = 1
 #   that appears following a screen touch when idle.  The screen
 #   gets drawn by status_screen().
 #
-#   Special treatment exists for several field names
+#   Internal callbacks are used for some fields
 #
 
 [STATUS_LAYOUT.thumb]   # Kodi logo
@@ -520,7 +523,7 @@ posy = 5
 size = 128
 
 [[STATUS_LAYOUT.fields]]
-name = "version"        # special treatment
+name = "version"        # internal callback
 posx = 145
 posy = 8
 font = "font_main"
@@ -528,14 +531,14 @@ fill = "color_artist"
 
 
 [[STATUS_LAYOUT.fields]]
-name = "summary"        # special treatment
+name = "summary"
 posx = 145
 posy = 35
 font = "font_main"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "time_hrmin"     # special treatment
+name = "time_hrmin"     # internal callback
 posx = 145
 posy = 73
 font = "font7S"
@@ -543,7 +546,8 @@ fill = "color_7S"
 smfont = "font7S_sm"    # used for AM / PM
 
 # The remaining fields all get populated via a special JSON-RPC query
-# to Kodi specifically for the status screen.
+# to Kodi specifically for the status screen.  See STATUS_LABELS
+# above.
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Date"
@@ -567,4 +571,3 @@ posy = 200
 format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
 fill = "white"
-

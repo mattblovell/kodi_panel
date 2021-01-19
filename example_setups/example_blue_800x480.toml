@@ -23,8 +23,8 @@ BASE_URL = "http://localhost:8080"
 # Specify the size of the display in pixels.  These values get stored
 # into a tuple within kodi_panel and MUST match how the display (or
 # framebuffer) is configured.
-DISPLAY_WIDTH  = 800 
-DISPLAY_HEIGHT = 480 
+DISPLAY_WIDTH  = 800
+DISPLAY_HEIGHT = 480
 
 # GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
 # numbering.
@@ -119,7 +119,7 @@ ENABLE_VIDEO_SCREENS = true
 
 # List of additional InfoLabels to retrieve for status screen
 STATUS_LABELS = [
-   "System.OSVersionInfo"   
+   "System.OSVersionInfo"
 ]
 
 # List of additional InfoLabels to retrieve for audio screen(s)
@@ -164,7 +164,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #
 #   If that flag is set to true, then VLAYOUT_NAMES should be
 #   populated with entries that match the heuristic if-then that is
-#   used by video_screens(). 
+#   used by video_screens().
 #
 #   If that variable is to false or left undeclared, then video modes
 #   just form a cycle that gets advanced via the touch interrupt, as
@@ -202,7 +202,7 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #    #00A0E3        blue, close to an LED
 #    #3399ff        skyblue
 #    #38bde8        Kodi logo's blue
-#  
+#
 #   Artist
 #   ------
 #    yellow
@@ -234,7 +234,7 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #
 #
 #  After lots o'indecision, I decided to go with the light amber!
-#  
+#
 #
 [COLORS]
  color_artist = '#ffcc00'    # artist name
@@ -258,7 +258,7 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 [[fonts]]
   name = "font_main"
   path = "fonts/Roboto-Light.ttf"
-  size = 28 
+  size = 28
   encoding = 'unic'
 
 # The "font_bold" below is what the layouts below all use for the
@@ -269,7 +269,7 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 [[fonts]]
   name = "font_bold"
 #  path = "fonts/RobotoCondensed-Light.ttf"
-  path = "fonts/ArchivoNarrow-Medium.ttf"  
+  path = "fonts/ArchivoNarrow-Medium.ttf"
   size = 54
   encoding = 'unic'
 
@@ -283,13 +283,13 @@ VLAYOUT_INITIAL = "V_DEFAULT"
   name = "font_artist"
   path = "fonts/Roboto-Medium.ttf"
   size = 30
-  encoding = 'unic'  
+  encoding = 'unic'
 
 [[fonts]]
   name = "font_tiny"
   path = "fonts/Roboto-Light.ttf"
   size = 22
-  encoding = 'unic'  
+  encoding = 'unic'
 
 # 7-segment font used for elapsed time and track number
 [[fonts]]
@@ -322,15 +322,15 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [shared_element.elapsed_time]
 #      name = "MusicPlayer.Time"
 #      posx = 420
-#      posy = 36 
+#      posy = 36
 #      font = "font7S"
 #      fill = "color_7S"
 #      dynamic = 1
-#     
+#
 #     [shared_element.progress_bar]
-#      posx   = 420   
-#      posy   = 8     
-#      height = 12    
+#      posx   = 420
+#      posy   = 8
+#      height = 12
 #      short_len = 196
 #      long_len  = 300
 #      color_fg = "color_7S"
@@ -344,10 +344,10 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [A_LAYOUT.A_FULLSCREEN.thumb]
 #     center = 1
 #     size = 480
-#     
+#
 #     [A_LAYOUT.A_FULLSCREEN.prog]
 #      shared_element = "progress_bar"
-#     
+#
 #     [[A_LAYOUT.A_FULLSCREEN.fields]]
 #      shared_element = "elapsed_time"
 #
@@ -395,6 +395,11 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #                 substitute, enclosed within curly braces.  See the
 #                 status layout screen text fields for examples.
 #
+#                 Terms to be substituted can also make use of any
+#                 entries defined within the string-manipulation
+#                 callback table (see the STRING_CB dictionary in
+#                 kodi_panel_display.py)
+#
 #      trunc    Flag indicating that single line string should
 #               truncated at the right-hand edge of the display
 #
@@ -418,7 +423,9 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #      lfill    Font fill color for label string
 #
 #
-#   Special treatment exists for the 'codec' and 'artist' text fields.
+#   Internal callbacks are used for the 'codec' and 'artist' text
+#   fields.  End-user scripts are free to augment or modify the
+#   callback tables (look for ELEMENT_CB and STRING_CB).
 #
 # --------------------------------------------------------------------
 
@@ -432,7 +439,7 @@ posy = 4
 size = 405
 # If artwork is smaller than the above size, should it be centered
 # where the fullsize artwork would have been placed?
-center_sm = 1    
+center_sm = 1
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
@@ -446,7 +453,7 @@ color_bg = "color_gray"
 [[A_LAYOUT.A_DEFAULT.fields]]
 name = "MusicPlayer.Time"
 posx = 420
-posy = 36 
+posy = 36
 font = "font7S"
 fill = "color_7S"
 dynamic = 1
@@ -480,7 +487,7 @@ font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name = "codec"   # special treatment in audio_screens()
+name = "codec"   # internal callback
 posx = 580
 posy = 132
 font = "font_tiny"
@@ -524,7 +531,7 @@ trunc = 1
 #
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name  = "artist"   # special treatment in audio_screens()
+name  = "artist"   # internal callback
 posx  = 420
 posy  = 240
 font  = "font_artist"
@@ -596,7 +603,7 @@ fill = "color_7S"
 posx = 3
 posy = 4
 size = 405
-center_sm = 1    
+center_sm = 1
 
 [A_LAYOUT.A_NOTIME.prog]    # Progress Bar
 posx   = 420     # upper-left corner x position
@@ -633,7 +640,7 @@ font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_NOTIME.fields]]
-name = "codec"   # special treatment in audio_screens()
+name = "codec"   # internal callback
 posx = 580
 posy = 62
 font = "font_tiny"
@@ -677,7 +684,7 @@ trunc = 1
 #
 
 [[A_LAYOUT.A_NOTIME.fields]]
-name  = "artist"   # special treatment in audio_screens()
+name  = "artist"   # internal callback
 posx  = 420
 posy  = 240
 font  = "font_artist"
@@ -711,8 +718,6 @@ max_lines = 4
 #   If a completely new InfoLabel is desired, then one must also
 #   augment the VIDEO_LABELS list (see earlier in this file).
 #
-#   Special treatment may exist for text fields within video_screens()
-#
 # --------------------------------------------------------------------
 
 #
@@ -739,7 +744,7 @@ color_bg = "color_gray"
 [[V_LAYOUT.V_DEFAULT.fields]]
 name = "VideoPlayer.Time"
 posx = 340
-posy = 31 
+posy = 31
 font = "font7S"
 fill = "color_7S"
 dynamic = 1
@@ -800,7 +805,7 @@ center = 1
 #   that appears following a screen touch when idle.  The screen
 #   gets drawn by status_screen().
 #
-#   Special treatment exists for several field names
+#   Internal callbacks are used for several fields.
 #
 
 [STATUS_LAYOUT.thumb]   # Kodi logo
@@ -809,7 +814,7 @@ posy = 5
 size = 128
 
 [[STATUS_LAYOUT.fields]]
-name = "version"        # special treatment
+name = "version"        # internal callback
 posx = 145
 posy = 8
 font = "font_main"
@@ -817,14 +822,14 @@ fill = "yellow"
 
 
 [[STATUS_LAYOUT.fields]]
-name = "summary"        # special treatment
+name = "summary"
 posx = 145
 posy = 40
 font = "font_main"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "time_hrmin"     # special treatment
+name = "time_hrmin"     # internal callback
 posx = 145
 posy = 90
 font = "font7S"
@@ -832,7 +837,7 @@ fill = "#00FF78"
 smfont = "font7S_sm"    # used for AM / PM
 
 # The remaining fields all get populated via a special JSON-RPC query
-# to Kodi specifically for the status screen.
+# to Kodi specifically for the status screen.  See STATUS_LABELS above.
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Date"
@@ -858,7 +863,7 @@ font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "kodi_version"  # special treatment
+name = "kodi_version"  # internal callback
 posx = 5
 posy = 290
 font = "font_sm"
