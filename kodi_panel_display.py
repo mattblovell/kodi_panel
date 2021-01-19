@@ -349,7 +349,7 @@ if VIDEO_ENABLED:
 
 # Screen Mode
 # -----------
-#        
+#
 # Define an enumerated type (well, it's still Python, so a class)
 # representing whether the screen being drawn is for audio playback,
 # video playback, or is just a status screen.
@@ -358,7 +358,7 @@ class ScreenMode(Enum):
     STATUS = 0   # kodi_panel status screen
     AUDIO  = 1   # audio playback is active
     VIDEO  = 2   # video playback is active
-        
+
 
 # Shared Elements
 # ---------------
@@ -585,11 +585,11 @@ draw = ImageDraw.Draw(image)
 # directly make use of format_InfoLabels() themselves.
 
 
-# Empty callback function, largely for testing    
+# Empty callback function, largely for testing
 def element_empty(image, draw, info, field, screen_mode, layout_name):
     return ""
 
-# Empty callback function, largely for testing    
+# Empty callback function, largely for testing
 def strcb_empty(info, screen_mode, layout_name):
     return ""
 
@@ -613,9 +613,9 @@ def strcb_acodec(info, screen_mode, layout_name):
         if info['VideoPlayer.AudioCodec'] in codec_name.keys():
             return codec_name[info['VideoPlayer.AudioCodec']]
         else:
-            return info['VideoPlayer.AudioCodec']        
+            return info['VideoPlayer.AudioCodec']
     return ""
-    
+
 
 # Construct a string containing both the friendly codec name and, in
 # parenthesis, the bit depth and sample rate for the codec.
@@ -653,19 +653,19 @@ def strcb_full_codec(info, screen_mode, layout_name):
 # Kodi doesn't successfully yield any composer info.  I believe that
 # Kodi's UPnP field parsing is incomplete.
 
-def strcb_audio_artist(info, screen_mode, layout_name):    
+def strcb_audio_artist(info, screen_mode, layout_name):
     if screen_mode == ScreenMode.AUDIO:
         # The following was an attempt to display Composer if
         # Artist is blank.  The combination of JRiver Media Center
         # and UPnP/DLNA playback via Kodi didn't quite permit this
         # to work, unfortunately.
-        
+
         if info['MusicPlayer.Artist'] != "":
             display_string = info['MusicPlayer.Artist']
 
         elif info['MusicPlayer.Property(Role.Composer)'] != "":
             display_string = "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
-            
+
         if (display_string == "Unknown" and field.get("drop_unknown", 0)):
             display_string = ""
 
@@ -674,7 +674,7 @@ def strcb_audio_artist(info, screen_mode, layout_name):
 
 
 
-# Return string with current kodi_panel version    
+# Return string with current kodi_panel version
 def strcb_version(info, screen_mode, layout_name):
     return "kodi_panel " + PANEL_VER
 
@@ -703,11 +703,11 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
                   field["fill"], field["smfont"])
 
     return ""
-        
+
 
 # Dictionary of element callback functions, with each key
 # corresponding to either the "name" specified for a textfield (within
-# a layout's array of such textfields).  
+# a layout's array of such textfields).
 #
 # Scripts that are making use of kodi_panel_display can change the
 # function assigned to the entries below and add entirely new
@@ -732,7 +732,7 @@ ELEMENT_CB = {
     # Status screen fields
     'time_hrmin' : element_time_hrmin,
     }
-    
+
 
 STRING_CB = {
     # Audio screen fields
@@ -742,7 +742,7 @@ STRING_CB = {
 
     # Video screen fields
     'acodec'     : strcb_acodec,
-    
+
     # Status screen fields
     'version'      : strcb_version,
     'kodi_version' : strcb_kodi_version,
@@ -1064,7 +1064,7 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
                                           kodi_info,
                                           screen_mode,
                                           layout_name
-                                      ))            
+                                      ))
         else:
             new_str = new_str.replace('{' + field + '}', '')
     return new_str
@@ -1090,7 +1090,7 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 #  screen_mode  Enumerated type indicating AUDIO, VIDEO, or STATUS
 #  layout_name  Name, as a string, for the in-use layout
 #  dynamic      Boolean flag, set for dynamic screen updates
-#  
+#
 #
 def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
 
@@ -1098,7 +1098,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
     txt_fields = layout.get("fields", [])
     for field_info in txt_fields:
         display_string = None
-        
+
         # Skip over the fields that aren't desired for this
         # invocation, based on static vs dynamic
         if dynamic:
@@ -1129,7 +1129,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
                 screen_mode,       # screen mode, as enum
                 layout_name        # layout name, as string
             )
-            
+
         else:
             if (field_info["name"] in info.keys() and
                 info[field_info["name"]] != ""):
@@ -1142,7 +1142,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
                     display_string = (field_info.get("prefix", "") +
                                       info[field_info["name"]] +
                                       field_info.get("suffix", ""))
-                
+
 
         # if the string to display is empty, move on to the next field,
         # otherwise render it.
@@ -1208,7 +1208,7 @@ def status_screen(image, draw, kodi_status, summary_string):
                 ScreenMode.STATUS, "STATUS_LAYOUT")
 
 
-            
+
 # Render the static portion of audio screens
 #
 #  First argument is the layout dictionary to use
@@ -1273,7 +1273,7 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
     text_fields(image, draw,
                 layout, info,
                 ScreenMode.AUDIO, audio_dmode.name,
-                dynamic=1)    
+                dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -1381,7 +1381,7 @@ def video_screen_static(layout, info):
     text_fields(image, draw,
                 layout, info,
                 ScreenMode.VIDEO, video_dmode.name,
-                dynamic=0)    
+                dynamic=0)
 
     # Return new image
     return image
@@ -1472,7 +1472,7 @@ def video_screens(image, draw, info, prog):
 
     # Look up video layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
-        
+
     if (_static_image and _static_video and
         info["VideoPlayer.Title"] == _last_video_title and
         info["VideoPlayer.Episode"] == _last_video_episode and
@@ -1640,7 +1640,7 @@ def update_display(touched=False):
 
             # add the summary string above to the response dictionary
             status_resp['result']['summary'] = summary
-            
+
             status_screen(image, draw, status_resp['result'], summary)
             screen_on()
         else:

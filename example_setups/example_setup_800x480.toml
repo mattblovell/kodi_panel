@@ -336,6 +336,11 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #                 substitute, enclosed within curly braces.  See the
 #                 status layout screen text fields for examples.
 #
+#                 Terms to be substituted can also make use of any
+#                 entries defined within the string-manipulation
+#                 callback table (see the STRING_CB dictionary in
+#                 kodi_panel_display.py)
+#
 #      trunc    Flag indicating that single line string should
 #               truncated at the right-hand edge of the display
 #
