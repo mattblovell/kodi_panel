@@ -652,8 +652,14 @@ def strcb_full_codec(info, screen_mode, layout_name):
 # combination of JRiver Media Center providing DLNA/UPnp playback to
 # Kodi doesn't successfully yield any composer info.  I believe that
 # Kodi's UPnP field parsing is incomplete.
+#
+# This function is an element callback simply to provide access to the
+# possibly-defined "drop_unknown" flag from TOML configuration.  It is
+# possible that functionality (not displaying a field based upon
+# display_string) will be replaced by something more general.
+#
 
-def strcb_audio_artist(info, screen_mode, layout_name):
+def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
     if screen_mode == ScreenMode.AUDIO:
         # The following was an attempt to display Composer if
         # Artist is blank.  The combination of JRiver Media Center
@@ -705,9 +711,9 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
     return ""
 
 
-# Dictionary of element callback functions, with each key
-# corresponding to either the "name" specified for a textfield (within
-# a layout's array of such textfields).
+# Dictionaries of element and string callback functions, with each key
+# corresponding to the "name" specified for a textfield (within a
+# layout's array of such textfields).
 #
 # Scripts that are making use of kodi_panel_display can change the
 # function assigned to the entries below and add entirely new
@@ -716,19 +722,33 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #   kodi_panel_display.main(device)
 #
 # scripts that wish to install their own callback functions can
-# directly manipulate kodi_panel_display.ELEMENT_CB.  For instance, if
-# a script has a customized codec lookup function, it can make the
-# assignment
+# directly manipulate
+#
+#    kodi_panel_display.ELEMENT_CB   or
+#    kodi_panel_display.STRING_CB
+#
+# For instance, if a script has a customized codec lookup function, it
+# can make the assignment
 #
 #   kodi_panel_display.ELEMENT_CB["codec"] = my_element_codec
 #
 # provided the my_element_codec() definition has been provided first.
+# Note that existing keys can be removed from either dictionary using
+# a del statement:
 #
+#   del kodi_panel_display.STRING_CB["codec"]
+#
+# Deleting an entry is necessary if one wants to switch an existing
+# key name to reside in the other lookup table.
+# 
 
 # FIXME: MBL, 19 Jan 21 -- Extend to top-level elements (thumb, prog)
 #        within a layout??
 
 ELEMENT_CB = {
+    # Audio screen fields
+    'artist'     : element_audio_artist,
+    
     # Status screen fields
     'time_hrmin' : element_time_hrmin,
     }
@@ -738,7 +758,6 @@ STRING_CB = {
     # Audio screen fields
     'codec'      : strcb_codec,
     'full_codec' : strcb_full_codec,
-    'artist'     : strcb_audio_artist,
 
     # Video screen fields
     'acodec'     : strcb_acodec,
