@@ -675,7 +675,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
     if "System.Time" in info:
         time_parts = info['System.Time'].split(" ")
         time_width, time_height = draw.textsize(time_parts[0], field["font"])
-        draw.text((field_info["posx"], field["posy"]),
+        draw.text((field["posx"], field["posy"]),
                   time_parts[0],
                   field["fill"], field["font"])
         draw.text((field["posx"] + time_width + 5, field["posy"]),
@@ -1130,7 +1130,7 @@ def text_fields(image, draw, layout, info, layout_name, screen_mode, dynamic=Fal
 # Second argument is a dictionary loaded from Kodi system status fields.
 # This argument is the string to use for current state of the system
 #
-def status_screen(draw, kodi_status, summary_string):
+def status_screen(image, draw, kodi_status, summary_string):
     layout = STATUS_LAYOUT
 
     # Kodi logo, if desired
@@ -1146,51 +1146,9 @@ def status_screen(draw, kodi_status, summary_string):
     if "fields" not in layout.keys():
         return
 
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-        if field_info["name"] == "version":
-            draw.text((field_info["posx"], field_info["posy"]),
-                      "kodi_panel " + PANEL_VER,
-                      field_info["fill"], field_info["font"])
-
-        elif field_info["name"] == "summary":
-            draw.text((field_info["posx"], field_info["posy"]),
-                      summary_string,
-                      field_info["fill"], field_info["font"])
-
-        elif field_info["name"] == "kodi_version":
-            kodi_version = kodi_status["System.BuildVersion"].split()[0]
-            build_date = kodi_status["System.BuildDate"]
-            draw.text((field_info["posx"], field_info["posy"]),
-                      "Kodi version: " + kodi_version +
-                      " (" + build_date + ")",
-                      field_info["fill"], field_info["font"])
-
-        elif field_info["name"] == "time_hrmin":
-            # current time (in 7-segment LED font by default)
-            time_parts = kodi_status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(
-                time_parts[0], field_info["font"])
-            draw.text((field_info["posx"], field_info["posy"]),
-                      time_parts[0],
-                      field_info["fill"], field_info["font"])
-            draw.text((field_info["posx"] + time_width + 5, field_info["posy"]),
-                      time_parts[1],
-                      field_info["fill"], field_info["smfont"])
-
-        else:
-            # Use format_str or prefix/suffic approach, in that order
-            if field_info.get("format_str", ""):
-                display_string = format_InfoLabels(
-                    field_info["format_str"], kodi_status)
-            else:
-                display_string = (field_info.get("prefix", "") + kodi_status[field_info["name"]] +
-                                  field_info.get("suffix", ""))
-
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_string,
-                      field_info["fill"], field_info["font"])
-
+    text_fields(image, draw,
+                layout, kodi_status,
+                "STATUS_LAYOUT", ScreenMode.STATUS)
 
 
             
@@ -1622,7 +1580,11 @@ def update_display(touched=False):
                 rpc_url,
                 data=json.dumps(payload),
                 headers=headers).json()
-            status_screen(draw, status_resp['result'], summary)
+
+            # add the summary string above to the response dictionary
+            status_resp['result']['summary'] = summary
+            
+            status_screen(image, draw, status_resp['result'], summary)
             screen_on()
         else:
             screen_off()
