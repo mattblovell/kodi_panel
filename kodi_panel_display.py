@@ -727,8 +727,8 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #    kodi_panel_display.ELEMENT_CB   or
 #    kodi_panel_display.STRING_CB
 #
-# For instance, if a script has a customized codec lookup function, it
-# can make the assignment
+# as part of their startup.  For instance, if a script has a
+# customized codec lookup function, it can make the assignment
 #
 #   kodi_panel_display.ELEMENT_CB["codec"] = my_element_codec
 #
