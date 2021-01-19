@@ -1200,12 +1200,11 @@ def audio_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All the static text fields
+    # All static text fields
     text_fields(image, draw,
                 layout, info,
                 audio_dmode.name, ScreenMode.AUDIO,
                 dynamic=0)
-    
 
     # Return new image
     return image
@@ -1220,7 +1219,7 @@ def audio_screen_static(layout, info):
 #
 def audio_screen_dynamic(image, draw, layout, info, prog):
 
-    # Dynamic text fields
+    # All dynamic text fields
     text_fields(image, draw,
                 layout, info,
                 audio_dmode.name, ScreenMode.AUDIO,
@@ -1289,89 +1288,6 @@ def audio_screens(image, draw, info, prog):
     audio_screen_dynamic(image, draw, layout, info, prog)
 
 
-# Render all video text fields, stepping through the entries from the
-# VIDEO_LAYOUT layout dictionary.
-#
-# The final argument determines whether one wants to render all of the
-# static fields or just the dynamic ones.  That permits this function
-# to be called by both
-#
-#   video_screen_static() and
-#   video_screen_dynamic()
-#
-def video_text_fields(image, draw, layout, info, dynamic=False):
-
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-
-        # Skip over the fields that aren't desired for
-        # this invocation
-        if dynamic:
-            if not field_info.get("dynamic", 0):
-                continue
-        else:
-            if field_info.get("dynamic", 0):
-                continue
-
-        # special treatment for audio codec, which gets a lookup
-        if field_info["name"] == "acodec":
-            display_text = info['VideoPlayer.AudioCodec']
-            if info['VideoPlayer.AudioCodec'] in codec_name.keys():
-                display_text = codec_name[info['VideoPlayer.AudioCodec']]
-
-            # render any label first
-            if "label" in field_info:
-                draw.text((field_info["lposx"], field_info["lposy"]),
-                          field_info["label"],
-                          fill=field_info["lfill"], font=field_info["lfont"])
-
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_text,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
-
-        # all other text fields
-        else:
-            if (field_info["name"] in info.keys() and
-                    info[field_info["name"]] != ""):
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-
-                # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str", ""):
-                    display_string = format_InfoLabels(
-                        field_info["format_str"], info)
-                else:
-                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
-                                      field_info.get("suffix", ""))
-
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
-
 
 # Render the static portion of video screens
 def video_screen_static(layout, info):
@@ -1411,8 +1327,11 @@ def video_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All the static text fields
-    video_text_fields(image, draw, layout, info, dynamic=0)
+    # All static text fields
+    text_fields(image, draw,
+                layout, info,
+                video_dmode.name, ScreenMode.VIDEO,
+                dynamic=0)    
 
     # Return new image
     return image
@@ -1427,8 +1346,11 @@ def video_screen_static(layout, info):
 #
 def video_screen_dynamic(image, draw, layout, info, prog):
 
-    # Dynamic text fields
-    video_text_fields(image, draw, layout, info, dynamic=1)
+    # All Dynamic text fields
+    text_fields(image, draw,
+                layout, info,
+                video_dmode.name, ScreenMode.VIDEO,
+                dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -1462,9 +1384,7 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 def video_screens(image, draw, info, prog):
     global _static_image, _static_video
     global _last_video_title, _last_video_episode, _last_video_time
-
-    # Determine what video layout should be used
-    layout = VIDEO_LAYOUT[video_dmode.name]
+    global video_dmode
 
     # Heuristic to determine layout based upon populated InfoLabels,
     # if enabled via settings.  Originally suggested by @noggin and
@@ -1487,19 +1407,22 @@ def video_screens(image, draw, info, prog):
     if VIDEO_LAYOUT_AUTOSELECT:
         if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
                 "V_PVR" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_PVR"]     # PVR TV shows
+            video_dmode = VDisplay["V_PVR"]     # PVR TV shows
         elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
               "V_LIVETV" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_LIVETV"]  # live TV
+            video_dmode = VDisplay["V_LIVETV"]  # live TV
         elif (info["VideoPlayer.TVShowTitle"] != '' and
               "V_TV_SHOW" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_TV_SHOW"]  # Library TV shows
+            video_dmode = VDisplay["V_TV_SHOW"] # library TV shows
         elif (info["VideoPlayer.OriginalTitle"] != '' and
               "V_MOVIE" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_MOVIE"]   # movie
+            video_dmode = VDisplay["V_MOVIE"]   # movie
         else:
             pass  # leave as-is, just use default selection
 
+    # Look up video layout details
+    layout = VIDEO_LAYOUT[video_dmode.name]
+        
     if (_static_image and _static_video and
         info["VideoPlayer.Title"] == _last_video_title and
         info["VideoPlayer.Episode"] == _last_video_episode and
@@ -1553,6 +1476,10 @@ def calc_progress(time_str, duration_str):
         return -1
 
 
+# Activate display backlight, making use of luma's PWM capabilities if
+# enabled.  Note that scripts using hardware PWM on RPi are likely to
+# override this function.
+#
 def screen_on():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
@@ -1561,7 +1488,10 @@ def screen_on():
     else:
         device.backlight(True)
 
-
+# Turn off the display backlight, making use of luma's PWM
+# capabilities if enabled.  Note that scripts using hardware PWM on
+# RPi are likely to override this function.
+#
 def screen_off():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
