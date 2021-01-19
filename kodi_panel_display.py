@@ -469,7 +469,7 @@ else:
 #
 USE_TOUCH = config.settings.get("USE_TOUCH", False)
 TOUCH_INT = config.settings.get("TOUCH_INT", 0)
-TOUCH_PULLUP = config.settings.get("TOUCH_PULLUP", False)
+TOUCH_PULLUP   = config.settings.get("TOUCH_PULLUP", False)
 TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE", 700)  # milliseconds
 
 # Should the touch_callback() ISR attempt to invoke update_display()
@@ -479,9 +479,9 @@ TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE", False)
 
 # Internal state variables used to manage screen presses
 _kodi_connected = False
-_kodi_playing = False
-_screen_press = False
-_screen_active = False
+_kodi_playing   = False
+_screen_press   = False
+_screen_active  = False
 
 # status screen waketime, in seconds
 _screen_wake = config.settings.get("SCREEN_WAKE_TIME", 25)
@@ -526,12 +526,13 @@ draw = ImageDraw.Draw(image)
 # ----------------------------------------------------------------------------
 
 
-# Element callback functions
-# --------------------------
+# Element and String callback functions
+# -------------------------------------
 #
 # These callbacks provide the "special treatment" of textfields that
 # was previously provided via if-elif trees within audio- and
-# video-specific functions.
+# video-specific functions.  See additional comment block after all of
+# the function definitions.
 #
 # Each function listed in the ELEMENT_CB dictionary must accept the
 # following 6 arguments:
@@ -561,19 +562,42 @@ draw = ImageDraw.Draw(image)
 # it upon itself to modify the passed Image or ImageDraw objects
 # directly, then it should return an empty string.
 #
-# After the function definitions, see remarks ahead of the callback
-# dictionary.
+# It is also possible to define a simpler set of callback functions
+# that only perform string manipulation.  Functions in that lookup
+# table only need to accept 3 arguments:
+#
+#   info         dictionary containing InfoLabels from JSON-RPC response,
+#                possibly augmented by calling function
+#
+#   screen_mode  instance of ScreenMode enumerated type, specifying
+#                whether screen is STATUS, AUDIO, or VIDEO
+#
+#   layout_name  string specifying in-use layout name
+#
+# Such functions must also return a string, even if empty.
+#
+#
+# Finally, note that some care should be taken if any callback
+# function wants to make use of format_InfoLabels(), as that function
+# also ends up consulting the string callback table.  If one isn't
+# careful, a loop could be possible that will end up just crashing
+# Python.  In general, it is NOT recommended that callback functions
+# directly make use of format_InfoLabels() themselves.
 
 
 # Empty callback function, largely for testing    
 def element_empty(image, draw, info, field, screen_mode, layout_name):
     return ""
 
+# Empty callback function, largely for testing    
+def strcb_empty(info, screen_mode, layout_name):
+    return ""
+
 
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
 
-def element_codec(image, draw, info, field, screen_mode, layout_name):
+def strcb_codec(info, screen_mode, layout_name):
     if 'MusicPlayer.Codec' in info:
         if info['MusicPlayer.Codec'] in codec_name:
             return codec_name[info['MusicPlayer.Codec']]
@@ -584,7 +608,7 @@ def element_codec(image, draw, info, field, screen_mode, layout_name):
 
 # Similar function for AudioCodec lookup when playing video
 
-def element_acodec(image, draw, info, field, screen_mode, layout_name):
+def strcb_acodec(info, screen_mode, layout_name):
     if 'VideoPlayer.AudioCodec' in info:
         if info['VideoPlayer.AudioCodec'] in codec_name.keys():
             return codec_name[info['VideoPlayer.AudioCodec']]
@@ -603,7 +627,7 @@ def element_acodec(image, draw, info, field, screen_mode, layout_name):
 #
 # This is intended to be an audio-only callback.
 
-def element_full_codec(image, draw, info, field, screen_mode, layout_name):
+def strcb_full_codec(info, screen_mode, layout_name):
     if (screen_mode == ScreenMode.AUDIO and
         'MusicPlayer.Codec' in info):
 
@@ -629,26 +653,21 @@ def element_full_codec(image, draw, info, field, screen_mode, layout_name):
 # Kodi doesn't successfully yield any composer info.  I believe that
 # Kodi's UPnP field parsing is incomplete.
 
-def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
+def strcb_audio_artist(info, screen_mode, layout_name):    
     if screen_mode == ScreenMode.AUDIO:
-        if field.get("format_str", ""):
-            display_string = format_InfoLabels(field["format_str"], info)
-        else:
-            # The following was an attempt to display Composer if
-            # Artist is blank.  The combination of JRiver Media Center
-            # and UPnP/DLNA playback via Kodi didn't quite permit this
-            # to work, unfortunately.
+        # The following was an attempt to display Composer if
+        # Artist is blank.  The combination of JRiver Media Center
+        # and UPnP/DLNA playback via Kodi didn't quite permit this
+        # to work, unfortunately.
+        
+        if info['MusicPlayer.Artist'] != "":
+            display_string = info['MusicPlayer.Artist']
+
+        elif info['MusicPlayer.Property(Role.Composer)'] != "":
+            display_string = "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
             
-            if info['MusicPlayer.Artist'] != "":
-                display_string = (field.get("prefix", "") + info['MusicPlayer.Artist'] +
-                                  field.get("suffix", ""))
-            elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                display_string = (field.get("prefix", "") +
-                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
-                                  field.get("suffix", ""))
-                
-            if (display_string == "Unknown" and field.get("drop_unknown", 0)):
-                display_string = ""
+        if (display_string == "Unknown" and field.get("drop_unknown", 0)):
+            display_string = ""
 
         return display_string
     return ""
@@ -656,12 +675,12 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
 
 
 # Return string with current kodi_panel version    
-def element_version(image, draw, info, field, screen_mode, layout_name):
+def strcb_version(info, screen_mode, layout_name):
     return "kodi_panel " + PANEL_VER
 
 
 # Return a friendlier version of Kodi build information
-def element_kodi_version(image, draw, info, field, screen_mode, layout_name):
+def strcb_kodi_version(info, screen_mode, layout_name):
     if ("System.BuildVersion" in info and
         "System.BuildDate" in info):
         kodi_version = info["System.BuildVersion"].split()[0]
@@ -710,20 +729,25 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #        within a layout??
 
 ELEMENT_CB = {
-    # Audio screen fields
-    'codec'      : element_codec,
-    'full_codec' : element_full_codec,
-    'artist'     : element_audio_artist,
-
-    # Video screen fields
-    'acodec'     : element_acodec,
-    
     # Status screen fields
-    'version'      : element_version,
-    'kodi_version' : element_kodi_version,
-    'time_hrmin'   : element_time_hrmin,
+    'time_hrmin' : element_time_hrmin,
     }
     
+
+STRING_CB = {
+    # Audio screen fields
+    'codec'      : strcb_codec,
+    'full_codec' : strcb_full_codec,
+    'artist'     : strcb_audio_artist,
+
+    # Video screen fields
+    'acodec'     : strcb_acodec,
+    
+    # Status screen fields
+    'version'      : strcb_version,
+    'kodi_version' : strcb_kodi_version,
+    }
+
 
 # ----------------------------------------------------------------------------
 
@@ -1024,14 +1048,23 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 # for embedded variables.  We instead just want the whole curly-brace
 # expression treated as a string for use as a dictionary key.
 
-_InfoLabel_re = re.compile(r'\{(\w*\.\w*)\}')
+_InfoLabel_re = re.compile(r'\{(\w*\.?\w*)\}')
 
-def format_InfoLabels(orig_str, kodi_dict):
+def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
     matches = set(_InfoLabel_re.findall(orig_str))
     new_str = orig_str
     for field in matches:
-        if field in kodi_dict.keys():
-            new_str = new_str.replace('{' + field + '}', kodi_dict[field])
+        if field in kodi_info.keys():
+            # lookup substitution using InfoLabels
+            new_str = new_str.replace('{' + field + '}', kodi_info[field])
+        elif field in STRING_CB.keys():
+            # lookup substitution from string-manipulation callbacks
+            new_str = new_str.replace('{' + field + '}',
+                                      STRING_CB[field](
+                                          kodi_info,
+                                          screen_mode,
+                                          layout_name
+                                      ))            
         else:
             new_str = new_str.replace('{' + field + '}', '')
     return new_str
@@ -1054,12 +1087,12 @@ def format_InfoLabels(orig_str, kodi_dict):
 #  draw         ImageDraw object, tied to image
 #  layout       Layout dictionary to use for screen update
 #  info         Dictionary containing Kodi InfoLabel response
-#  layout_name  Name, as a string, for the in-use layout
 #  screen_mode  Enumerated type indicating AUDIO, VIDEO, or STATUS
+#  layout_name  Name, as a string, for the in-use layout
 #  dynamic      Boolean flag, set for dynamic screen updates
 #  
 #
-def text_fields(image, draw, layout, info, layout_name, screen_mode, dynamic=False):
+def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
 
     # Text fields (all except for MusicPlayer.Time)
     txt_fields = layout.get("fields", [])
@@ -1086,9 +1119,16 @@ def text_fields(image, draw, layout, info, layout_name, screen_mode, dynamic=Fal
                 info,              # Kodo InfoLabel response
                 field_info,        # layout details for field
                 screen_mode,       # screen mode, as enum
-                audio_dmode.name   # layout name, as string
+                layout_name        # layout name, as string
             )
             # print("Invoked CB for ", field_info["name"],"; received back '", display_string, "'")
+
+        elif field_info["name"] in STRING_CB:
+            display_string = STRING_CB[field_info["name"]](
+                info,              # Kodo InfoLabel response
+                screen_mode,       # screen mode, as enum
+                layout_name        # layout name, as string
+            )
             
         else:
             if (field_info["name"] in info.keys() and
@@ -1097,7 +1137,7 @@ def text_fields(image, draw, layout, info, layout_name, screen_mode, dynamic=Fal
                 # Use format_str or prefix/suffic approach, in that order
                 if field_info.get("format_str", ""):
                     display_string = format_InfoLabels(
-                        field_info["format_str"], info)
+                        field_info["format_str"], info, screen_mode, layout_name)
                 else:
                     display_string = (field_info.get("prefix", "") +
                                       info[field_info["name"]] +
@@ -1165,7 +1205,7 @@ def status_screen(image, draw, kodi_status, summary_string):
 
     text_fields(image, draw,
                 layout, kodi_status,
-                "STATUS_LAYOUT", ScreenMode.STATUS)
+                ScreenMode.STATUS, "STATUS_LAYOUT")
 
 
             
@@ -1213,7 +1253,7 @@ def audio_screen_static(layout, info):
     # All static text fields
     text_fields(image, draw,
                 layout, info,
-                audio_dmode.name, ScreenMode.AUDIO,
+                ScreenMode.AUDIO, audio_dmode.name,
                 dynamic=0)
 
     # Return new image
@@ -1232,7 +1272,7 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
     # All dynamic text fields
     text_fields(image, draw,
                 layout, info,
-                audio_dmode.name, ScreenMode.AUDIO,
+                ScreenMode.AUDIO, audio_dmode.name,
                 dynamic=1)    
 
     # Progress bar, if present
@@ -1340,7 +1380,7 @@ def video_screen_static(layout, info):
     # All static text fields
     text_fields(image, draw,
                 layout, info,
-                video_dmode.name, ScreenMode.VIDEO,
+                ScreenMode.VIDEO, video_dmode.name,
                 dynamic=0)    
 
     # Return new image
@@ -1359,7 +1399,7 @@ def video_screen_dynamic(image, draw, layout, info, prog):
     # All Dynamic text fields
     text_fields(image, draw,
                 layout, info,
-                video_dmode.name, ScreenMode.VIDEO,
+                ScreenMode.VIDEO, video_dmode.name,
                 dynamic=1)
 
     # Progress bar, if present
