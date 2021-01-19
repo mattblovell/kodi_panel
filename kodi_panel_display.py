@@ -740,7 +740,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #
 # Deleting an entry is necessary if one wants to switch an existing
 # key name to reside in the other lookup table.
-# 
+#
 
 # FIXME: MBL, 19 Jan 21 -- Extend to top-level elements (thumb, prog)
 #        within a layout??
@@ -748,7 +748,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 ELEMENT_CB = {
     # Audio screen fields
     'artist'     : element_audio_artist,
-    
+
     # Status screen fields
     'time_hrmin' : element_time_hrmin,
     }
