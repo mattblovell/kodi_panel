@@ -741,9 +741,28 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 # Deleting an entry is necessary if one wants to switch an existing
 # key name to reside in the other lookup table.
 #
+# -------------------
+#
+# NOTE:
+#
+#   It would also be possible to extend this approach to apply to
+#   top-level elements within a layout such as "thumb" and "prog".
+#   However, the end user can *already* override that functionality by
+#
+#    1. Not making use of "thumb" or "prog" in their layouts.
+#
+#    2. Providing equivalent, customized functionality via their
+#       own element callback functions, adding to ELEMENT_CB.
+#
+#    3. Invoking those callbacks by name within the fields
+#       array of their layouts.
+#
+#   So, I believe all of the top-level functionality can be overridden
+#   externally, without needing anything else.
+#       
 
-# FIXME: MBL, 19 Jan 21 -- Extend to top-level elements (thumb, prog)
-#        within a layout??
+
+# Drawing-capable element callback functions
 
 ELEMENT_CB = {
     # Audio screen fields
@@ -753,6 +772,8 @@ ELEMENT_CB = {
     'time_hrmin' : element_time_hrmin,
     }
 
+
+# String-manipulation callback functions
 
 STRING_CB = {
     # Audio screen fields
@@ -1140,7 +1161,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
                 screen_mode,       # screen mode, as enum
                 layout_name        # layout name, as string
             )
-            # print("Invoked CB for ", field_info["name"],"; received back '", display_string, "'")
+            # print("Invoked element CB for", field_info["name"],"; received back '", display_string, "'")
 
         elif field_info["name"] in STRING_CB:
             display_string = STRING_CB[field_info["name"]](
@@ -1148,6 +1169,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
                 screen_mode,       # screen mode, as enum
                 layout_name        # layout name, as string
             )
+            # print("Invoked string CB for", field_info["name"],"; received back '", display_string, "'")
 
         else:
             if (field_info["name"] in info.keys() and
