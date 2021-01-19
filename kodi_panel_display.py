@@ -578,8 +578,7 @@ def element_codec(image, draw, info, field, screen_mode, layout_name):
             return codec_name[info['MusicPlayer.Codec']]
         else:
             return info['MusicPlayer.Codec']
-    else:
-        return ""
+    return ""
 
 
 # Similar function for AudioCodec lookup when playing video
@@ -590,8 +589,7 @@ def element_acodec(image, draw, info, field, screen_mode, layout_name):
             return codec_name[info['VideoPlayer.AudioCodec']]
         else:
             return info['VideoPlayer.AudioCodec']        
-    else:
-        return ""
+    return ""
     
 
 # Construct a string containing both the friendly codec name and, in
@@ -616,7 +614,8 @@ def element_full_codec(image, draw, info, field, screen_mode, layout_name):
         # augment with (bit/sample) information
         display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
             info['MusicPlayer.SampleRate'] + ")"
-            
+
+        return display_text
     else:
         return ""
 
@@ -650,9 +649,8 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
             if (display_string == "Unknown" and field.get("drop_unknown", 0)):
                 display_string = ""
 
-            return display_string
-    else:
-        return ""
+        return display_string
+    return ""
 
 
 
@@ -668,8 +666,7 @@ def element_kodi_version(image, draw, info, field, screen_mode, layout_name):
         kodi_version = info["System.BuildVersion"].split()[0]
         build_date   = info["System.BuildDate"]
         return "Kodi version: " + kodi_version + " (" + build_date + ")"
-    else:
-        return ""
+    return ""
 
 
 # Render current time and, in what should be a smaller font, AM/PM.
