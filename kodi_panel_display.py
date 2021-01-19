@@ -529,8 +529,9 @@ draw = ImageDraw.Draw(image)
 # Element callback functions
 # --------------------------
 #
-# These callbacks take the place of the earlier "special treatment" of
-# textfields.
+# These callbacks provide the "special treatment" of textfields that
+# was previously provided via if-elif trees within audio- and
+# video-specific functions.
 #
 # Each function listed in the ELEMENT_CB dictionary must accept the
 # following 6 arguments:
@@ -687,20 +688,36 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 
 # Dictionary of element callback functions, with each key
 # corresponding to either the "name" specified for a textfield (within
-# a layout's array of such textfields).
-#
-# FIXME: Extend to top-level elements (thumb, prog) within a layout??
+# a layout's array of such textfields).  
 #
 # Scripts that are making use of kodi_panel_display can change the
 # function assigned to the entries below and add entirely new
-# key/value pairs.
-    
+# key/value pairs.  Prior to invoking
+#
+#   kodi_panel_display.main(device)
+#
+# scripts that wish to install their own callback functions can
+# directly manipulate kodi_panel_display.ELEMENT_CB.  For instance, if
+# a script has a customized codec lookup function, it can make the
+# assignment
+#
+#   kodi_panel_display.ELEMENT_CB["codec"] = my_element_codec
+#
+# provided the my_element_codec() definition has been provided first.
+#
+
+# FIXME: MBL, 19 Jan 21 -- Extend to top-level elements (thumb, prog)
+#        within a layout??
+
 ELEMENT_CB = {
+    # Audio screen fields
     'codec'      : element_codec,
-    'acodec'     : element_acodec,
     'full_codec' : element_full_codec,
     'artist'     : element_audio_artist,
 
+    # Video screen fields
+    'acodec'     : element_acodec,
+    
     # Status screen fields
     'version'      : element_version,
     'kodi_version' : element_kodi_version,
