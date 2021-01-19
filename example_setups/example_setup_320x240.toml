@@ -166,7 +166,7 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #
 [COLORS]
  color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
- color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while) 
+ color_7S     = '#00FF78'    # 7-Segment color (used 'SpringGreen' for a while)
  color_artist = 'yellow'     # artist name
 
 
@@ -197,13 +197,13 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
   name = "font_sm"
   path = "fonts/FreeSans.ttf"
   size = 18
-  encoding = 'unic'  
+  encoding = 'unic'
 
 [[fonts]]
   name = "font_tiny"
   path = "fonts/FreeSans.ttf"
   size = 11
-  encoding = 'unic'  
+  encoding = 'unic'
 
 # 7-segment font used for elapsed time and track number
 [[fonts]]
@@ -236,15 +236,15 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #     [shared_element.elapsed_time]
 #      name = "MusicPlayer.Time"
 #      posx = 420
-#      posy = 36 
+#      posy = 36
 #      font = "font7S"
 #      fill = "color_7S"
 #      dynamic = 1
-#     
+#
 #     [shared_element.progress_bar]
-#      posx   = 420   
-#      posy   = 8     
-#      height = 12    
+#      posx   = 420
+#      posy   = 8
+#      height = 12
 #      short_len = 196
 #      long_len  = 300
 #      color_fg = "color_7S"
@@ -258,10 +258,10 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #     [A_LAYOUT.A_FULLSCREEN.thumb]
 #     center = 1
 #     size = 480
-#     
+#
 #     [A_LAYOUT.A_FULLSCREEN.prog]
 #      shared_element = "progress_bar"
-#     
+#
 #     [[A_LAYOUT.A_FULLSCREEN.fields]]
 #      shared_element = "elapsed_time"
 #
@@ -353,7 +353,7 @@ posy = 7
 size = 140
 # If artwork is smaller than the above size, should it be centered
 # where the fullsize artwork would have been placed?
-center_sm = 1  
+center_sm = 1
 
 [A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
 posx   = 150     # upper-left corner x position
@@ -571,4 +571,3 @@ posy = 200
 format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
 fill = "white"
-

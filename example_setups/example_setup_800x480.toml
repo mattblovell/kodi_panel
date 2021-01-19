@@ -263,15 +263,15 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [shared_element.elapsed_time]
 #      name = "MusicPlayer.Time"
 #      posx = 420
-#      posy = 36 
+#      posy = 36
 #      font = "font7S"
 #      fill = "color_7S"
 #      dynamic = 1
-#     
+#
 #     [shared_element.progress_bar]
-#      posx   = 420   
-#      posy   = 8     
-#      height = 12    
+#      posx   = 420
+#      posy   = 8
+#      height = 12
 #      short_len = 196
 #      long_len  = 300
 #      color_fg = "color_7S"
@@ -285,10 +285,10 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [A_LAYOUT.A_FULLSCREEN.thumb]
 #     center = 1
 #     size = 480
-#     
+#
 #     [A_LAYOUT.A_FULLSCREEN.prog]
 #      shared_element = "progress_bar"
-#     
+#
 #     [[A_LAYOUT.A_FULLSCREEN.fields]]
 #      shared_element = "elapsed_time"
 #

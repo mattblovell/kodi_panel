@@ -762,7 +762,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #
 #   So, I believe all of the top-level functionality can be overridden
 #   externally, without needing anything else.
-#       
+#
 
 
 # Drawing-capable element callback functions
