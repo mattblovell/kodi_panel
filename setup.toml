@@ -579,7 +579,92 @@ max_lines = 4
 #   Special treatment may exist for text fields within video_screens()
 #
 # --------------------------------------------------------------------
-[shared_element.elapsed_time]
+[shared_element.time]
+name = "VideoPlayer.Time"
+posx = 330
+posy = 31
+font = "font7S"
+fill = "color_7S"
+dynamic = 1
+
+[shared_element.duration]
+name = "VideoPlayer.Duration"
+posx = 330
+posy = 104
+font = "font7S"
+fill = "color_7S"
+
+[shared_element.vtitle]
+name  = "VideoPlayer.Title"
+posx  = 4
+posy  = 400
+font  = "font_bold"
+fill  = "color_7S"
+wrap  = 1
+max_width = 635
+max_lines = 1
+
+[shared_element.chapter]
+name  = "Player.chapter"
+format_str = "chapter {Player.chapter}/{Player.chaptercount} {Player.chaptername} "
+posx  = 340
+posy  = 180
+font  = "font_tiny"
+fill  = "color_7S"
+dynamic = 1
+
+[shared_element.vcodec]
+name = "vcodec"   # special treatment in audio_screens()
+posx = 340
+posy = 200
+font = "font_tiny"
+fill = "color_7S"
+prefix= "Video Codec "
+
+[shared_element.resolution]
+name = "VideoPlayer.VideoResolution"
+posx = 400
+posy = 200
+font = "font_tiny"
+fill = "color_7S"
+format_str = "{VideoPlayer.VideoResolution}p {VideoPlayer.VideoCodec}"
+
+
+[shared_element.acodec]
+name = "acodec"   # special treatment in audio_screens()
+posx = 375
+posy = 220
+font = "font_tiny"
+fill = "color_7S"
+
+
+[shared_element.vchannelnumber]
+name = "vchannelnumber"
+posx = 340
+posy = 220
+font = "font_tiny"
+fill = "color_7S"
+
+
+[shared_element.vplaycount]
+name = "VideoPlayer.PlayCount"
+posx = 340
+posy = 280
+font = "font_tiny"
+fill = "color_7S"
+prefix = "Play count: "
+suffix = ""
+
+[shared_element.finishtime]
+name = "Player.FinishTime"
+posx = 340
+posy = 300
+font = "font_tiny"
+fill = "color_7S"
+prefix = "End "
+suffix = ""
+dynamic = 1
+
 
 #
 [shared_element.progress_bar]
@@ -593,7 +678,7 @@ color_bg = "color_gray"
 #
 # Default video info
 #
-
+################################ DEFAULT ##################################
 [V_LAYOUT.V_DEFAULT.thumb]   # artwork / movie poster
 posx = 0
 posy = 0
@@ -603,92 +688,29 @@ center_sm = 1
 
 [V_LAYOUT.V_DEFAULT.prog]    # Progress Bar
 shared_element = "progress_bar"
-
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "VideoPlayer.Time"
-posx = 330
-posy = 31
-font = "font7S"
-fill = "color_7S"
-dynamic = 1
-
+shared_element = "time"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "VideoPlayer.Duration"
-posx = 330
-posy = 104
-font = "font7S"
-fill = "color_7S"
-
+shared_element = "duration"
+###############################################     debut copie
 [[V_LAYOUT.V_DEFAULT.fields]]
-name  = "VideoPlayer.Title"
-posx  = 4
-posy  = 400
-font  = "font_bold"
-fill  = "color_7S"
-wrap  = 1
-max_width = 635
-max_lines = 1
-
+shared_element = "vtitle"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name  = "Player.chapter"
-format_str = "chapter {Player.chapter}/{Player.chaptercount} {Player.chaptername} "
-posx  = 340
-posy  = 180
-font  = "font_tiny"
-fill  = "color_7S"
-dynamic = 1
-
+shared_element = "chapter"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "vcodec"   # special treatment in audio_screens()
-posx = 340
-posy = 200
-font = "font_tiny"
-fill = "color_7S"
-prefix= "Video Codec "
-
+shared_element = "vcodec"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "VideoPlayer.VideoResolution"
-posx = 400
-posy = 200
-font = "font_tiny"
-fill = "color_7S"
-format_str = "{VideoPlayer.VideoResolution}p {VideoPlayer.VideoCodec}"
-
-
+shared_element = "resolution"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "acodec"   # special treatment in audio_screens()
-posx = 375
-posy = 220
-font = "font_tiny"
-fill = "color_7S"
-
-
+shared_element = "acodec"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "vchannelnumber"
-posx = 340
-posy = 220
-font = "font_tiny"
-fill = "color_7S"
-
-
+shared_element = "vchannelnumber"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "VideoPlayer.PlayCount"
-posx = 340
-posy = 280
-font = "font_tiny"
-fill = "color_7S"
-prefix = "Play count: "
-suffix = ""
-
+shared_element = "vplaycount"
 [[V_LAYOUT.V_DEFAULT.fields]]
-name = "Player.FinishTime"
-posx = 340
-posy = 300
-font = "font_tiny"
-fill = "color_7S"
-prefix = "End "
-suffix = ""
-dynamic = 1
+shared_element = "finishtime"
+###################################fin copie
+
 
 [[V_LAYOUT.V_DEFAULT.fields]]
 name = "System.Time(hh:mm:ss)"
@@ -747,15 +769,29 @@ font = "font_tiny"
 fill = "color_7S"
 dynamic = 1
 
-
+################################ PVR ##################################
+[V_LAYOUT.V_PVR.prog]    # Progress Bar
+shared_element = "progress_bar"
 [[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.ChannelName"
-posx = 10
-posy = 300
-font = "font_tiny"
-fill = "color_7S"
-format_str = "{VideoPlayer.ChannelNumberLabel} {VideoPlayer.ChannelName}"
-dynamic = 1
+shared_element = "time"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "duration"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "vtitle"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "chapter"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "vcodec"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "resolution"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "acodec"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "vchannelnumber"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "vplaycount"
+[[V_LAYOUT.V_PVR.fields]]
+shared_element = "finishtime"
 
 [[V_LAYOUT.V_PVR.fields]]
 name = "Player.FinishTime"
@@ -763,103 +799,66 @@ posx = 340
 posy = 340
 font = "font_tiny"
 fill = "color_7S"
-prefix = "PVR "
-suffix = ""
+format_str = "PVR      Current: {System.Time}"
 dynamic = 1
 
-
-
-
-[V_LAYOUT.V_PVR.prog]    # Progress Bar
+################################ LIVE TV ##################################
+[V_LAYOUT.V_LIVETV.prog]    # Progress Bar
 shared_element = "progress_bar"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "time"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "duration"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "vtitle"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "chapter"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "vcodec"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "resolution"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "acodec"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "vchannelnumber"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "vplaycount"
+[[V_LAYOUT.V_LIVETV.fields]]
+shared_element = "finishtime"
 
-[[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.Time"
-posx = 330
-posy = 31
-font = "font7S"
-fill = "color_7S"
-dynamic = 1
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.Duration"
-posx = 330
-posy = 104
-font = "font7S"
-fill = "color_7S"
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.TimeRemaining"
-posx = 330
-posy = 170
-font = "font_tiny"
-fill = "color_7S"
-dynamic = 1
-
-[[V_LAYOUT.V_PVR.fields]]
-name  = "VideoPlayer.Title"
-posx  = 4
-posy  = 400
-font  = "font_bold"
-fill  = "color_7S"
-wrap  = 1
-max_width = 635
-max_lines = 1
-
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "vcodec"   # special treatment in audio_screens()
-posx = 340
-posy = 200
-font = "font_tiny"
-fill = "color_7S"
-prefix= "Video Codec "
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.VideoResolution"
-posx = 400
-posy = 200
-font = "font_tiny"
-fill = "color_7S"
-format_str = "{VideoPlayer.VideoResolution}p {VideoPlayer.VideoCodec}"
-
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "acodec"   # special treatment in audio_screens()
-posx = 375
-posy = 220
-font = "font_tiny"
-fill = "color_7S"
-
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "vchannelnumber"
-posx = 340
-posy = 220
-font = "font_tiny"
-fill = "color_7S"
-
-
-[[V_LAYOUT.V_PVR.fields]]
-name = "VideoPlayer.PlayCount"
-posx = 340
-posy = 280
-font = "font_tiny"
-fill = "color_7S"
-prefix = "Play count: "
-suffix = ""
-
-[[V_LAYOUT.V_PVR.fields]]
+[[V_LAYOUT.V_LIVETV.fields]]
 name = "Player.FinishTime"
 posx = 340
-posy = 300
+posy = 340
 font = "font_tiny"
 fill = "color_7S"
-format_str = "End: {Player.FinishTime}     Current: {System.Time}"
+prefix = "Live TV "
+suffix = ""
 dynamic = 1
 
+################################ TV SHOWS ##################################
 [V_LAYOUT.V_TV_SHOW.prog]    # Progress Bar
 shared_element = "progress_bar"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "time"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "duration"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "vtitle"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "chapter"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "vcodec"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "resolution"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "acodec"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "vchannelnumber"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "vplaycount"
+[[V_LAYOUT.V_TV_SHOW.fields]]
+shared_element = "finishtime"
 
 [[V_LAYOUT.V_TV_SHOW.fields]]
 name = "Player.FinishTime"
@@ -871,18 +870,31 @@ prefix = "série "
 suffix = ""
 dynamic = 1
 
-[V_LAYOUT.V_LIVETV.prog]    # Progress Bar
+################################ MOVIES ##################################
+[V_LAYOUT.V_MOVIE.prog]    # Progress Bar
 shared_element = "progress_bar"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "time"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "duration"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "vtitle"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "chapter"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "vcodec"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "resolution"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "acodec"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "vchannelnumber"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "vplaycount"
+[[V_LAYOUT.V_MOVIE.fields]]
+shared_element = "finishtime"
 
-[[V_LAYOUT.V_LIVETV.fields]]
-name = "Player.FinishTime"
-posx = 340
-posy = 340
-font = "font_tiny"
-fill = "color_7S"
-prefix = "Live TV "
-suffix = ""
-dynamic = 1
+
 
 [[V_LAYOUT.V_MOVIE.fields]]
 name = "Player.FinishTime"
@@ -900,37 +912,6 @@ posy = 0
 width  = 320
 height = 480
 center_sm = 1
-
-[V_LAYOUT.V_MOVIE.prog]    # Progress Bar
-shared_element = "progress_bar"
-
-[[V_LAYOUT.V_MOVIE.fields]]
-name = "VideoPlayer.Time"
-posx = 330
-posy = 31
-font = "font7S"
-fill = "color_7S"
-dynamic = 1
-
-[[V_LAYOUT.V_MOVIE.fields]]
-name = "VideoPlayer.Duration"
-posx = 330
-posy = 104
-font = "font7S"
-fill = "color_7S"
-
-[[V_LAYOUT.V_MOVIE.fields]]
-name  = "VideoPlayer.Title"
-posx  = 4
-posy  = 400
-font  = "font_bold"
-fill  = "color_7S"
-wrap  = 1
-max_width = 635
-max_lines = 1
-
-
-
 
 # Fullscreen movie poster only
 #
@@ -951,6 +932,7 @@ center = 1
 #
 #   Special treatment exists for several field names
 #
+################################ STATUS ##################################
 
 [STATUS_LAYOUT.thumb]   # Kodi logo
 posx = 5
