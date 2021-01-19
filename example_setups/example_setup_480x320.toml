@@ -73,6 +73,10 @@ USE_BACKLIGHT = true
 ENABLE_AUDIO_SCREENS = true
 ENABLE_VIDEO_SCREENS = false
 
+# Should the idle status screen always be shown?  That could be
+# desired if no touch interrupt is available.
+# ENABLE_IDLE_STATUS = true
+
 
 # The script has built-in lists of Kodi InfoLabels to retrieve for the
 # various screens that are possible, defined at the beginning of the

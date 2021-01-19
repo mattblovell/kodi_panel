@@ -272,6 +272,9 @@ if ("VIDEO_LABELS" in config.settings.keys() and
 AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS", False)
 VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS", False)
 
+# Should the status screen always be shown when idle?
+IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
+
 
 # Audio screen enumeration
 # ------------------------
@@ -1615,12 +1618,15 @@ def update_display(touched=False):
         draw.rectangle(
             [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
 
-    # Check if the _screen_active time has expired
-    if (_screen_active and datetime.now() >= _screen_offtime):
-        _screen_active = False
-        if not _kodi_playing:
-            screen_off()
-
+    # Check if the _screen_active time has expired, unless we're
+    # always showing an idle status screen.
+    if not IDLE_STATUS_ENABLED:
+        if (_screen_active and datetime.now() >= _screen_offtime):
+            _screen_active = False
+            if not _kodi_playing:
+                screen_off()
+        
+                
     # Ask Kodi whether anything is playing...
     #
     #   JSON-RPC calls can only invoke one method per call.  Unless
@@ -1650,6 +1656,14 @@ def update_display(touched=False):
         # is available.
         _kodi_playing = False
 
+        # If there /was/ a static image, let's blank the screen for
+        # the idle status screen.  This code may change once we permit
+        # for customized backgrounds, but this should do for the
+        # moment.
+        if (_static_image and IDLE_STATUS_ENABLED):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')            
+        
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
         _last_image_path = None
@@ -1661,8 +1675,8 @@ def update_display(touched=False):
             _screen_press = False
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
-
-        if _screen_active:
+            
+        if _screen_active or IDLE_STATUS_ENABLED:
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
