@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.21"
+PANEL_VER = "v1.22dev"
 
 #
 # Audio/Video codec lookup table
@@ -347,6 +347,19 @@ if VIDEO_ENABLED:
         VIDEO_ENABLED = 0
 
 
+# Screen Mode
+# -----------
+#        
+# Define an enumerated type (well, it's still Python, so a class)
+# representing whether the screen being drawn is for audio playback,
+# video playback, or is just a status screen.
+
+class ScreenMode(Enum):
+    STATUS = 0   # kodi_panel status screen
+    AUDIO  = 1   # audio playback is active
+    VIDEO  = 2   # video playback is active
+        
+
 # Shared Elements
 # ---------------
 #
@@ -503,15 +516,160 @@ PWM_LEVEL = 75.0     # float value between 0 and 100
 # gets modified directly by kodi_panel_demo.py.
 DEMO_MODE = False
 
-
-# ----------------------------------------------------------------------------
-
+#
 # Finally, create the needed Pillow objects
+#
 image = Image.new('RGB', (_frame_size), 'black')
 draw = ImageDraw.Draw(image)
 
 
 # ----------------------------------------------------------------------------
+
+
+# Callback functions for "special treatment" of textfields or other
+# screen elements.
+#
+# Each function listed in this dictionary must accept the following 6
+# arguments:
+#
+#   image        Image object instance for Pillow
+#
+#   draw         ImageDraw object instance, tied to image
+#
+#   info         dictionary containing InfoLabels from JSON-RPC response,
+#                possibly augmented by calling function
+#
+#   field        dictionary containing layout information, originating
+#                from the setup.toml file
+#
+#   screen_mode  instance of Screen_Mode enumerated type, specifying
+#                whether screen is STATUS, AUDIO, or VIDEO
+#
+#   layout_name  string specifying in-use layout name
+#
+# In addition, each function MUST return a string, even if empty.  The
+# string return value is useful for the format_InfoLabels / format_str
+# interpolation feature.
+#
+# For purely text display, the calling function is responsible for
+# rendering the returned string.  This callback ONLY needs to perform
+# the desired string manipulation.  If the callback function does take
+# it upon itself to modify the passed Image or ImageDraw objects
+# directly, then it should return an empty string.
+#
+# After the function definitions, see remarks ahead of the callback
+# dictionary.
+
+
+# Empty callback function, largely for testing    
+def element_empty(image, draw, info, field, screen_mode, layout_name):
+    return ""
+
+
+# Perform a table lookup to convert Kodi's codec names into more
+# common names.
+
+def element_codec(image, draw, info, field, screen_mode, layout_name):
+    if (screen_mode == Screen_Mode.AUDIO and
+        'MusicPlayer.Codec' in info):
+        if info['MusicPlayer.Codec'] in codec_name:
+            return codec_name[info['MusicPlayer.Codec']]
+        else:
+            return info['MusicPlayer.Codec']
+
+    elif (screen_mode == Screen_Mode.VIDEO and
+          'VideoPlayer.AudioCodec' in info):
+        if info['VideoPlayer.AudioCodec'] in codec_name.keys():
+            return codec_name[info['VideoPlayer.AudioCodec']]
+        else:
+            return info['VideoPlayer.AudioCodec']
+        
+    else:
+        return ""
+
+
+# Construct a string containing both the friendly codec name and, in
+# parenthesis, the bit depth and sample rate for the codec.
+#
+# Note that DLNA/UPnP playback with Kodi seems to cause these
+# InfoLabels to be inaccurate.  The bit depth, for instance, gets
+# "stuck" at 32, even when playback has moved on to what is known to
+# be a normal, 16-bit file.
+#
+# This is intended to be an audio-only callback.
+
+def element_full_codec(image, draw, info, field, screen_mode, layout_name):
+    if (screen_mode == Screen_Mode.AUDIO and
+        'MusicPlayer.Codec' in info):
+
+        if info['MusicPlayer.Codec'] in codec_name:
+            display_text = codec_name[info['MusicPlayer.Codec']]
+        else:
+            display_text = info['MusicPlayer.Codec']
+
+        # augment with (bit/sample) information
+        display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
+            info['MusicPlayer.SampleRate'] + ")"
+            
+    else:
+        return ""
+
+
+
+# Process an audio file's listed Artist, instead displaying the
+# Composer parenthetically if the artist field is empty.
+#
+# This particular special treatment never worked out as intended.  The
+# combination of JRiver Media Center providing DLNA/UPnp playback to
+# Kodi doesn't successfully yield any composer info.  I believe that
+# Kodi's UPnP field parsing is incomplete.
+
+def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
+    if screen_mode == Screen_Mode.AUDIO:
+        if field.get("format_str", ""):
+            display_string = format_InfoLabels(field["format_str"], info)
+        else:
+            # The following was an attempt to display Composer if
+            # Artist is blank.  The combination of JRiver Media Center
+            # and UPnP/DLNA playback via Kodi didn't quite permit this
+            # to work, unfortunately.
+            
+            if info['MusicPlayer.Artist'] != "":
+                display_string = (field.get("prefix", "") + info['MusicPlayer.Artist'] +
+                                  field.get("suffix", ""))
+            elif info['MusicPlayer.Property(Role.Composer)'] != "":
+                display_string = (field.get("prefix", "") +
+                                  "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
+                                  field.get("suffix", ""))
+                
+            if (display_string == "Unknown" and field.get("drop_unknown", 0)):
+                display_string = ""
+
+            return display_string
+    else:
+        return ""
+
+
+
+    
+# Dictionary of element callback functions, with each key
+# corresponding to either the "name" specified for a textfield (within
+# a layout's array of such textfields).
+#
+# FIXME: Extend to top-level elements (thumb, prog) within a layout??
+#
+# Scripts that are making use of kodi_panel_display can change the
+# function assigned to the entries below and add entirely new
+# key/value pairs.
+    
+ELEMENT_CB = {
+    'codec'      : element_codec,
+    'acodec'     : element_codec,
+    'full_codec' : element_full_codec,
+    'artist'     : element_audio_artist,
+    }
+    
+
 
 
 # Text wrapping from public blog post
