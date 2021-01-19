@@ -1226,9 +1226,9 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
 #
 # First argument is a Pillow ImageDraw object.
 # Second argument is a dictionary loaded from Kodi system status fields.
-# This argument is the string to use for current state of the system
+# Third argument is dictionary holding JSON-RPC response from Kodi.
 #
-def status_screen(image, draw, kodi_status, summary_string):
+def status_screen(image, draw, kodi_status):
     layout = STATUS_LAYOUT
 
     # Kodi logo, if desired
@@ -1682,7 +1682,7 @@ def update_display(touched=False):
             # add the summary string above to the response dictionary
             status_resp['result']['summary'] = summary
 
-            status_screen(image, draw, status_resp['result'], summary)
+            status_screen(image, draw, status_resp['result'])
             screen_on()
         else:
             screen_off()
