@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.25"
+PANEL_VER = "v1.26"
 
 #
 # Audio/Video codec lookup table
@@ -1359,11 +1359,12 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
 #  See comments regarding video_selection_default().  We're just
 #  mimicking that functionality on the audio side.
 #
-#  Here we provide no actual heurstic, just the framework to permit
+#  Here we provide no actual heuristic, just the framework to permit
 #  for end-user extension.
 #
 #  Sole argument is a dictionary containing the audio InfoLabels
-#  retrieved from Kodi.
+#  retrieved from Kodi.  Function MUST return the ADisplay
+#  enumeration to use for the screen update.
 #
 def audio_select_default(info):
     return audio_dmode
@@ -1539,7 +1540,8 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 #   script to completely override the above heurstic.
 #
 #  Sole argument is a dictionary containing the video InfoLabels
-#  retrieved from Kodi.
+#  retrieved from Kodi.  Function MUST return the VDisplay
+#  enumeration to use for the screen update.
 #
 def video_select_default(info):
     if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
