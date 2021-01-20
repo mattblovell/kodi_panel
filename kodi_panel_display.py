@@ -412,6 +412,7 @@ def fixup_layouts(nested_dict):
             newdict[key] = fixup_array(value)
         else:
             if ((key.startswith("color") or key == "lcolor" or
+                 key == "outline" or 
                  key == "fill" or key == "lfill") and
                     value.startswith("color_")):
                 # Lookup color

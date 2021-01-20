@@ -432,6 +432,33 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #   callback tables (look for ELEMENT_CB and STRING_CB).
 #
 # --------------------------------------------------------------------
+#
+# Background
+#
+#   Every layout, including the status screens, can optional specify a
+#   background entry at the top-level.  A few examples are as follows:
+#
+#     [A_LAYOUT.A_FULLSCREEN.background]
+#      fill = "navy"        # uniform fill color
+#
+#   or
+#
+#     [A_LAYOUT.A_FULLSCREEN.background]
+#      rectangle = 1        # rectangle with frame/border
+#      fill = "navy"
+#      outline = "yellow"
+#      width = 3
+#
+#   or
+#
+#     [STATUS_LAYOUT.background]
+#      image = "images/mickey-sprite.png"   # assumed sized correctly
+#
+#
+#   As shown, the entry must be named "background".
+#
+# --------------------------------------------------------------------
+
 
 #
 # Default audio info screen
