@@ -758,6 +758,10 @@ center = 1
 #   that appears following a screen touch when idle.  The screen
 #   gets drawn by status_screen().
 #
+#   Note that the dynamic flag for entries below (if present) is
+#   just ignored for the status screen.  Everything is redrawn
+#   on each update loop.
+#
 #   Internal callbacks are used for several fields.
 #
 
