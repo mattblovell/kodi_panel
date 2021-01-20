@@ -1178,6 +1178,13 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             )
             # print("Invoked element CB for", field_info["name"],"; received back '", display_string, "'")
 
+            # still permit prefix and suffix options
+            if ("prefix" in field_info or
+                "suffix" in field_info):
+                display_string = (field_info.get("prefix", "") +
+                                  display_string +
+                                  field_info.get("suffix", ""))
+
         elif field_info["name"] in STRING_CB:
             display_string = STRING_CB[field_info["name"]](
                 info,              # Kodo InfoLabel response
@@ -1186,15 +1193,25 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             )
             # print("Invoked string CB for", field_info["name"],"; received back '", display_string, "'")
 
+            # still permit prefix and suffix options
+            if ("prefix" in field_info or
+                "suffix" in field_info):
+                display_string = (field_info.get("prefix", "") +
+                                  display_string +
+                                  field_info.get("suffix", ""))
+
         else:
-            if (field_info["name"] in info.keys() and
-                info[field_info["name"]] != ""):
+            if (# name corresponds to a non-empty InfoLabel -OR-
+                (field_info["name"] in info and info[field_info["name"]] != "") or
+                # entry has a format_str specified for use
+                ("format_str" in field_info)):
 
                 # Use format_str or prefix/suffic approach, in that order
+
                 if field_info.get("format_str", ""):
                     display_string = format_InfoLabels(
                         field_info["format_str"], info, screen_mode, layout_name)
-                else:
+                elif field_info["name"] in info:
                     display_string = (field_info.get("prefix", "") +
                                       info[field_info["name"]] +
                                       field_info.get("suffix", ""))
