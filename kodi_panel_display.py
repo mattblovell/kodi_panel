@@ -1260,8 +1260,33 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
 # Second argument is a dictionary loaded from Kodi system status fields.
 # Third argument is dictionary holding JSON-RPC response from Kodi.
 #
+# Unlike audio_screen_static() and video_screen_static(), this
+# function is NOT expected to create a completely new image.  So, any
+# background fill is handled in a slightly different manner.
+#
 def status_screen(image, draw, kodi_status):
     layout = STATUS_LAYOUT
+
+    # Draw any user-specified rectangle or load background
+    # image for layout
+    if "background" in layout:
+        if ("rectangle" in layout["background"] and
+            layout["background"]["rectangle"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = layout["background"].get("outline","black"),
+                width   = layout["background"].get("width",1)
+            )
+        elif ("image" in layout["background"]):
+            pass
+        elif ("fill" in layout["background"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = "black",
+                width   = 1
+            )
 
     # Kodi logo, if desired
     if "thumb" in layout.keys():
@@ -1290,11 +1315,33 @@ def status_screen(image, draw, kodi_status):
 def audio_screen_static(layout, info):
     global _last_thumb, _last_image_path
 
-    # Create a new image
-    image = Image.new('RGB', (_frame_size), 'black')
+    # Create new Image and ImageDraw objects
+    if ("background" in layout and
+        "fill" in layout["background"] and
+        ("rectangle" not in layout["background"] or
+         not layout["background"]["rectangle"])):
+        image = Image.new('RGB', (_frame_size), layout["background"]["fill"])
+    else:
+        image = Image.new('RGB', (_frame_size), 'black')
+
     draw = ImageDraw.Draw(image)
 
-    # retrieve cover image from Kodi, if it exists and needs a refresh
+    # Draw any user-specified rectangle or load background
+    # image for layout
+    if "background" in layout:
+        if ("rectangle" in layout["background"] and
+            layout["background"]["rectangle"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = layout["background"].get("outline","black"),
+                width   = layout["background"].get("width",1)
+            )
+        elif ("image" in layout["background"]):
+            pass
+
+
+    # Retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
         _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
                                   layout["thumb"]["size"], layout["thumb"]["size"])
@@ -1448,9 +1495,31 @@ def audio_screens(image, draw, info, prog):
 def video_screen_static(layout, info):
     global _last_thumb, _last_image_path
 
-    # Create a new image
-    image = Image.new('RGB', (_frame_size), 'black')
+    # Create new Image and ImageDraw objects
+    if ("background" in layout and
+        "fill" in layout["background"] and
+        ("rectangle" not in layout["background"] or
+         not layout["background"]["rectangle"])):
+        image = Image.new('RGB', (_frame_size), layout["background"]["fill"])
+    else:
+        image = Image.new('RGB', (_frame_size), 'black')
+
     draw = ImageDraw.Draw(image)
+
+    # Draw any user-specified rectangle or load background
+    # image for layout
+    if "background" in layout:
+        if ("rectangle" in layout["background"] and
+            layout["background"]["rectangle"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = layout["background"].get("outline","black"),
+                width   = layout["background"].get("width",1)
+            )
+        elif ("image" in layout["background"]):
+            pass
+
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if "thumb" in layout.keys():
