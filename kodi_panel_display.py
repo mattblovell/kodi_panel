@@ -1179,8 +1179,8 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             # print("Invoked element CB for", field_info["name"],"; received back '", display_string, "'")
 
             # still permit prefix and suffix options
-            if ("prefix" in field_info or
-                "suffix" in field_info):
+            if (display_string != "" and
+                ("prefix" in field_info or "suffix" in field_info)):
                 display_string = (field_info.get("prefix", "") +
                                   display_string +
                                   field_info.get("suffix", ""))
@@ -1194,8 +1194,8 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             # print("Invoked string CB for", field_info["name"],"; received back '", display_string, "'")
 
             # still permit prefix and suffix options
-            if ("prefix" in field_info or
-                "suffix" in field_info):
+            if (display_string != "" and
+                ("prefix" in field_info or "suffix" in field_info)):
                 display_string = (field_info.get("prefix", "") +
                                   display_string +
                                   field_info.get("suffix", ""))
