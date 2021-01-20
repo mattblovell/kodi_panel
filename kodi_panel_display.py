@@ -1155,13 +1155,17 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
         display_string = None
 
         # Skip over the fields that aren't desired for this
-        # invocation, based on static vs dynamic
-        if dynamic:
-            if not field_info.get("dynamic", 0):
-                continue
-        else:
-            if field_info.get("dynamic", 0):
-                continue
+        # invocation, based on static vs dynamic.
+        #
+        # Just show everything for a status screen.
+        
+        if screen_mode != ScreenMode.STATUS:
+            if dynamic:
+                if not field_info.get("dynamic", 0):
+                    continue
+            else:
+                if field_info.get("dynamic", 0):
+                    continue
 
         # Check for any defined callback functions.  If an entry
         # exists in the lookup table, invoke the specified function
