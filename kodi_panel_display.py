@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.22"
+PANEL_VER = "v1.23"
 
 #
 # Audio/Video codec lookup table
@@ -1552,7 +1552,8 @@ def video_screens(image, draw, info, prog):
               "V_MOVIE" in VIDEO_LAYOUT):
             video_dmode = VDisplay["V_MOVIE"]   # movie
         else:
-            pass  # leave as-is, just use default selection
+            # use the default mode specified from setup
+            video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
 
     # Look up video layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
