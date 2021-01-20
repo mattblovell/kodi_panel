@@ -1990,14 +1990,15 @@ def update_display(touched=False):
         # mode-specific.
         if _screen_press or touched:
             _screen_press = False
-            audio_dmode = audio_dmode.next()
-            print(datetime.now(), "audio display mode now", audio_dmode.name)
-            _last_image_path = None
-            _last_image_time = None
-            _last_thumb = None
-            _static_image = None
-            truncate_line.cache_clear()
-            text_wrap.cache_clear()
+            if not AUDIO_LAYOUT_AUTOSELECT:
+                audio_dmode = audio_dmode.next()
+                print(datetime.now(), "audio display mode now", audio_dmode.name)
+                _last_image_path = None
+                _last_image_time = None
+                _last_thumb = None
+                _static_image = None
+                truncate_line.cache_clear()
+                text_wrap.cache_clear()
 
         # Retrieve all music InfoLabels in a single JSON-RPC call.
         #
