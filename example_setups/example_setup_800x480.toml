@@ -93,6 +93,10 @@ HW_PWM_LEVEL = 0.55
 ENABLE_AUDIO_SCREENS = true
 ENABLE_VIDEO_SCREENS = true
 
+# Should the idle status screen always be shown?  That could be
+# desired if no touch interrupt is available.
+# ENABLE_IDLE_STATUS = true
+
 
 # The script has built-in lists of Kodi InfoLabels to retrieve for the
 # various screens that are possible, defined at the beginning of the
@@ -263,15 +267,15 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [shared_element.elapsed_time]
 #      name = "MusicPlayer.Time"
 #      posx = 420
-#      posy = 36 
+#      posy = 36
 #      font = "font7S"
 #      fill = "color_7S"
 #      dynamic = 1
-#     
+#
 #     [shared_element.progress_bar]
-#      posx   = 420   
-#      posy   = 8     
-#      height = 12    
+#      posx   = 420
+#      posy   = 8
+#      height = 12
 #      short_len = 196
 #      long_len  = 300
 #      color_fg = "color_7S"
@@ -285,10 +289,10 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #     [A_LAYOUT.A_FULLSCREEN.thumb]
 #     center = 1
 #     size = 480
-#     
+#
 #     [A_LAYOUT.A_FULLSCREEN.prog]
 #      shared_element = "progress_bar"
-#     
+#
 #     [[A_LAYOUT.A_FULLSCREEN.fields]]
 #      shared_element = "elapsed_time"
 #
@@ -336,6 +340,11 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #                 substitute, enclosed within curly braces.  See the
 #                 status layout screen text fields for examples.
 #
+#                 Terms to be substituted can also make use of any
+#                 entries defined within the string-manipulation
+#                 callback table (see the STRING_CB dictionary in
+#                 kodi_panel_display.py)
+#
 #      trunc    Flag indicating that single line string should
 #               truncated at the right-hand edge of the display
 #
@@ -359,7 +368,9 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #      lfill    Font fill color for label string
 #
 #
-#   Special treatment exists for the 'codec' and 'artist' text fields.
+#   Internal callbacks are used for the 'codec' and 'artist' text
+#   fields.  End-user scripts are free to augment or modify the
+#   callback tables (look for ELEMENT_CB and STRING_CB).
 #
 # --------------------------------------------------------------------
 
@@ -420,7 +431,7 @@ font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name = "codec"   # special treatment in audio_screens()
+name = "codec"   # internal callback
 posx = 580
 posy = 132
 font = "font_tiny"
@@ -462,7 +473,7 @@ trunc = 1
 #
 
 [[A_LAYOUT.A_DEFAULT.fields]]
-name  = "artist"   # special treatment in audio_screens()
+name  = "artist"   # internal callback
 posx  = 420
 posy  = 240
 font  = "font_sm"
@@ -557,7 +568,7 @@ font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.A_NOTIME.fields]]
-name = "codec"   # special treatment in audio_screens()
+name = "codec"   # internal callback
 posx = 580
 posy = 58
 font = "font_tiny"
@@ -601,7 +612,7 @@ trunc = 1
 #
 
 [[A_LAYOUT.A_NOTIME.fields]]
-name  = "artist"   # special treatment in audio_screens()
+name  = "artist"   # internal callback
 posx  = 420
 posy  = 240
 font  = "font_sm"
@@ -634,8 +645,6 @@ max_lines = 4
 #
 #   If a completely new InfoLabel is desired, then one must also
 #   augment the VIDEO_LABELS list (see earlier in this file).
-#
-#   Special treatment may exist for text fields within video_screens()
 #
 # --------------------------------------------------------------------
 
@@ -722,7 +731,7 @@ center = 1
 #   that appears following a screen touch when idle.  The screen
 #   gets drawn by status_screen().
 #
-#   Special treatment exists for several field names
+#   Internal callbacks are used for several fields.
 #
 
 [STATUS_LAYOUT.thumb]   # Kodi logo
@@ -731,7 +740,7 @@ posy = 5
 size = 128
 
 [[STATUS_LAYOUT.fields]]
-name = "version"        # special treatment
+name = "version"        # internal callback
 posx = 145
 posy = 8
 font = "font_main"
@@ -739,14 +748,14 @@ fill = "color_artist"
 
 
 [[STATUS_LAYOUT.fields]]
-name = "summary"        # special treatment
+name = "summary"
 posx = 145
 posy = 40
 font = "font_main"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "time_hrmin"     # special treatment
+name = "time_hrmin"     # internal callback
 posx = 145
 posy = 90
 font = "font7S"
@@ -754,7 +763,7 @@ fill = "color_7S"
 smfont = "font7S_sm"    # used for AM / PM
 
 # The remaining fields all get populated via a special JSON-RPC query
-# to Kodi specifically for the status screen.
+# to Kodi specifically for the status screen.  See STATUS_LABELS above.
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Date"
@@ -780,7 +789,7 @@ font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
-name = "kodi_version"  # special treatment
+name = "kodi_version"  # internal callback
 posx = 5
 posy = 290
 font = "font_sm"

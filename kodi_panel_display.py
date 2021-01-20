@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.21"
+PANEL_VER = "v1.22"
 
 #
 # Audio/Video codec lookup table
@@ -308,6 +308,9 @@ if ("VIDEO_LABELS" in config.settings.keys() and
 AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS", False)
 VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS", False)
 
+# Should the status screen always be shown when idle?
+IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
+
 
 # Audio screen enumeration
 # ------------------------
@@ -381,6 +384,19 @@ if VIDEO_ENABLED:
             "Cannot find settings for VLAYOUT_NAMES and/or VLAYOUT_INITIAL!")
         print("Disabling video screens (VIDEO_ENABLED=0)")
         VIDEO_ENABLED = 0
+
+
+# Screen Mode
+# -----------
+#
+# Define an enumerated type (well, it's still Python, so a class)
+# representing whether the screen being drawn is for audio playback,
+# video playback, or is just a status screen.
+
+class ScreenMode(Enum):
+    STATUS = 0   # kodi_panel status screen
+    AUDIO  = 1   # audio playback is active
+    VIDEO  = 2   # video playback is active
 
 
 # Shared Elements
@@ -492,7 +508,7 @@ else:
 #
 USE_TOUCH = config.settings.get("USE_TOUCH", False)
 TOUCH_INT = config.settings.get("TOUCH_INT", 0)
-TOUCH_PULLUP = config.settings.get("TOUCH_PULLUP", False)
+TOUCH_PULLUP   = config.settings.get("TOUCH_PULLUP", False)
 TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE", 700)  # milliseconds
 
 # Should the touch_callback() ISR attempt to invoke update_display()
@@ -502,9 +518,9 @@ TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE", False)
 
 # Internal state variables used to manage screen presses
 _kodi_connected = False
-_kodi_playing = False
-_screen_press = False
-_screen_active = False
+_kodi_playing   = False
+_screen_press   = False
+_screen_active  = False
 
 # status screen waketime, in seconds
 _screen_wake = config.settings.get("SCREEN_WAKE_TIME", 25)
@@ -539,16 +555,283 @@ PWM_LEVEL = 75.0     # float value between 0 and 100
 # gets modified directly by kodi_panel_demo.py.
 DEMO_MODE = False
 
-
-# ----------------------------------------------------------------------------
-
+#
 # Finally, create the needed Pillow objects
+#
 image = Image.new('RGB', (_frame_size), 'black')
 draw = ImageDraw.Draw(image)
 
 
 # ----------------------------------------------------------------------------
 
+
+# Element and String callback functions
+# -------------------------------------
+#
+# These callbacks provide the "special treatment" of textfields that
+# was previously provided via if-elif trees within audio- and
+# video-specific functions.  See additional comment block after all of
+# the function definitions.
+#
+# Each function listed in the ELEMENT_CB dictionary must accept the
+# following 6 arguments:
+#
+#   image        Image object instance for Pillow
+#
+#   draw         ImageDraw object instance, tied to image
+#
+#   info         dictionary containing InfoLabels from JSON-RPC response,
+#                possibly augmented by calling function
+#
+#   field        dictionary containing layout information, originating
+#                from the setup.toml file
+#
+#   screen_mode  instance of ScreenMode enumerated type, specifying
+#                whether screen is STATUS, AUDIO, or VIDEO
+#
+#   layout_name  string specifying in-use layout name
+#
+# In addition, each function MUST return a string, even if empty.  The
+# string return value is useful for the format_InfoLabels / format_str
+# interpolation feature.
+#
+# For purely text display, the calling function is responsible for
+# rendering the returned string.  This callback ONLY needs to perform
+# the desired string manipulation.  If the callback function does take
+# it upon itself to modify the passed Image or ImageDraw objects
+# directly, then it should return an empty string.
+#
+# It is also possible to define a simpler set of callback functions
+# that only perform string manipulation.  Functions in that lookup
+# table only need to accept 3 arguments:
+#
+#   info         dictionary containing InfoLabels from JSON-RPC response,
+#                possibly augmented by calling function
+#
+#   screen_mode  instance of ScreenMode enumerated type, specifying
+#                whether screen is STATUS, AUDIO, or VIDEO
+#
+#   layout_name  string specifying in-use layout name
+#
+# Such functions must also return a string, even if empty.
+#
+#
+# Finally, note that some care should be taken if any callback
+# function wants to make use of format_InfoLabels(), as that function
+# also ends up consulting the string callback table.  If one isn't
+# careful, a loop could be possible that will end up just crashing
+# Python.  In general, it is NOT recommended that callback functions
+# directly make use of format_InfoLabels() themselves.
+
+
+# Empty callback function, largely for testing
+def element_empty(image, draw, info, field, screen_mode, layout_name):
+    return ""
+
+# Empty callback function, largely for testing
+def strcb_empty(info, screen_mode, layout_name):
+    return ""
+
+
+# Perform a table lookup to convert Kodi's codec names into more
+# common names.
+
+def strcb_codec(info, screen_mode, layout_name):
+    if 'MusicPlayer.Codec' in info:
+        if info['MusicPlayer.Codec'] in codec_name:
+            return codec_name[info['MusicPlayer.Codec']]
+        else:
+            return info['MusicPlayer.Codec']
+    return ""
+
+
+# Similar function for AudioCodec lookup when playing video
+
+def strcb_acodec(info, screen_mode, layout_name):
+    if 'VideoPlayer.AudioCodec' in info:
+        if info['VideoPlayer.AudioCodec'] in codec_name.keys():
+            return codec_name[info['VideoPlayer.AudioCodec']]
+        else:
+            return info['VideoPlayer.AudioCodec']
+    return ""
+
+
+# Construct a string containing both the friendly codec name and, in
+# parenthesis, the bit depth and sample rate for the codec.
+#
+# Note that DLNA/UPnP playback with Kodi seems to cause these
+# InfoLabels to be inaccurate.  The bit depth, for instance, gets
+# "stuck" at 32, even when playback has moved on to what is known to
+# be a normal, 16-bit file.
+#
+# This is intended to be an audio-only callback.
+
+def strcb_full_codec(info, screen_mode, layout_name):
+    if (screen_mode == ScreenMode.AUDIO and
+        'MusicPlayer.Codec' in info):
+
+        if info['MusicPlayer.Codec'] in codec_name:
+            display_text = codec_name[info['MusicPlayer.Codec']]
+        else:
+            display_text = info['MusicPlayer.Codec']
+
+        # augment with (bit/sample) information
+        display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
+            info['MusicPlayer.SampleRate'] + ")"
+
+        return display_text
+    else:
+        return ""
+
+
+# Process an audio file's listed Artist, instead displaying the
+# Composer parenthetically if the artist field is empty.
+#
+# This particular special treatment never worked out as intended.  The
+# combination of JRiver Media Center providing DLNA/UPnp playback to
+# Kodi doesn't successfully yield any composer info.  I believe that
+# Kodi's UPnP field parsing is incomplete.
+#
+# This function is an element callback simply to provide access to the
+# possibly-defined "drop_unknown" flag from TOML configuration.  It is
+# possible that functionality (not displaying a field based upon
+# display_string) will be replaced by something more general.
+#
+
+def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
+    if screen_mode == ScreenMode.AUDIO:
+        # The following was an attempt to display Composer if
+        # Artist is blank.  The combination of JRiver Media Center
+        # and UPnP/DLNA playback via Kodi didn't quite permit this
+        # to work, unfortunately.
+
+        if info['MusicPlayer.Artist'] != "":
+            display_string = info['MusicPlayer.Artist']
+
+        elif info['MusicPlayer.Property(Role.Composer)'] != "":
+            display_string = "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
+
+        if (display_string == "Unknown" and field.get("drop_unknown", 0)):
+            display_string = ""
+
+        return display_string
+    return ""
+
+
+
+# Return string with current kodi_panel version
+def strcb_version(info, screen_mode, layout_name):
+    return "kodi_panel " + PANEL_VER
+
+
+# Return a friendlier version of Kodi build information
+def strcb_kodi_version(info, screen_mode, layout_name):
+    if ("System.BuildVersion" in info and
+        "System.BuildDate" in info):
+        kodi_version = info["System.BuildVersion"].split()[0]
+        build_date   = info["System.BuildDate"]
+        return "Kodi version: " + kodi_version + " (" + build_date + ")"
+    return ""
+
+
+# Render current time and, in what should be a smaller font, AM/PM.
+# Return an empty string so as not to confuse the caller.
+def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
+    if "System.Time" in info:
+        time_parts = info['System.Time'].split(" ")
+        time_width, time_height = draw.textsize(time_parts[0], field["font"])
+        draw.text((field["posx"], field["posy"]),
+                  time_parts[0],
+                  field["fill"], field["font"])
+        draw.text((field["posx"] + time_width + 5, field["posy"]),
+                  time_parts[1],
+                  field["fill"], field["smfont"])
+
+    return ""
+
+
+# Dictionaries of element and string callback functions, with each key
+# corresponding to the "name" specified for a field (within a layout's
+# array named "fields").
+#
+# Scripts that are making use of kodi_panel_display can change the
+# function assigned to the entries below or add entirely new key/value
+# pairs.  Prior to invoking
+#
+#   kodi_panel_display.main(device)
+#
+# scripts that wish to install their own callback functions can
+# directly manipulate
+#
+#    kodi_panel_display.ELEMENT_CB   or
+#    kodi_panel_display.STRING_CB
+#
+# as part of their startup.  For instance, if a script has a
+# customized codec lookup function, it can make the assignment
+#
+#   kodi_panel_display.ELEMENT_CB["codec"] = my_element_codec
+#
+# provided the my_element_codec() definition has been provided first.
+# Note that existing keys can be removed from either dictionary using
+# a del statement:
+#
+#   del kodi_panel_display.STRING_CB["codec"]
+#
+# Deleting an entry is necessary if one wants to switch an existing
+# key name to reside in the other lookup table.
+#
+# -------------------
+#
+# NOTE:
+#
+#   It would also be possible to extend this approach to apply to
+#   top-level elements within a layout such as "thumb" and "prog".
+#   However, the end user can *already* override that functionality by
+#
+#    1. Not making use of "thumb" or "prog" in their layouts.
+#
+#    2. Providing equivalent, customized functionality via their own
+#       element callback functions, adding to ELEMENT_CB.  (The new
+#       functions must take some care if referencing any variables
+#       declared in this module's namespace, but such uses are
+#       certainly possible.)
+#
+#    3. Invoking those callbacks by name within the fields
+#       array of their layouts.
+#
+#   So, I believe all of the top-level functionality can be overridden
+#   externally, without needing anything else.
+#
+
+
+# Drawing-capable element callback functions
+
+ELEMENT_CB = {
+    # Audio screen fields
+    'artist'     : element_audio_artist,
+
+    # Status screen fields
+    'time_hrmin' : element_time_hrmin,
+    }
+
+
+# String-manipulation callback functions
+
+STRING_CB = {
+    # Audio screen fields
+    'codec'      : strcb_codec,
+    'full_codec' : strcb_full_codec,
+
+    # Video screen fields
+    'acodec'     : strcb_acodec,
+
+    # Status screen fields
+    'version'      : strcb_version,
+    'kodi_version' : strcb_kodi_version,
+    }
+
+
+# ----------------------------------------------------------------------------
 
 # Text wrapping from public blog post
 #
@@ -847,26 +1130,148 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
 # for embedded variables.  We instead just want the whole curly-brace
 # expression treated as a string for use as a dictionary key.
 
-_InfoLabel_re = re.compile(r'\{(\w*\.\w*)\}')
+_InfoLabel_re = re.compile(r'\{(\w*\.?\w*)\}')
 
-def format_InfoLabels(orig_str, kodi_dict):
+def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
     matches = set(_InfoLabel_re.findall(orig_str))
     new_str = orig_str
     for field in matches:
-        if field in kodi_dict.keys():
-            new_str = new_str.replace('{' + field + '}', kodi_dict[field])
+        if field in kodi_info.keys():
+            # lookup substitution using InfoLabels
+            new_str = new_str.replace('{' + field + '}', kodi_info[field])
+        elif field in STRING_CB.keys():
+            # lookup substitution from string-manipulation callbacks
+            new_str = new_str.replace('{' + field + '}',
+                                      STRING_CB[field](
+                                          kodi_info,
+                                          screen_mode,
+                                          layout_name
+                                      ))
         else:
             new_str = new_str.replace('{' + field + '}', '')
     return new_str
+
+
+
+
+# Render all text fields, stepping through the fields array from
+# the layout dictionary that is passed in.
+#
+# The final argument determines whether one wants to render all of the
+# static fields or just the dynamic ones.  That, together with the
+# screen_mode argument, permits this function to be called by
+#
+#   audio_screen_static() and audio_screen_dynamic()
+#   video_screen_static() and video_screen_dynamic()
+#
+# Full set of arguments is as follows:
+#
+#  image        Image object for Pillow
+#  draw         ImageDraw object, tied to image
+#  layout       Layout dictionary to use for screen update
+#  info         Dictionary containing Kodi InfoLabel response
+#  screen_mode  Enumerated type indicating AUDIO, VIDEO, or STATUS
+#  layout_name  Name, as a string, for the in-use layout
+#  dynamic      Boolean flag, set for dynamic screen updates
+#
+#
+def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
+
+    # Text fields (all except for MusicPlayer.Time)
+    txt_fields = layout.get("fields", [])
+    for field_info in txt_fields:
+        display_string = None
+
+        # Skip over the fields that aren't desired for this
+        # invocation, based on static vs dynamic
+        if dynamic:
+            if not field_info.get("dynamic", 0):
+                continue
+        else:
+            if field_info.get("dynamic", 0):
+                continue
+
+        # Check for any defined callback functions.  If an entry
+        # exists in the lookup table, invoke the specified function
+        # with all of the arguments discussed in earlier comments.
+
+        if field_info["name"] in ELEMENT_CB:
+            display_string = ELEMENT_CB[field_info["name"]](
+                image,             # Image instance
+                draw,              # ImageDraw instance
+                info,              # Kodo InfoLabel response
+                field_info,        # layout details for field
+                screen_mode,       # screen mode, as enum
+                layout_name        # layout name, as string
+            )
+            # print("Invoked element CB for", field_info["name"],"; received back '", display_string, "'")
+
+        elif field_info["name"] in STRING_CB:
+            display_string = STRING_CB[field_info["name"]](
+                info,              # Kodo InfoLabel response
+                screen_mode,       # screen mode, as enum
+                layout_name        # layout name, as string
+            )
+            # print("Invoked string CB for", field_info["name"],"; received back '", display_string, "'")
+
+        else:
+            if (field_info["name"] in info.keys() and
+                info[field_info["name"]] != ""):
+
+                # Use format_str or prefix/suffic approach, in that order
+                if field_info.get("format_str", ""):
+                    display_string = format_InfoLabels(
+                        field_info["format_str"], info, screen_mode, layout_name)
+                else:
+                    display_string = (field_info.get("prefix", "") +
+                                      info[field_info["name"]] +
+                                      field_info.get("suffix", ""))
+
+
+        # if the string to display is empty, move on to the next field,
+        # otherwise render it.
+        if (not display_string or display_string == ""):
+            continue
+
+        # render any label first
+        if "label" in field_info:
+            draw.text((field_info["lposx"], field_info["lposy"]),
+                      field_info["label"],
+                      fill=field_info["lfill"], font=field_info["lfont"])
+
+        if "wrap" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=field_info["max_width"],
+                             max_lines=field_info["max_lines"],
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        elif "trunc" in field_info.keys():
+            render_text_wrap(draw,
+                             (field_info["posx"], field_info["posy"]),
+                             display_string,
+                             max_width=_frame_size[0] -
+                             field_info["posx"],
+                             max_lines=1,
+                             fill=field_info["fill"],
+                             font=field_info["font"])
+        else:
+            draw.text((field_info["posx"], field_info["posy"]),
+                      display_string,
+                      fill=field_info["fill"],
+                      font=field_info["font"])
+
+
 
 
 # Idle status screen (shown upon a screen press)
 #
 # First argument is a Pillow ImageDraw object.
 # Second argument is a dictionary loaded from Kodi system status fields.
-# This argument is the string to use for current state of the system
+# Third argument is dictionary holding JSON-RPC response from Kodi.
 #
-def status_screen(draw, kodi_status, summary_string):
+def status_screen(image, draw, kodi_status):
     layout = STATUS_LAYOUT
 
     # Kodi logo, if desired
@@ -882,210 +1287,10 @@ def status_screen(draw, kodi_status, summary_string):
     if "fields" not in layout.keys():
         return
 
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-        if field_info["name"] == "version":
-            draw.text((field_info["posx"], field_info["posy"]),
-                      "kodi_panel " + PANEL_VER,
-                      field_info["fill"], field_info["font"])
+    text_fields(image, draw,
+                layout, kodi_status,
+                ScreenMode.STATUS, "STATUS_LAYOUT")
 
-        elif field_info["name"] == "summary":
-            draw.text((field_info["posx"], field_info["posy"]),
-                      summary_string,
-                      field_info["fill"], field_info["font"])
-
-        elif field_info["name"] == "kodi_version":
-            kodi_version = kodi_status["System.BuildVersion"].split()[0]
-            build_date = kodi_status["System.BuildDate"]
-            draw.text((field_info["posx"], field_info["posy"]),
-                      "Kodi version: " + kodi_version +
-                      " (" + build_date + ")",
-                      field_info["fill"], field_info["font"])
-
-        elif field_info["name"] == "time_hrmin":
-            # current time (in 7-segment LED font by default)
-            time_parts = kodi_status['System.Time'].split(" ")
-            time_width, time_height = draw.textsize(
-                time_parts[0], field_info["font"])
-            draw.text((field_info["posx"], field_info["posy"]),
-                      time_parts[0],
-                      field_info["fill"], field_info["font"])
-            draw.text((field_info["posx"] + time_width + 5, field_info["posy"]),
-                      time_parts[1],
-                      field_info["fill"], field_info["smfont"])
-
-        else:
-            # Use format_str or prefix/suffic approach, in that order
-            if field_info.get("format_str", ""):
-                display_string = format_InfoLabels(
-                    field_info["format_str"], kodi_status)
-            else:
-                display_string = (field_info.get("prefix", "") + kodi_status[field_info["name"]] +
-                                  field_info.get("suffix", ""))
-
-            draw.text((field_info["posx"], field_info["posy"]),
-
-                      display_string,
-                      field_info["fill"], field_info["font"])
-
-
-# Render all audio text fields, stepping through the entries from the
-# AUDIO_LAYOUT layout dictionary.
-#
-# The final argument determines whether one wants to render all of the
-# static fields or just the dynamic ones.  That permits this function
-# to be called by both
-#
-#   audio_screen_static() and
-#   audio_screen_dynamic()
-#
-# The audio_text_fields() and video_text_fields() functions could be
-# combined if one settled upon a suitable method for dealing with all
-# of the "special case" fields (and pull from the appropriate *_LAYOUT
-# dictionary).  For the moment, I think it's simpler just to keep them
-# separate.
-#
-def audio_text_fields(image, draw, layout, info, dynamic=False):
-
-    # Text fields (all except for MusicPlayer.Time)
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-
-        # Skip over the fields that aren't desired for
-        # this invocation
-        if dynamic:
-            if not field_info.get("dynamic", 0):
-                continue
-        else:
-            if field_info.get("dynamic", 0):
-                continue
-
-        # special treatment for "codec", which gets a lookup
-        if field_info["name"] == "codec":
-            display_text = info['MusicPlayer.Codec']
-            if info['MusicPlayer.Codec'] in codec_name:
-                display_text = codec_name[info['MusicPlayer.Codec']]
-
-            # render any label first
-            if "label" in field_info:
-                draw.text((field_info["lposx"], field_info["lposy"]),
-                          field_info["label"],
-                          fill=field_info["lfill"], font=field_info["lfont"])
-
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_text,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
-
-        # special treatment for "full_codec"
-        elif field_info["name"] == "full_codec":
-            if info['MusicPlayer.Codec'] in codec_name:
-                display_text = codec_name[info['MusicPlayer.Codec']]
-                display_text += " (" + info['MusicPlayer.BitsPerSample'] + "/" + \
-                    info['MusicPlayer.SampleRate'] + ")"
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-
-                draw.text((field_info["posx"], field_info["posy"]),
-                          display_text,
-                          fill=field_info["fill"],
-                          font=field_info["font"])
-
-            # special treatment for "artist"
-        elif (field_info["name"] == "artist" and
-              info['MusicPlayer.Artist'] != ""):
-            display_string = None
-
-            if field_info.get("format_str", ""):
-                display_string = format_InfoLabels(
-                    field_info["format_str"], info)
-            else:
-                # The following was an attempt to display Composer if
-                # Artist is blank.  The combination of JRiver Media Center
-                # and UPnP/DLNA playback via Kodi didn't quite permit this
-                # to work, unfortunately.
-
-                if info['MusicPlayer.Artist'] != "":
-                    display_string = (field_info.get("prefix", "") + info['MusicPlayer.Artist'] +
-                                      field_info.get("suffix", ""))
-                elif info['MusicPlayer.Property(Role.Composer)'] != "":
-                    display_string = (field_info.get("prefix", "") +
-                                      "(" + info['MusicPlayer.Property(Role.Composer)'] + ")" +
-                                      field_info.get("suffix", ""))
-
-            if (display_string == "Unknown" and
-                    field_info.get("drop_unknown", 0)):
-                continue
-
-            if display_string:
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
-
-        # all other text fields
-        else:
-            if (field_info["name"] in info.keys() and
-                    info[field_info["name"]] != ""):
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-
-                # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str", ""):
-                    display_string = format_InfoLabels(
-                        field_info["format_str"], info)
-                else:
-                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
-                                      field_info.get("suffix", ""))
-
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
 
 
 # Render the static portion of audio screens
@@ -1129,8 +1334,11 @@ def audio_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All the static text fields
-    audio_text_fields(image, draw, layout, info, dynamic=0)
+    # All static text fields
+    text_fields(image, draw,
+                layout, info,
+                ScreenMode.AUDIO, audio_dmode.name,
+                dynamic=0)
 
     # Return new image
     return image
@@ -1145,8 +1353,11 @@ def audio_screen_static(layout, info):
 #
 def audio_screen_dynamic(image, draw, layout, info, prog):
 
-    # Dynamic text fields
-    audio_text_fields(image, draw, layout, info, dynamic=1)
+    # All dynamic text fields
+    text_fields(image, draw,
+                layout, info,
+                ScreenMode.AUDIO, audio_dmode.name,
+                dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -1211,89 +1422,6 @@ def audio_screens(image, draw, info, prog):
     audio_screen_dynamic(image, draw, layout, info, prog)
 
 
-# Render all video text fields, stepping through the entries from the
-# VIDEO_LAYOUT layout dictionary.
-#
-# The final argument determines whether one wants to render all of the
-# static fields or just the dynamic ones.  That permits this function
-# to be called by both
-#
-#   video_screen_static() and
-#   video_screen_dynamic()
-#
-def video_text_fields(image, draw, layout, info, dynamic=False):
-
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
-
-        # Skip over the fields that aren't desired for
-        # this invocation
-        if dynamic:
-            if not field_info.get("dynamic", 0):
-                continue
-        else:
-            if field_info.get("dynamic", 0):
-                continue
-
-        # special treatment for audio codec, which gets a lookup
-        if field_info["name"] == "acodec":
-            display_text = info['VideoPlayer.AudioCodec']
-            if info['VideoPlayer.AudioCodec'] in codec_name.keys():
-                display_text = codec_name[info['VideoPlayer.AudioCodec']]
-
-            # render any label first
-            if "label" in field_info:
-                draw.text((field_info["lposx"], field_info["lposy"]),
-                          field_info["label"],
-                          fill=field_info["lfill"], font=field_info["lfont"])
-
-            draw.text((field_info["posx"], field_info["posy"]),
-                      display_text,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
-
-        # all other text fields
-        else:
-            if (field_info["name"] in info.keys() and
-                    info[field_info["name"]] != ""):
-
-                # render any label first
-                if "label" in field_info:
-                    draw.text((field_info["lposx"], field_info["lposy"]),
-                              field_info["label"],
-                              fill=field_info["lfill"], font=field_info["lfont"])
-
-                # Use format_str or prefix/suffic approach, in that order
-                if field_info.get("format_str", ""):
-                    display_string = format_InfoLabels(
-                        field_info["format_str"], info)
-                else:
-                    display_string = (field_info.get("prefix", "") + info[field_info["name"]] +
-                                      field_info.get("suffix", ""))
-
-                if "wrap" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=field_info["max_width"],
-                                     max_lines=field_info["max_lines"],
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                elif "trunc" in field_info.keys():
-                    render_text_wrap(draw,
-                                     (field_info["posx"], field_info["posy"]),
-                                     display_string,
-                                     max_width=_frame_size[0] -
-                                     field_info["posx"],
-                                     max_lines=1,
-                                     fill=field_info["fill"],
-                                     font=field_info["font"])
-                else:
-                    draw.text((field_info["posx"], field_info["posy"]),
-                              display_string,
-                              fill=field_info["fill"],
-                              font=field_info["font"])
-
 
 # Render the static portion of video screens
 def video_screen_static(layout, info):
@@ -1333,8 +1461,11 @@ def video_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All the static text fields
-    video_text_fields(image, draw, layout, info, dynamic=0)
+    # All static text fields
+    text_fields(image, draw,
+                layout, info,
+                ScreenMode.VIDEO, video_dmode.name,
+                dynamic=0)
 
     # Return new image
     return image
@@ -1349,8 +1480,11 @@ def video_screen_static(layout, info):
 #
 def video_screen_dynamic(image, draw, layout, info, prog):
 
-    # Dynamic text fields
-    video_text_fields(image, draw, layout, info, dynamic=1)
+    # All Dynamic text fields
+    text_fields(image, draw,
+                layout, info,
+                ScreenMode.VIDEO, video_dmode.name,
+                dynamic=1)
 
     # Progress bar, if present
     if (prog != -1 and "prog" in layout.keys()):
@@ -1384,9 +1518,7 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 def video_screens(image, draw, info, prog):
     global _static_image, _static_video
     global _last_video_title, _last_video_episode, _last_video_time
-
-    # Determine what video layout should be used
-    layout = VIDEO_LAYOUT[video_dmode.name]
+    global video_dmode
 
     # Heuristic to determine layout based upon populated InfoLabels,
     # if enabled via settings.  Originally suggested by @noggin and
@@ -1409,18 +1541,21 @@ def video_screens(image, draw, info, prog):
     if VIDEO_LAYOUT_AUTOSELECT:
         if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
                 "V_PVR" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_PVR"]     # PVR TV shows
+            video_dmode = VDisplay["V_PVR"]     # PVR TV shows
         elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
               "V_LIVETV" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_LIVETV"]  # live TV
+            video_dmode = VDisplay["V_LIVETV"]  # live TV
         elif (info["VideoPlayer.TVShowTitle"] != '' and
               "V_TV_SHOW" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_TV_SHOW"]  # Library TV shows
+            video_dmode = VDisplay["V_TV_SHOW"] # library TV shows
         elif (info["VideoPlayer.OriginalTitle"] != '' and
               "V_MOVIE" in VIDEO_LAYOUT):
-            layout = VIDEO_LAYOUT["V_MOVIE"]   # movie
+            video_dmode = VDisplay["V_MOVIE"]   # movie
         else:
             pass  # leave as-is, just use default selection
+
+    # Look up video layout details
+    layout = VIDEO_LAYOUT[video_dmode.name]
 
     if (_static_image and _static_video and
         info["VideoPlayer.Title"] == _last_video_title and
@@ -1475,6 +1610,10 @@ def calc_progress(time_str, duration_str):
         return -1
 
 
+# Activate display backlight, making use of luma's PWM capabilities if
+# enabled.  Note that scripts using hardware PWM on RPi are likely to
+# override this function.
+#
 def screen_on():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
@@ -1483,7 +1622,10 @@ def screen_on():
     else:
         device.backlight(True)
 
-
+# Turn off the display backlight, making use of luma's PWM
+# capabilities if enabled.  Note that scripts using hardware PWM on
+# RPi are likely to override this function.
+#
 def screen_off():
     if (not USE_BACKLIGHT or DEMO_MODE):
         return
@@ -1513,12 +1655,15 @@ def update_display(touched=False):
         draw.rectangle(
             [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
 
-    # Check if the _screen_active time has expired
-    if (_screen_active and datetime.now() >= _screen_offtime):
-        _screen_active = False
-        if not _kodi_playing:
-            screen_off()
-
+    # Check if the _screen_active time has expired, unless we're
+    # always showing an idle status screen.
+    if not IDLE_STATUS_ENABLED:
+        if (_screen_active and datetime.now() >= _screen_offtime):
+            _screen_active = False
+            if not _kodi_playing:
+                screen_off()
+        
+                
     # Ask Kodi whether anything is playing...
     #
     #   JSON-RPC calls can only invoke one method per call.  Unless
@@ -1548,6 +1693,14 @@ def update_display(touched=False):
         # is available.
         _kodi_playing = False
 
+        # If there /was/ a static image, let's blank the screen for
+        # the idle status screen.  This code may change once we permit
+        # for customized backgrounds, but this should do for the
+        # moment.
+        if (_static_image and IDLE_STATUS_ENABLED):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')            
+        
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
         _last_image_path = None
@@ -1556,12 +1709,14 @@ def update_display(touched=False):
         _static_image = None
         _screen_active = True #to force status screen
 
-        #if _screen_press or touched:
-         #   _screen_press = False
-          #  _screen_active = True
-          #  _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
-        if _screen_active:
+        if _screen_press or touched:
+            _screen_press = False
+            _screen_active = True
+            _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
+            
+        if _screen_active or IDLE_STATUS_ENABLED:
+
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
@@ -1580,7 +1735,11 @@ def update_display(touched=False):
                 rpc_url,
                 data=json.dumps(payload),
                 headers=headers).json()
-            status_screen(draw, status_resp['result'], summary)
+
+            # add the summary string above to the response dictionary
+            status_resp['result']['summary'] = summary
+
+            status_screen(image, draw, status_resp['result'])
             screen_on()
         else:
             screen_off()
