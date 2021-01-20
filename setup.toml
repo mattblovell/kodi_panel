@@ -93,6 +93,10 @@ HW_PWM_LEVEL = 0.55
 ENABLE_AUDIO_SCREENS = true
 ENABLE_VIDEO_SCREENS = true
 
+# Should the idle status screen always be shown?  That could be
+# desired if no touch interrupt is available.
+ENABLE_IDLE_STATUS = true
+
 
 # Paths to default thumbnails for audio and status screen.  These now
 # get resized, to whatever is specified for the audio screen used.
