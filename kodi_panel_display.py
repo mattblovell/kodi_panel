@@ -1477,8 +1477,7 @@ AUDIO_SELECT_FUNC = audio_select_default
 #
 #  First two arguments are Pillow Image and ImageDraw objects.  Third
 #  argument is a dictionary loaded from Kodi with relevant info
-#  fields.  Fourth argument is a float representing progress through
-#  the track.
+#  fields.
 #
 #  The rendering is divided into two phases -- first all of the static
 #  elements (on a new image) and then the dynamic text fields and
@@ -1489,7 +1488,7 @@ AUDIO_SELECT_FUNC = audio_select_default
 #   - around 20% CPU load for an RPi Zero W and
 #   - around 5% CPU load on an RPi 4.
 #
-def audio_screens(image, draw, info, prog):
+def audio_screens(image, draw, info):
     global _static_image, _static_video
     global _last_track_num, _last_track_title, _last_track_album, _last_track_time
     global audio_dmode
@@ -1501,6 +1500,13 @@ def audio_screens(image, draw, info, prog):
     # Retrieve layout details
     layout = AUDIO_LAYOUT[audio_dmode.name]
 
+    # Calculate progress in media
+    prog = calc_progress(
+        info["MusicPlayer.Time"],
+        info["MusicPlayer.Duration"],
+        audio_dmode.name
+    )
+    
     if (_static_image and (not _static_video) and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
         info["MusicPlayer.Title"] == _last_track_title and
@@ -1697,11 +1703,10 @@ VIDEO_SELECT_FUNC = video_select_default
 #
 #  First two arguments are Pillow Image and ImageDraw objects.
 #  Third argument is a dictionary loaded from Kodi with relevant info fields.
-#  Fourth argument is a float representing progress through the video.
 #
 #  See static/dynamic description given for audio_screens()
 #
-def video_screens(image, draw, info, prog):
+def video_screens(image, draw, info):
     global _static_image, _static_video
     global _last_video_title, _last_video_episode, _last_video_time
     global video_dmode
@@ -1713,6 +1718,13 @@ def video_screens(image, draw, info, prog):
     # Retrieve layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
 
+    # Calculate progress in media    
+    prog = calc_progress(
+        info["VideoPlayer.Time"],
+        info["VideoPlayer.Duration"],
+        video_dmode.name
+    )
+    
     if (_static_image and _static_video and
         info["VideoPlayer.Title"] == _last_video_title and
         info["VideoPlayer.Episode"] == _last_video_episode and
@@ -1735,7 +1747,28 @@ def video_screens(image, draw, info, prog):
 #
 # A -1 return value causes the progress bar NOT to be rendered.
 #
-def calc_progress(time_str, duration_str):
+# If one wants the progress percentage to be calculated by Kodi, then
+# in Kodi Leia it must be fetched separately!  An additional JSON-RPC
+# call like the following is necessary:
+#
+#   payload = {
+#       "jsonrpc": "2.0",
+#       "method"  : "Player.GetProperties",
+#       "params"  : {
+#           "playerid": 0,
+#           "properties" : ["percentage"],
+#       },
+#       "id"      : "prog",
+#   }
+#
+# That particular hiccup looks to be fixed in Kodi Matrix.  However,
+# since we have time and duration values, we should be able to
+# calculate the percentage done ourselves.
+#
+# The layout_name, as a string, is passed in case a user-override
+# function wants to use that to modify calculations.
+#
+def calc_progress(time_str, duration_str, layout_name):
     if (time_str == "" or duration_str == ""):
         return -1
     if not (1 <= time_str.count(":") <= 2 and
@@ -1934,11 +1967,6 @@ def update_display(touched=False):
         try:
             video_info = response['result']
 
-            # See remarks in audio_screens() regarding calc_progress()
-            prog = calc_progress(
-                video_info["VideoPlayer.Time"],
-                video_info["VideoPlayer.Duration"])
-
             # There seems to be a hiccup in DLNA/UPnP playback in which a
             # change (or stopping playback) causes a moment when
             # nothing is actually playing, according to the Info Labels.
@@ -1948,7 +1976,7 @@ def update_display(touched=False):
                 video_info["VideoPlayer.Cover"] == ""):
                 pass
             else:
-                video_screens(image, draw, video_info, prog)
+                video_screens(image, draw, video_info)
                 screen_on()
         except BaseException:
             raise
@@ -2000,27 +2028,6 @@ def update_display(touched=False):
         try:
             track_info = response['result']
 
-            # Progress information in Kodi Leia must be fetch separately, via a
-            # JSON-RPC call like the following:
-            #
-            #   payload = {
-            #       "jsonrpc": "2.0",
-            #       "method"  : "Player.GetProperties",
-            #       "params"  : {
-            #           "playerid": 0,
-            #           "properties" : ["percentage"],
-            #       },
-            #       "id"      : "prog",
-            #   }
-            #
-            # This looks to be fixed in Kodi Matrix.  However, since we
-            # already have the current time and duration, let's just
-            # calculate the current position as a percentage.
-
-            prog = calc_progress(
-                track_info["MusicPlayer.Time"],
-                track_info["MusicPlayer.Duration"])
-
             # There seems to be a hiccup in DLNA/UPnP playback in
             # which a track change (or stopping playback) causes a
             # moment when nothing is actually playing, according to
@@ -2031,7 +2038,7 @@ def update_display(touched=False):
                     track_info["MusicPlayer.Cover"] == ""):
                 pass
             else:
-                audio_screens(image, draw, track_info, prog)
+                audio_screens(image, draw, track_info)
                 screen_on()
         except BaseException:
             raise
