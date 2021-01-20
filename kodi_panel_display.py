@@ -1278,8 +1278,14 @@ def status_screen(image, draw, kodi_status):
                 outline = layout["background"].get("outline","black"),
                 width   = layout["background"].get("width",1)
             )
-        elif ("image" in layout["background"]):
-            pass
+
+        elif ("image" in layout["background"] and
+              os.path.isfile(layout["background"]["image"]) and
+              os.access(layout["background"]["image"], os.R_OK)):
+            # assume that image is properly sized for the display
+            bg_image = Image.open(layout["background"]["image"])
+            image.paste(bg_image, (0,0))
+
         elif ("fill" in layout["background"]):
             draw.rectangle(
                 [(0, 0), (_frame_size[0], _frame_size[1])],
@@ -1337,8 +1343,13 @@ def audio_screen_static(layout, info):
                 outline = layout["background"].get("outline","black"),
                 width   = layout["background"].get("width",1)
             )
-        elif ("image" in layout["background"]):
-            pass
+
+        elif ("image" in layout["background"] and
+              os.path.isfile(layout["background"]["image"]) and
+              os.access(layout["background"]["image"], os.R_OK)):
+            # assume that image is properly sized for the display
+            bg_image = Image.open(layout["background"]["image"])
+            image.paste(bg_image, (0,0))
 
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
@@ -1517,8 +1528,13 @@ def video_screen_static(layout, info):
                 outline = layout["background"].get("outline","black"),
                 width   = layout["background"].get("width",1)
             )
-        elif ("image" in layout["background"]):
-            pass
+
+        elif ("image" in layout["background"] and
+              os.path.isfile(layout["background"]["image"]) and
+              os.access(layout["background"]["image"], os.R_OK)):
+            # assume that image is properly sized for the display
+            bg_image = Image.open(layout["background"]["image"])
+            image.paste(bg_image, (0,0))
 
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
