@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.24"
+PANEL_VER = "v1.25"
 
 #
 # Audio/Video codec lookup table
@@ -309,7 +309,7 @@ if AUDIO_ENABLED:
         # the audio side of things.
         AUDIO_LAYOUT_AUTOSELECT = config.settings.get(
             "ALAYOUT_AUTOSELECT", False)
-        
+
     else:
         warnings.warn(
             "Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
@@ -1366,7 +1366,7 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
 #  retrieved from Kodi.
 #
 def audio_select_default(info):
-    pass
+    return audio_dmode
 
 
 # Callback hook
@@ -1377,7 +1377,7 @@ def audio_select_default(info):
 #
 AUDIO_SELECT_FUNC = audio_select_default
 
-            
+
 # Audio info screens (shown when music is playing)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.  Third
@@ -1397,11 +1397,12 @@ AUDIO_SELECT_FUNC = audio_select_default
 def audio_screens(image, draw, info, prog):
     global _static_image, _static_video
     global _last_track_num, _last_track_title, _last_track_album, _last_track_time
+    global audio_dmode
 
     # Permit audio content to drive selected layout
     if (AUDIO_LAYOUT_AUTOSELECT and AUDIO_SELECT_FUNC):
-        AUDIO_SELECT_FUNC(info)    
-    
+        audio_dmode = AUDIO_SELECT_FUNC(info)
+
     # Retrieve layout details
     layout = AUDIO_LAYOUT[audio_dmode.name]
 
@@ -1541,23 +1542,23 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 #  retrieved from Kodi.
 #
 def video_select_default(info):
-    global video_dmode
-    
     if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
         "V_PVR" in VIDEO_LAYOUT):
-        video_dmode = VDisplay["V_PVR"]     # PVR TV shows
+        new_mode = VDisplay["V_PVR"]     # PVR TV shows
     elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
           "V_LIVETV" in VIDEO_LAYOUT):
-        video_dmode = VDisplay["V_LIVETV"]  # live TV
+        new_mode = VDisplay["V_LIVETV"]  # live TV
     elif (info["VideoPlayer.TVShowTitle"] != '' and
           "V_TV_SHOW" in VIDEO_LAYOUT):
-        video_dmode = VDisplay["V_TV_SHOW"] # library TV shows
+        new_mode = VDisplay["V_TV_SHOW"] # library TV shows
     elif (info["VideoPlayer.OriginalTitle"] != '' and
           "V_MOVIE" in VIDEO_LAYOUT):
-        video_dmode = VDisplay["V_MOVIE"]   # movie
+        new_mode = VDisplay["V_MOVIE"]   # movie
     else:
         # use the default mode specified from setup
-        video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
+        new_mode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
+
+    return new_mode
 
 
 # Callback hook
@@ -1567,8 +1568,8 @@ def video_select_default(info):
 #     kodi_display_panel.VIDEO_SELECT_FUNC = my_selection_func
 #
 VIDEO_SELECT_FUNC = video_select_default
-        
-        
+
+
 # Video info screens (shown when a video is playing)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.
@@ -1584,7 +1585,7 @@ def video_screens(image, draw, info, prog):
 
     # Permit video content to drive selected layout
     if (VIDEO_LAYOUT_AUTOSELECT and VIDEO_SELECT_FUNC):
-        VIDEO_SELECT_FUNC(info)
+        video_dmode = VIDEO_SELECT_FUNC(info)
 
     # Retrieve layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
@@ -1694,8 +1695,8 @@ def update_display(touched=False):
             _screen_active = False
             if not _kodi_playing:
                 screen_off()
-        
-                
+
+
     # Ask Kodi whether anything is playing...
     #
     #   JSON-RPC calls can only invoke one method per call.  Unless
@@ -1731,8 +1732,8 @@ def update_display(touched=False):
         # moment.
         if (_static_image and IDLE_STATUS_ENABLED):
             draw.rectangle(
-                [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')            
-        
+                [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
+
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
         _last_image_path = None
@@ -1744,7 +1745,7 @@ def update_display(touched=False):
             _screen_press = False
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
-            
+
         if _screen_active or IDLE_STATUS_ENABLED:
             # Idle status screen
             if len(response['result']) == 0:
