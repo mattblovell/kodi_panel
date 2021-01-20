@@ -183,6 +183,11 @@ _last_image_path = None
 _last_thumb = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
+# Flag set or cleared by get_artwork() to indicate if fallback to one
+# of the default images was necessary.  Knowing that state could be
+# useful for any element-rendering callback functions.
+_image_default = False
+
 # Re-use static portion of a screen.  The various _last_* variables
 # below are checked to determine when the static portion can be
 # reused.
@@ -412,7 +417,7 @@ def fixup_layouts(nested_dict):
             newdict[key] = fixup_array(value)
         else:
             if ((key.startswith("color") or key == "lcolor" or
-                 key == "outline" or 
+                 key == "outline" or
                  key == "fill" or key == "lfill") and
                     value.startswith("color_")):
                 # Lookup color
@@ -931,7 +936,7 @@ def progress_bar(pil_draw, bgcolor, color, x, y,
 # prev_image.
 #
 def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
-    global _last_image_path, _last_image_time
+    global _last_image_path, _last_image_time, _image_default
     image_url = None
     image_set = False
     resize_needed = False
@@ -980,11 +985,14 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
                     cover = Image.open(io.BytesIO(r.content))
                     image_set = True
                     resize_needed = True
+                    _image_default = False
                 except BaseException:
                     cover = Image.open(_default_audio_thumb)
                     prev_image = cover
                     image_set = True
                     resize_needed = True
+                    _image_default = True
+
 
     # Airplay artwork
     #
@@ -1047,11 +1055,13 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
                     image_set = True
                     resize_needed = True
                     _last_image_time = new_image_time
+                    _image_default = False
                 except BaseException:
                     cover = Image.open(_default_audio_thumb)
                     prev_image = cover
                     image_set = True
                     resize_needed = True
+                    _image_default = True
         else:
             image_set = True
 
@@ -1066,14 +1076,18 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
             if os.path.isfile(airplay_thumb):
                 _last_image_path = airplay_thumb
                 resize_needed = True
+                _image_default = False
             else:
                 _last_image_path = _default_airplay_thumb
+                _image_default = True
         else:
             # use default image when no artwork is available
             if video:
                 _last_image_path = _default_video_thumb
+                _image_default = True
             else:
                 _last_image_path = _default_audio_thumb
+                _image_default = True
 
         cover = Image.open(_last_image_path)
         prev_image = cover
@@ -1159,7 +1173,7 @@ def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
         # invocation, based on static vs dynamic.
         #
         # Just show everything for a status screen.
-        
+
         if screen_mode != ScreenMode.STATUS:
             if dynamic:
                 if not field_info.get("dynamic", 0):
