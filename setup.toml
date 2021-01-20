@@ -63,7 +63,7 @@ TOUCH_INT = 25
 # Note that the framebuffer version (kodi_panel_fb.py) may ignore or
 # override this setting, in favor of the group below.
 #
-USE_BACKLIGHT = true
+USE_BACKLIGHT = false
 
 # Hardware PWM is available on many SBCs.  For the Raspberry Pi
 # with new-ish kernels, one can add
@@ -79,7 +79,7 @@ USE_BACKLIGHT = true
 # As of Dec 2020, only kodi_panel_fb.py examines these settings.
 # They are not used within kodi_panel_display itself
 #
-USE_HW_PWM = true
+USE_HW_PWM = false
 HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
 HW_PWM_LEVEL = 0.55
 
@@ -635,11 +635,12 @@ format_str = "{VideoPlayer.VideoResolution}p {VideoPlayer.VideoCodec}"
 
 
 [shared_element.acodec]
-name = "acodec"   # special treatment in audio_screens()
+name = "VideoPlayer.Title"   # special treatment in audio_screens()
 posx = 375
 posy = 220
 font = "font_tiny"
 fill = "color_7S"
+format_str = " {acodec} test {vchannelnumber}"
 
 
 [shared_element.vchannelnumber]
@@ -669,7 +670,6 @@ prefix = "End "
 suffix = ""
 dynamic = 1
 
-
 #
 [shared_element.progress_bar]
 posx   = 330     # upper-left corner x position
@@ -696,7 +696,6 @@ shared_element = "progress_bar"
 shared_element = "time"
 [[V_LAYOUT.V_DEFAULT.fields]]
 shared_element = "duration"
-###############################################     debut copie
 [[V_LAYOUT.V_DEFAULT.fields]]
 shared_element = "vtitle"
 [[V_LAYOUT.V_DEFAULT.fields]]
@@ -713,7 +712,6 @@ shared_element = "vchannelnumber"
 shared_element = "vplaycount"
 [[V_LAYOUT.V_DEFAULT.fields]]
 shared_element = "finishtime"
-###################################fin copie
 
 
 [[V_LAYOUT.V_DEFAULT.fields]]
