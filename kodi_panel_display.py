@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.23"
+PANEL_VER = "v1.26"
 
 #
 # Audio/Video codec lookup table
@@ -338,6 +338,14 @@ if AUDIO_ENABLED:
 
         # At startup, use the default layout mode specified in settings
         audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
+
+        # Should audio content (in InfoLabels) be used to select
+        # layout?  See remarks below for VIDEO_LAYOUT_AUTOSELECT.
+        # This variable just permits for copying that functionality on
+        # the audio side of things.
+        AUDIO_LAYOUT_AUTOSELECT = config.settings.get(
+            "ALAYOUT_AUTOSELECT", False)
+
     else:
         warnings.warn(
             "Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
@@ -371,7 +379,8 @@ if VIDEO_ENABLED:
         video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
 
         # Should video layout be auto-determined as part of video_screens()
-        # execution, based upon InfoLabel settings?
+        # execution, based upon InfoLabel settings?  That is, should video
+        # content be used to select layout?
         #
         # This is different behavior than using the touch-interrupt to
         # just cycle through the list of video modes, but seems warranted
@@ -1380,6 +1389,33 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
                          prog)
 
 
+
+
+# Audio selection heuristic
+#
+#  See comments regarding video_selection_default().  We're just
+#  mimicking that functionality on the audio side.
+#
+#  Here we provide no actual heuristic, just the framework to permit
+#  for end-user extension.
+#
+#  Sole argument is a dictionary containing the audio InfoLabels
+#  retrieved from Kodi.  Function MUST return the ADisplay
+#  enumeration to use for the screen update.
+#
+def audio_select_default(info):
+    return audio_dmode
+
+
+# Callback hook
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.AUDIO_SELECT_FUNC = my_selection_func
+#
+AUDIO_SELECT_FUNC = audio_select_default
+
+
 # Audio info screens (shown when music is playing)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.  Third
@@ -1399,8 +1435,13 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
 def audio_screens(image, draw, info, prog):
     global _static_image, _static_video
     global _last_track_num, _last_track_title, _last_track_album, _last_track_time
+    global audio_dmode
 
-    # Determine what audio layout should be used
+    # Permit audio content to drive selected layout
+    if (AUDIO_LAYOUT_AUTOSELECT and AUDIO_SELECT_FUNC):
+        audio_dmode = AUDIO_SELECT_FUNC(info)
+
+    # Retrieve layout details
     layout = AUDIO_LAYOUT[audio_dmode.name]
 
     if (_static_image and (not _static_video) and
@@ -1507,6 +1548,67 @@ def video_screen_dynamic(image, draw, layout, info, prog):
                          prog)
 
 
+
+# Video selection heuristic
+#
+#   Default Heuristic to determine layout based upon populated
+#   InfoLabels, if enabled via settings.  Originally suggested by
+#   @noggin and augmented by @nico1080 in CoreELEC Forum discussion.
+#
+#   Entries within VIDEO_LAYOUT don't have to exist, as selection will
+#   just fall-through based on the key checks below.  In other wise,
+#   if a given layout name doesn't exist, the heuristic just ends up
+#   using the default mode as specified by the setup file's
+#   VLAYOUT_INITIAL variable.
+#
+#   The heuristic is currently as follows:
+#
+#   Check                                  Selected layout
+#   ------------------------------------------------------------
+#   1. playing a pvr://recordings file     V_PVR
+#   2. playing a pvr://channels file       V_LIVETV
+#   3. TVShowTitle label is non-empty      V_TV_SHOW
+#   4. OriginalTitle label is non-empty    V_MOVIE
+#   otherwise                              default (VLAYOUT_INITIAL)
+#   ------------------------------------------------------------
+#
+#   The video_screens() function invokes this function via a "hook"
+#   variable.  Reassignment of that variable permits an end-user's
+#   script to completely override the above heurstic.
+#
+#  Sole argument is a dictionary containing the video InfoLabels
+#  retrieved from Kodi.  Function MUST return the VDisplay
+#  enumeration to use for the screen update.
+#
+def video_select_default(info):
+    if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
+        "V_PVR" in VIDEO_LAYOUT):
+        new_mode = VDisplay["V_PVR"]     # PVR TV shows
+    elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
+          "V_LIVETV" in VIDEO_LAYOUT):
+        new_mode = VDisplay["V_LIVETV"]  # live TV
+    elif (info["VideoPlayer.TVShowTitle"] != '' and
+          "V_TV_SHOW" in VIDEO_LAYOUT):
+        new_mode = VDisplay["V_TV_SHOW"] # library TV shows
+    elif (info["VideoPlayer.OriginalTitle"] != '' and
+          "V_MOVIE" in VIDEO_LAYOUT):
+        new_mode = VDisplay["V_MOVIE"]   # movie
+    else:
+        # use the default mode specified from setup
+        new_mode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
+
+    return new_mode
+
+
+# Callback hook
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.VIDEO_SELECT_FUNC = my_selection_func
+#
+VIDEO_SELECT_FUNC = video_select_default
+
+
 # Video info screens (shown when a video is playing)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.
@@ -1520,42 +1622,11 @@ def video_screens(image, draw, info, prog):
     global _last_video_title, _last_video_episode, _last_video_time
     global video_dmode
 
-    # Heuristic to determine layout based upon populated InfoLabels,
-    # if enabled via settings.  Originally suggested by @noggin and
-    # augmented by @nico1080 in CoreELEC Forum discussion.
-    #
-    # Entries within VIDEO_LAYOUT don't have to exist, as selection
-    # will just fall-through based on the key checks below.
-    #
-    # The heuristic is currently as follows:
-    #
-    #   Check                                    Use layout
-    #   -------------------------------------------------------
-    #   1. playing a pvr://recordings file       V_PVR
-    #   2. playing a pvr://channels file         V_LIVETV
-    #   3. TVShowTitle label is non-empty        V_TV_SHOW
-    #   4. OriginalTitle label is non-empty      V_MOVIE
-    #   -------------------------------------------------------
-    #
+    # Permit video content to drive selected layout
+    if (VIDEO_LAYOUT_AUTOSELECT and VIDEO_SELECT_FUNC):
+        video_dmode = VIDEO_SELECT_FUNC(info)
 
-    if VIDEO_LAYOUT_AUTOSELECT:
-        if (info["Player.Filenameandpath"].startswith("pvr://recordings") and
-                "V_PVR" in VIDEO_LAYOUT):
-            video_dmode = VDisplay["V_PVR"]     # PVR TV shows
-        elif (info["Player.Filenameandpath"].startswith("pvr://channels") and
-              "V_LIVETV" in VIDEO_LAYOUT):
-            video_dmode = VDisplay["V_LIVETV"]  # live TV
-        elif (info["VideoPlayer.TVShowTitle"] != '' and
-              "V_TV_SHOW" in VIDEO_LAYOUT):
-            video_dmode = VDisplay["V_TV_SHOW"] # library TV shows
-        elif (info["VideoPlayer.OriginalTitle"] != '' and
-              "V_MOVIE" in VIDEO_LAYOUT):
-            video_dmode = VDisplay["V_MOVIE"]   # movie
-        else:
-            # use the default mode specified from setup
-            video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
-
-    # Look up video layout details
+    # Retrieve layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
 
     if (_static_image and _static_video and
