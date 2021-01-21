@@ -291,20 +291,22 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #   Note that the available InfoLabels can be augmented via use of
 #   the AUDIO_LABELS list (see earlier in this file).
 #
-#   Unless making use of a shared element, each entry must have a
-#   'name' key that corresponds to ONE of the following:
+#   All entries in the "fields" array" MUST have a name (either
+#   specified explicitly or inherited from a shared element
+#   reference).  The 'name' key corresponds to ONE of the following:
 #
-#     - Exactly matching one of the InfoLabels retrieved from Kodi.
-#       Such entries are only rendered if the corresponding InfoLabel
-#       is non-empty.
+#     - An exact match for one of the InfoLabels retrieved from Kodi.
+#       The entry is only rendered if the corresponding InfoLabel is
+#       non-empty.
 #
-#     - One of the callback functions named in either the ELEMENT_CB
-#       table or the STRING_CB table.  That string matching triggers
+#     - An exact match for one of the callback functions named in the
+#       ELEMENT_CB table or the STRING_CB table.  That match triggers
 #       execution of the corresponding callback function.
 #
-#     - An arbitrary string, not matching an InfoLabel or any callback
-#       function names, provided that the entry ALSO specifies a
-#       'format_str' key.
+#     - An arbitrary string (not matching an InfoLabel or any callback
+#       function names), provided that the entry ALSO specifies a
+#       'format_str' key.  The interpolated format_str always gets
+#       rendered.
 #
 #   The execution path followed by any of the above naming choices is
 #   typically expected to yield a text string to display.  Remaining
