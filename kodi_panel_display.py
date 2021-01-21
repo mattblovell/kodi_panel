@@ -1141,8 +1141,8 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 
 
 
-# Render all text fields, stepping through the fields array from
-# the layout dictionary that is passed in.
+# Render all layout fields, stepping through the fields array from the
+# layout dictionary that is passed in.
 #
 # The final argument determines whether one wants to render all of the
 # static fields or just the dynamic ones.  That, together with the
@@ -1162,7 +1162,7 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 #  dynamic      Boolean flag, set for dynamic screen updates
 #
 #
-def text_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
+def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
 
     # Text fields (all except for MusicPlayer.Time)
     txt_fields = layout.get("fields", [])
@@ -1326,7 +1326,7 @@ def status_screen(image, draw, kodi_status):
     if "fields" not in layout.keys():
         return
 
-    text_fields(image, draw,
+    draw_fields(image, draw,
                 layout, kodi_status,
                 ScreenMode.STATUS, "STATUS_LAYOUT")
 
@@ -1401,7 +1401,7 @@ def audio_screen_static(layout, info):
         _last_thumb = None
 
     # All static text fields
-    text_fields(image, draw,
+    draw_fields(image, draw,
                 layout, info,
                 ScreenMode.AUDIO, audio_dmode.name,
                 dynamic=0)
@@ -1420,7 +1420,7 @@ def audio_screen_static(layout, info):
 def audio_screen_dynamic(image, draw, layout, info, prog):
 
     # All dynamic text fields
-    text_fields(image, draw,
+    draw_fields(image, draw,
                 layout, info,
                 ScreenMode.AUDIO, audio_dmode.name,
                 dynamic=1)
@@ -1506,7 +1506,7 @@ def audio_screens(image, draw, info):
         info["MusicPlayer.Duration"],
         audio_dmode.name
     )
-    
+
     if (_static_image and (not _static_video) and
         info["MusicPlayer.TrackNumber"] == _last_track_num and
         info["MusicPlayer.Title"] == _last_track_title and
@@ -1593,7 +1593,7 @@ def video_screen_static(layout, info):
         _last_thumb = None
 
     # All static text fields
-    text_fields(image, draw,
+    draw_fields(image, draw,
                 layout, info,
                 ScreenMode.VIDEO, video_dmode.name,
                 dynamic=0)
@@ -1611,8 +1611,8 @@ def video_screen_static(layout, info):
 #
 def video_screen_dynamic(image, draw, layout, info, prog):
 
-    # All Dynamic text fields
-    text_fields(image, draw,
+    # All Dynamic layout fields
+    draw_fields(image, draw,
                 layout, info,
                 ScreenMode.VIDEO, video_dmode.name,
                 dynamic=1)
@@ -1718,13 +1718,13 @@ def video_screens(image, draw, info):
     # Retrieve layout details
     layout = VIDEO_LAYOUT[video_dmode.name]
 
-    # Calculate progress in media    
+    # Calculate progress in media
     prog = calc_progress(
         info["VideoPlayer.Time"],
         info["VideoPlayer.Duration"],
         video_dmode.name
     )
-    
+
     if (_static_image and _static_video and
         info["VideoPlayer.Title"] == _last_video_title and
         info["VideoPlayer.Episode"] == _last_video_episode and
