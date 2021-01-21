@@ -292,8 +292,8 @@ VLAYOUT_INITIAL = "V_FULLSCREEN"
 #   Note that the available InfoLabels can be augmented via use of
 #   the AUDIO_LABELS list (see earlier in this file).
 #
-#   Each entry must have a 'name' key that corresponds to ONE of
-#   the following:
+#   Unless making use of a shared element, each entry must have a
+#   'name' key that corresponds to ONE of the following:
 #
 #     - Exactly matching one of the InfoLabels retrieved from Kodi.
 #       Such entries are only rendered if the corresponding InfoLabel
