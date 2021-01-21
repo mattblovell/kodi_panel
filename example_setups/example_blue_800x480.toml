@@ -369,17 +369,32 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #   be omitted from a screen just by commenting it out here, particular
 #   for text fields.
 #
-#   Top-level entries within this A_LAYOUT table MUST have names that
-#   correspond to the ALAYOUT_NAMES list specified earlier in this
-#   file.
+#   Entries within the "fields" array generally correspond to text
+#   fields, but the introduction of the ELEMENT_CB lookup table (if
+#   customized) does permit for additional graphical elements.  Such
+#   customization does require a bit of Python programming.
 #
-#   If a completely new InfoLabel is desired, then one must also
-#   augment the AUDIO_LABELS list (see earlier in this file).
+#   Note that the available InfoLabels can be augmented via use of
+#   the AUDIO_LABELS list (see earlier in this file).
 #
-#   All entries within the "fields" array below correspond to text
-#   fields, with the 'name' key generally corresponding to one of the
-#   retrieved InfoLabels.  Each entry is a little dictionary that can
-#   specify the following entries:
+#   Each entry must have a 'name' key that corresponds to ONE of
+#   the following:
+#
+#     - Exactly matching one of the InfoLabels retrieved from Kodi.
+#       Such entries are only rendered if the corresponding InfoLabel
+#       is non-empty.
+#
+#     - One of the callback functions named in either the ELEMENT_CB
+#       table or the STRING_CB table.  That string matching triggers
+#       execution of the corresponding callback function.
+#
+#     - An arbitrary string, not matching an InfoLabel or any callback
+#       function names, provided that the entry ALSO specifies a
+#       'format_str' key.
+#
+#   The execution path followed by any of the above naming choices is
+#   typically expected to yield a text string to display.  Remaining
+#   keys that control the rendering of that text are as follows:
 #
 #      posx     X-coordinate for field (horizontal position)
 #      posy     Y-coordinate for field (vertical position)
@@ -394,10 +409,11 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #      suffix   Optional string following InfoLabel text
 #
 #      format_str Alternatively, rather than using prefix and suffix,
-#                 one has the option of using a format_str.  The
-#                 string should contain one or more InfoLabels to
-#                 substitute, enclosed within curly braces.  See the
-#                 status layout screen text fields for examples.
+#                 and if one is NOT triggering a callback function, a
+#                 formatting string can be specified.  The string
+#                 should contain one or more InfoLabels to substitute,
+#                 enclosed within curly braces.  See the status layout
+#                 screen text fields for examples.
 #
 #                 Terms to be substituted can also make use of any
 #                 entries defined within the string-manipulation
