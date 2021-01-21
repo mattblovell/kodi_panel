@@ -90,8 +90,13 @@ HW_PWM_LEVEL = 0.45
 #
 
 # Audio and video screens are enabled and disabled separately.
+#
+# Slideshow screens are also possible, controlled by yet another
+# layout (or layouts).
+#
 ENABLE_AUDIO_SCREENS = true
 ENABLE_VIDEO_SCREENS = true
+ENABLE_SLIDESHOW_SCREENS = false
 
 # Should the idle status screen always be shown?  That could be
 # desired if no touch interrupt is available.
@@ -141,6 +146,7 @@ DEFAULT_AIRPLAY = "images/airplay_thumb.png"    # Airplay file w/o artwork
 
 
 # Audio Layout Names
+# ------------------
 #
 #   Specify the names of layouts that are available when playing an
 #   audio file.  The strings used must correspond to those used within
@@ -158,6 +164,7 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 
 
 # Video Layout Names
+# ------------------
 #
 #   Similar to audio screen modes above, except for the
 #   following tidbit ...
@@ -184,6 +191,19 @@ VLAYOUT_NAMES = [
 
 # Initial mode to use upon startup
 VLAYOUT_INITIAL = "V_DEFAULT"
+
+
+
+# Slideshow Layout Names
+# ----------------------
+#
+#   Similar to audio screen modes and video screen modes
+#
+
+SLAYOUT_AUTOSELECT = false
+SLAYOUT_NAMES = [ "DEFAULT" ]
+SLAYOUT_INITIAL = "DEFAULT"
+
 
 
 # Colors
@@ -933,3 +953,46 @@ posx = 5
 posy = 330
 font = "font_sm"
 fill = "white"
+
+
+# --------------------------------------------------------------------
+# Slideshow Screen Content
+#
+#   Similar to audio layout above, but used when a photo slideshow
+#   is in progress.
+#
+
+[S_LAYOUT.DEFAULT.background]
+fill = "navy"
+
+# This example shows the use of an arbitrary `name` when
+# specifying a `format_str`
+[[S_LAYOUT.DEFAULT.fields]]
+name = "greeting"
+posx = 5
+posy = 0
+format_str = "Hello, Slideshow!"
+font = "font_bold"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.Resolution"
+posx = 5
+posy = 130
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.Aperture"
+posx = 5
+posy = 170
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.CameraModel"
+posx = 5
+posy = 210
+font = "font_sm"
+fill = "white"
+
