@@ -671,10 +671,9 @@ def strcb_full_codec(info, screen_mode, layout_name):
 # Kodi doesn't successfully yield any composer info.  I believe that
 # Kodi's UPnP field parsing is incomplete.
 #
-# This function is an element callback simply to provide access to the
-# possibly-defined "drop_unknown" flag from TOML configuration.  It is
-# possible that functionality (not displaying a field based upon
-# display_string) will be replaced by something more general.
+# The "drop_unknown" flag previously checked by this function
+# has been replaced with a more-general "exclude" check within
+# the draw_fields() function.
 #
 
 def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
@@ -689,9 +688,6 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
 
         elif info['MusicPlayer.Property(Role.Composer)'] != "":
             display_string = "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
-
-        if (display_string == "Unknown" and field.get("drop_unknown", 0)):
-            display_string = ""
 
         return display_string
     return ""
@@ -1240,6 +1236,15 @@ def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
         # otherwise render it.
         if (not display_string or display_string == ""):
             continue
+
+        # check for any exclusions
+        if "exclude" in field_info:
+            if type(field_info["exclude"]) == str:
+                if display_string == field_info["exclude"]:
+                    continue
+            elif type(field_info["exclude"]) == list:
+                if display_string in field_info["exclude"]:
+                    continue
 
         # render any label first
         if "label" in field_info:

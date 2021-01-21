@@ -442,6 +442,10 @@ VLAYOUT_INITIAL = "V_DEFAULT"
 #      lfont    Font for label string
 #      lfill    Font fill color for label string
 #
+#      exclude  A string or an array strings that, if the text to
+#               displayed exactly matches, causes the element to
+#               not be drawn.
+#
 #
 #   Internal callbacks are used for the 'codec' and 'artist' text
 #   fields.  End-user scripts are free to augment or modify the
@@ -584,7 +588,8 @@ posy  = 240
 font  = "font_artist"
 fill  = "color_artist"
 trunc = 1
-drop_unknown = 1
+# Drop artist display if "Unknown"
+exclude = "Unknown"
 
 [[A_LAYOUT.A_DEFAULT.fields]]
 name  = "MusicPlayer.Album"
