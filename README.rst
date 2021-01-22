@@ -60,8 +60,9 @@ running on an RPi 3.
 Installation
 ------------
 
-I only have direct access to a Raspberry Pi 3 Model B and an Odroid C4.
-As others try additional SBCs, please feel free to suggest additions or
+When I started, I only had direct access to a Raspberry Pi 3 Model B and an Odroid C4.
+I subsequently got the script running on an RPi 4 Model B and an 
+RPi Zero W.  As others try additional SBCs, please feel free to suggest additions or
 changes to this documentation.
 
 The first step is really to get your display of choice connected and
