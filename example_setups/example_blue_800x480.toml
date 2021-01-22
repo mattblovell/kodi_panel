@@ -958,7 +958,7 @@ fill = "white"
 [[STATUS_LAYOUT.fields]]
 name = "System.Uptime"
 posx = 5
-posy = 210
+posy = 212
 format_str = "Up: {System.Uptime}"
 font = "font_sm"
 fill = "white"
@@ -966,7 +966,7 @@ fill = "white"
 [[STATUS_LAYOUT.fields]]
 name = "System.CPUTemperature"
 posx = 5
-posy = 250
+posy = 254
 format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
 fill = "white"
@@ -974,14 +974,14 @@ fill = "white"
 [[STATUS_LAYOUT.fields]]
 name = "kodi_version"  # internal callback
 posx = 5
-posy = 290
+posy = 296
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.OSVersionInfo"
 posx = 5
-posy = 330
+posy = 338
 font = "font_sm"
 fill = "white"
 
