@@ -494,6 +494,14 @@ are directly analogous to ``ALAYOUT_NAMES`` and ``A_LAYOUT``.   See the
 JSON-RPC call involving ``VideoPlayer`` fields in ``update_display()`` to
 see what fields are available for displaying.
 
+Slideshow Screens
+*****************
+
+The most recent versions of kodi_panel also have support for showing screens
+during photo slideshows.  Just as with audio or video, one has to setup at
+least one layout, defining `SLAYOUT_NAMES` and an `S_LAYOUT` dictionary.
+
+
 
 License
 -------
