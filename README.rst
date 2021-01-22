@@ -34,7 +34,7 @@ and retrieving all relevant state via JSON-RPC, has been used by other
 projects.  The main advantage of *not* being a Kodi addon is that, at least
 with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
 script also means that one can have a separate SBC driving a "Now Playing"
-screen anywhere one would like!  
+screen anywhere one would like.  
 
 The various kodi_panel scripts are also fairly short.  If you are
 familiar with reading and writing Python, and making use of the Pillow
@@ -46,7 +46,7 @@ on
 `InfoLabels <https://kodi.wiki/view/InfoLabels>`_
 should give you a complete picture of what information is available.
 (One can also change Kodi's state using JSON-RPC, something I don't even
-attempt here!)
+attempt here.)
 
 On an Odroid C4, kodi_panel appears to take ~0.5% of CPU time when idle
 and about ~2.5% when music playback is occurring.  Kodi itself, for
@@ -89,7 +89,7 @@ Raspberry Pi
 ************
 
 The directions below were tried on an RPi3 Model B v1.2 using Raspberry Pi OS
-with Linux kernel 5.4.51-v7+ in late 2020.  (I've *not* tried getting
+(Buster) with Linux kernel 5.4.51-v7+ in late 2020.  (I've *not* tried getting
 the display working with LibreELEC.)
 
 For Raspberry Pi boards, follow the
@@ -305,7 +305,7 @@ is by default pulled up to Vcc by an internal resistor and gets pulled
 down to ground when the screen is pressed (as verified with a simple
 multimeter).
 
-This was the motivation I needed to give it a try!
+This was all the motivation I needed to give it a try.
 
 All that was necessary was to find a GPIO pin that was free to use an
 an input.  For my Odroid C4 board, that turned out to be GPIO19, otherwise
@@ -445,7 +445,7 @@ Larger Resolutions & IPS Panels
 I liked the first version of kodi_panel, but the TN (twisted nematic) LCD I used
 had a pretty small viewing angle.  One doesn't tend to notice this when sitting at
 a desk immediately in front of the display, but it ends up being pretty obvious 
-sitting across the living room.  I therefore really wanted to try an IPS display!
+sitting across the living room.  I therefore really wanted to try an IPS display.
 
 I ended up getting both another SPI-connected 3.5-inch IPS display *and* a 4-inch
 HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
