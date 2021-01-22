@@ -151,6 +151,18 @@ VIDEO_LABELS = [
     "VideoPlayer.Cover",
 ]
 
+# Slideshow information
+SLIDESHOW_LABELS = [
+    "Slideshow.Filename",
+    "Slideshow.Resolution",
+    "Slideshow.CameraMake",
+    "Slideshow.CameraModel",
+    "Slideshow.Aperture",
+    "Slideshow.ExposureTime",
+    "Slideshow.Exposure",
+    "Slideshow.FocalLength",
+]
+
 # ----------------------------------------------------------------------------
 
 #
@@ -270,12 +282,17 @@ if ("VIDEO_LABELS" in config.settings.keys() and
         type(config.settings["VIDEO_LABELS"]) == list):
     VIDEO_LABELS += config.settings["VIDEO_LABELS"]
 
+if ("SLIDESHOW_LABELS" in config.settings.keys() and
+        type(config.settings["SLIDESHOW_LABELS"]) == list):
+    SLIDESHOW_LABELS += config.settings["SLIDESHOW_LABELS"]
+
 
 #
 # Which display screens are enabled for use?
 #
-AUDIO_ENABLED = config.settings.get("ENABLE_AUDIO_SCREENS", False)
-VIDEO_ENABLED = config.settings.get("ENABLE_VIDEO_SCREENS", False)
+AUDIO_ENABLED     = config.settings.get("ENABLE_AUDIO_SCREENS", False)
+VIDEO_ENABLED     = config.settings.get("ENABLE_VIDEO_SCREENS", False)
+SLIDESHOW_ENABLED = config.settings.get("ENABLE_SLIDESHOW_SCREENS", False)
 
 # Should the status screen always be shown when idle?
 IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
@@ -283,9 +300,17 @@ IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 
 # Audio screen enumeration
 # ------------------------
-# The next() function serves to switch modes in response to screen
-# touches.  The list is intended to grow, as other ideas for layouts
-# are proposed.
+#
+#   Use an enumerated type to capture all the distinct layouts for
+#   audio screens.  The next() function that makes available then
+#   serves to switch modes in response to screen touches.
+#
+#   The number of audio layouts can grow, based on the contents
+#   of the setup.toml file.
+#
+#   During development, the ability to support different layouts got
+#   somewhat re-purposed, after general video screen support was
+#   added.
 #
 
 class ADisplay(Enum):
@@ -324,7 +349,8 @@ if AUDIO_ENABLED:
 
 # Video screen enumeration
 # ------------------------
-# Same functionality as ADisplay above.
+#
+#   Same functionality as ADisplay above
 #
 
 class VDisplay(Enum):
@@ -364,8 +390,53 @@ if VIDEO_ENABLED:
         VIDEO_ENABLED = 0
 
 
-# Screen Mode
-# -----------
+# Slideshow screen enumeration
+# ----------------------------
+#
+#   This should seem familiar by now...
+#
+#   We'll use "S" for slideshow.
+#
+
+class SDisplay(Enum):
+    def next(self):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1
+        if index >= len(members):
+            index = 0
+        return members[index]
+
+
+if SLIDESHOW_ENABLED:
+    if ("SLAYOUT_NAMES" in config.settings.keys() and
+            "SLAYOUT_INITIAL" in config.settings.keys()):
+        # Populate enum based upon settings file
+        for index, value in enumerate(config.settings["SLAYOUT_NAMES"]):
+            extend_enum(SDisplay, value, index)
+
+        # At startup, use the default layout mode specified in settings
+        slide_dmode = SDisplay[config.settings["SLAYOUT_INITIAL"]]
+
+        # Should video layout be auto-determined as part of video_screens()
+        # execution, based upon InfoLabel settings?  That is, should video
+        # content be used to select layout?
+        #
+        # This is different behavior than using the touch-interrupt to
+        # just cycle through the list of video modes, but seems warranted
+        # based on the differences that exist for Movies, TV, and PVR.
+        SLIDESHOW_LAYOUT_AUTOSELECT = config.settings.get(
+            "SLAYOUT_AUTOSELECT", False)
+
+    else:
+        warnings.warn(
+            "Cannot find settings for SLAYOUT_NAMES and/or SAYOUT_INITIAL!")
+        print("Disabling slideshow screens (SLIDESHOW_ENABLED=0)")
+        SLIDESHOW_ENABLED = 0
+
+
+# Overall Screen Mode
+# -------------------
 #
 # Define an enumerated type (well, it's still Python, so a class)
 # representing whether the screen being drawn is for audio playback,
@@ -375,6 +446,7 @@ class ScreenMode(Enum):
     STATUS = 0   # kodi_panel status screen
     AUDIO  = 1   # audio playback is active
     VIDEO  = 2   # video playback is active
+    SLIDE  = 3   # slideshow is active
 
 
 # Shared Elements
@@ -445,27 +517,35 @@ def fixup_array(array):
     return newarray
 
 
-# Used by audio_screens() for all info screens
+# Patch up the audio layout nested dictionary...
 if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
     AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
 elif AUDIO_ENABLED:
     warnings.warn(
-        "Cannot find any A_LAYOUT screen settings!  Disabling audio screens.")
+        "Cannot find any A_LAYOUT screen settings in setup file!  Disabling audio screens.")
     AUDIO_ENABLED = 0
 
-# Used by video_screens() for all info screens
+# Patch up the video layout nested dictionary...
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 elif VIDEO_ENABLED:
     warnings.warn(
-        "Cannot find any V_LAYOUT screen settings!  Disabling video screens.")
+        "Cannot find any V_LAYOUT screen settings in setup file!  Disabling video screens.")
+    VIDEO_ENABLED = 0
+
+# Patch up the slideshow layout nested dictionary...
+if (SLIDESHOW_ENABLED and "S_LAYOUT" in config.settings.keys()):
+    SLIDESHOW_LAYOUT = fixup_layouts(config.settings["S_LAYOUT"])
+elif SLIDESHOW_ENABLED:
+    warnings.warn(
+        "Cannot find any S_LAYOUT screen settings in setup file!  Disabling slideshow screens.")
     VIDEO_ENABLED = 0
 
 # Layout control for status screen, used by status_screen()
 if ("STATUS_LAYOUT" in config.settings.keys()):
     STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 else:
-    warnings.warn("Cannot find any STATUS_LAYOUT screen settings!  Exiting.")
+    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Exiting.")
     sys.exit(1)
 
 
@@ -1153,24 +1233,28 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 #  draw         ImageDraw object, tied to image
 #  layout       Layout dictionary to use for screen update
 #  info         Dictionary containing Kodi InfoLabel response
-#  screen_mode  Enumerated type indicating AUDIO, VIDEO, or STATUS
+#  screen_mode  Enumerated type indicating AUDIO, VIDEO, SLIDE, or STATUS
 #  layout_name  Name, as a string, for the in-use layout
 #  dynamic      Boolean flag, set for dynamic screen updates
 #
 #
 def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
 
-    # Text fields (all except for MusicPlayer.Time)
-    txt_fields = layout.get("fields", [])
-    for field_info in txt_fields:
+    # Pull out the layout's fields
+    field_list = layout.get("fields", [])
+    for field_info in field_list:
         display_string = None
 
         # Skip over the fields that aren't desired for this
         # invocation, based on static vs dynamic.
         #
-        # Just show everything for a status screen.
+        # Just show everything for a STATUS screen or
+        # a SLIDE screen.
 
-        if screen_mode != ScreenMode.STATUS:
+        if (screen_mode == ScreenMode.STATUS or
+            screen_mode == ScreenMode.SLIDE):
+            pass
+        else:
             if dynamic:
                 if not field_info.get("dynamic", 0):
                     continue
@@ -1278,15 +1362,15 @@ def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
 
 
 
-# Idle status screen (shown upon a screen press)
+# Idle status screen (often shown upon a screen press)
 #
-# First argument is a Pillow ImageDraw object.
-# Second argument is a dictionary loaded from Kodi system status fields.
-# Third argument is dictionary holding JSON-RPC response from Kodi.
+#   First two arguments are Pillow Image and ImageDraw objects.
+#   Third argument is a dictionary loaded from Kodi with info fields.
 #
 # Unlike audio_screen_static() and video_screen_static(), this
-# function is NOT expected to create a completely new image.  So, any
-# background fill is handled in a slightly different manner.
+# function is NOT expected to create a completely new Image object.
+# So, the background fill (if any) is handled in a slightly different
+# manner.
 #
 def status_screen(image, draw, kodi_status):
     layout = STATUS_LAYOUT
@@ -1327,7 +1411,7 @@ def status_screen(image, draw, kodi_status):
             (layout["thumb"]["posx"],
              layout["thumb"]["posy"]))
 
-    # go through all text fields, if any
+    # go through all layout fields, if any
     if "fields" not in layout.keys():
         return
 
@@ -1405,7 +1489,7 @@ def audio_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All static text fields
+    # All static layout fields
     draw_fields(image, draw,
                 layout, info,
                 ScreenMode.AUDIO, audio_dmode.name,
@@ -1424,7 +1508,7 @@ def audio_screen_static(layout, info):
 #
 def audio_screen_dynamic(image, draw, layout, info, prog):
 
-    # All dynamic text fields
+    # All dynamic layout fields
     draw_fields(image, draw,
                 layout, info,
                 ScreenMode.AUDIO, audio_dmode.name,
@@ -1480,19 +1564,35 @@ AUDIO_SELECT_FUNC = audio_select_default
 
 # Audio info screens (shown when music is playing)
 #
-#  First two arguments are Pillow Image and ImageDraw objects.  Third
-#  argument is a dictionary loaded from Kodi with relevant info
-#  fields.
+#  First two arguments are Pillow Image and ImageDraw objects.
+#  Third argument is a dictionary loaded from Kodi with info fields.
 #
 #  The rendering is divided into two phases -- first all of the static
-#  elements (on a new image) and then the dynamic text fields and
-#  progress bar.  The static image gets reused when possible.
+#  elements (on a new image) and then the dynamic fields and progress
+#  bar.  The static image gets reused when possible.
 #
 #  Switching to this approach seems to keep the active update loop to
 #
 #   - around 20% CPU load for an RPi Zero W and
 #   - around 5% CPU load on an RPi 4.
 #
+#
+# NOTES:
+#
+#  Unfortunately, Kodi Leia doesn't seem to capture the field
+#  that JRiver Media Center offers up for its "Composer" tag,
+#  namely
+#
+#      upnp:author role="Composer"
+#
+#  I've tried several variants with no success.
+#
+#  Also, BitsPerSample appears to be unreliable, as it can
+#  get "stuck" at 32.  The SampleRate behaves better.  None
+#  of these problems likely occur when playing back from a
+#  Kodi-local library.
+#
+
 def audio_screens(image, draw, info):
     global _static_image, _static_video
     global _last_track_num, _last_track_title, _last_track_album, _last_track_time
@@ -1597,7 +1697,7 @@ def video_screen_static(layout, info):
     else:
         _last_thumb = None
 
-    # All static text fields
+    # All static layout fields
     draw_fields(image, draw,
                 layout, info,
                 ScreenMode.VIDEO, video_dmode.name,
@@ -1747,6 +1847,77 @@ def video_screens(image, draw, info):
     video_screen_dynamic(image, draw, layout, info, prog)
 
 
+
+
+# Callback hook
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.SLIDESHOW_SELECT_FUNC = my_selection_func
+#
+SLIDESHOW_SELECT_FUNC = None
+    
+
+# Slideshow info screens (shown when a photo slideshow is in progress)
+#
+#  First two arguments are Pillow Image and ImageDraw objects.
+#  Third argument is a dictionary loaded from Kodi with relevant info fields.
+#
+# At present, this function is closest in nature to status_screen(),
+# without any distinction between static and dynamic elements.  That
+# assumption is reflect with a conditional in the draw_fields()
+# function.  That conditional will need to be modified if there is a
+# change to this assumption.
+#
+# Custom backgrounds are handled in the same fashion as in
+# status_screen(), since a new Image object isn't expected.
+#
+def slideshow_screens(image, draw, info):
+    global slide_dmode
+
+    # Permit audio content to drive selected layout
+    if (SLIDESHOW_LAYOUT_AUTOSELECT and SLIDESHOW_SELECT_FUNC):
+        slide_dmode = SLIDESHOW_SELECT_FUNC(info)
+    
+    # Retrieve layout details
+    layout = SLIDESHOW_LAYOUT[slide_dmode.name]
+
+    # Draw any user-specified rectangle or load background
+    # image for layout
+    if "background" in layout:
+        if ("rectangle" in layout["background"] and
+            layout["background"]["rectangle"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = layout["background"].get("outline","black"),
+                width   = layout["background"].get("width",1)
+            )
+
+        elif ("image" in layout["background"] and
+              os.path.isfile(layout["background"]["image"]) and
+              os.access(layout["background"]["image"], os.R_OK)):
+            # assume that image is properly sized for the display
+            bg_image = Image.open(layout["background"]["image"])
+            image.paste(bg_image, (0,0))
+
+        elif ("fill" in layout["background"]):
+            draw.rectangle(
+                [(0, 0), (_frame_size[0], _frame_size[1])],
+                fill    = layout["background"].get("fill","black"),
+                outline = "black",
+                width   = 1
+            )
+
+    # go through all layout fields, if any
+    if "fields" not in layout.keys():
+        return
+
+    draw_fields(image, draw,
+                layout, info,
+                ScreenMode.SLIDE, slide_dmode.name)
+
+
 # Given current position ([h:]m:s) and duration, calculate
 # percentage done as a float for progress bar display.
 #
@@ -1880,9 +2051,10 @@ def update_display(touched=False):
 
     if ('result' not in response.keys() or
         len(response['result']) == 0 or
-        response['result'][0]['type'] == 'picture' or
+        (response['result'][0]['type'] == 'picture' and not SLIDESHOW_ENABLED) or
         (response['result'][0]['type'] == 'video' and not VIDEO_ENABLED) or
-            (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
+        (response['result'][0]['type'] == 'audio' and not AUDIO_ENABLED)):
+
         # Nothing is playing or something for which no display screen
         # is available.
         _kodi_playing = False
@@ -1915,6 +2087,8 @@ def update_display(touched=False):
                 summary = "Video playing"
             elif response['result'][0]['type'] == 'picture':
                 summary = "Photo viewing"
+            elif response['result'][0]['type'] == 'audio':
+                summary = "Audio playing"
 
             payload = {
                 "jsonrpc": "2.0",
@@ -2006,20 +2180,6 @@ def update_display(touched=False):
                 text_wrap.cache_clear()
 
         # Retrieve all music InfoLabels in a single JSON-RPC call.
-        #
-        #   Unfortunately, Kodi Leia doesn't seem to capture the field
-        #   that JRiver Media Center offers up for its "Composer" tag,
-        #   namely
-        #
-        #      upnp:author role="Composer"
-        #
-        #   I've tried several variants with no success.
-        #
-        #   Also, BitsPerSample appears to be unreliable, as it can
-        #   get "stuck" at 32.  The SampleRate behaves better.  None
-        #   of these problems likely occur when playing back from a
-        #   Kodi-local library.
-        #
         payload = {
             "jsonrpc": "2.0",
             "method": "XBMC.GetInfoLabels",
@@ -2046,6 +2206,44 @@ def update_display(touched=False):
             else:
                 audio_screens(image, draw, track_info)
                 screen_on()
+        except BaseException:
+            raise
+
+    elif (response['result'][0]['type'] == 'picture' and SLIDESHOW_ENABLED):
+        # Photo slideshow is in-progress!
+        _kodi_playing = True
+
+        # Change display modes upon any screen press, forcing a
+        # re-fetch of any artwork.  Clear other state that may also be
+        # mode-specific.
+        if _screen_press or touched:
+            _screen_press = False
+            if not SLIDESHOW_LAYOUT_AUTOSELECT:
+                slide_dmode = slide_dmode.next()
+                print(datetime.now(), "slideshow display mode now", audio_dmode.name)
+                _last_image_path = None
+                _last_image_time = None
+                _last_thumb = None
+                _static_image = None
+                truncate_line.cache_clear()
+                text_wrap.cache_clear()
+
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "XBMC.GetInfoLabels",
+            "params": {"labels": SLIDESHOW_LABELS},
+            "id": "4a",
+        }
+        response = requests.post(
+            rpc_url,
+            data=json.dumps(payload),
+            headers=headers).json()
+        # print("Response: ", json.dumps(response))
+        try:
+            slide_info = response['result']
+            slideshow_screens(image, draw, slide_info)
+            screen_on()
+
         except BaseException:
             raise
 
