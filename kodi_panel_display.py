@@ -1848,6 +1848,16 @@ def video_screens(image, draw, info):
 
 
 
+
+# Callback hook
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.SLIDESHOW_SELECT_FUNC = my_selection_func
+#
+SLIDESHOW_SELECT_FUNC = None
+    
+
 # Slideshow info screens (shown when a photo slideshow is in progress)
 #
 #  First two arguments are Pillow Image and ImageDraw objects.
@@ -1865,6 +1875,10 @@ def video_screens(image, draw, info):
 def slideshow_screens(image, draw, info):
     global slide_dmode
 
+    # Permit audio content to drive selected layout
+    if (SLIDESHOW_LAYOUT_AUTOSELECT and SLIDESHOW_SELECT_FUNC):
+        slide_dmode = SLIDESHOW_SELECT_FUNC(info)
+    
     # Retrieve layout details
     layout = SLIDESHOW_LAYOUT[slide_dmode.name]
 
