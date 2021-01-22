@@ -499,7 +499,7 @@ Slideshow Screens
 
 The most recent versions of kodi_panel also have support for showing screens
 during photo slideshows.  Just as with audio or video, one has to setup at
-least one layout, defining `SLAYOUT_NAMES` and an `S_LAYOUT` dictionary.
+least one layout, defining ``SLAYOUT_NAMES`` and an ``S_LAYOUT`` dictionary.
 
 
 
