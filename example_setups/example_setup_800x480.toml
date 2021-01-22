@@ -916,14 +916,15 @@ fill = "navy"
 name = "greeting"
 posx = 5
 posy = 0
-format_str = "Hello, Slideshow!"
+format_str = "Slideshow"
 font = "font_bold"
 fill = "white"
 
 [[S_LAYOUT.DEFAULT.fields]]
-name = "Slideshow.Resolution"
+name = "Slideshow.CameraModel"
 posx = 5
 posy = 130
+prefix = "Camera: "
 font = "font_sm"
 fill = "white"
 
@@ -931,12 +932,22 @@ fill = "white"
 name = "Slideshow.Aperture"
 posx = 5
 posy = 170
+prefix = "Aperture: "
 font = "font_sm"
 fill = "white"
 
 [[S_LAYOUT.DEFAULT.fields]]
-name = "Slideshow.CameraModel"
+name = "Slideshow.ExposureTime"
 posx = 5
 posy = 210
+prefix = "Exposure: "
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.Resolution"
+posx = 5
+posy = 250
+prefix = "Resolution: "
 font = "font_sm"
 fill = "white"
