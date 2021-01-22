@@ -418,13 +418,8 @@ if SLIDESHOW_ENABLED:
         # At startup, use the default layout mode specified in settings
         slide_dmode = SDisplay[config.settings["SLAYOUT_INITIAL"]]
 
-        # Should video layout be auto-determined as part of video_screens()
-        # execution, based upon InfoLabel settings?  That is, should video
-        # content be used to select layout?
-        #
-        # This is different behavior than using the touch-interrupt to
-        # just cycle through the list of video modes, but seems warranted
-        # based on the differences that exist for Movies, TV, and PVR.
+        # Provide the same auto-selection hooks as exist for the
+        # other modes.
         SLIDESHOW_LAYOUT_AUTOSELECT = config.settings.get(
             "SLAYOUT_AUTOSELECT", False)
 
