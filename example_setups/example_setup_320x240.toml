@@ -381,9 +381,26 @@ SLAYOUT_INITIAL = "DEFAULT"
 #      lfont    Font for label string
 #      lfill    Font fill color for label string
 #
-#      exclude  A string or an array strings that, if the text to
-#               displayed exactly matches, causes the element to
-#               not be drawn.
+#      exclude  A string or an array strings that, if the text to be
+#               displayed exactly matches, causes the element to NOT
+#               be drawn.
+#
+#      display_if / display_ifnot
+#               An alternative mechanism for controlling element
+#               display.  The value must be a two-element list
+#               providing two strings.
+#
+#               The first string must be either an InfoLabel or a
+#               string callback function (entry in STRING_CB).
+#
+#               The second string is then compared for equality (or
+#               inequality, when using ifnot) against the string
+#               resulting from "evaluating" the InfoLabel or callback
+#               function.
+#
+#               An example:
+#
+#                 display_if = [ "MusicPlayer.TrackNumber", "02" ]
 #
 #
 #   Internal callbacks are used for the 'codec' and 'artist' text
@@ -423,15 +440,19 @@ SLAYOUT_INITIAL = "DEFAULT"
 # Default audio info screen
 #
 
-[A_LAYOUT.A_DEFAULT.thumb]   # Artwork
-posx = 4
-posy = 7
-size = 140
-# If artwork is smaller than the above size, should it be centered
-# where the fullsize artwork would have been placed?
-center_sm = 1
+# Note that one can optionally specify a display_if or display_ifnot
+# expression for the cover art thumbnail (thumb)
+[A_LAYOUT.A_DEFAULT.thumb]
+  posx = 4
+  posy = 7
+  size = 140
+  # If artwork is smaller than the above size, should it be centered
+  # where the fullsize artwork would have been placed?
+  center_sm = 1
 
-[A_LAYOUT.A_DEFAULT.prog]    # Progress Bar
+# Note that one can optionally specify a display_if or display_ifnot
+# expression for the progress bar (prog)
+[A_LAYOUT.A_DEFAULT.prog] 
 posx   = 150     # upper-left corner x position
 posy   = 7       # upper-left corner y position
 height = 8       # pixel height

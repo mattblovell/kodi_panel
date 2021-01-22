@@ -1212,6 +1212,83 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 
 
 
+# Permit a layout's thumb, prog, or fields elements to specify a basic
+# conditional to control their display.
+#
+# The dictionary keys
+#
+#   display_if     or
+#   display_ifnot
+#
+# are assumed to provide a two-element list:
+#
+#  - The first element in should be either an InfoLabel name
+#    or the name of a string callback function (i.e., in the STRING_CB
+#    table).
+#
+#  - The second element is a string.  For display_if, the string must
+#    equal that which results from "evaluating" the InfoLabel or
+#    callback for the element to be displayed.  For display_ifnot, the
+#    specified string must NOT equal the return value for the element
+#    to be displayed.
+#
+# At most one of display_if or display_ifnot can be present for an
+# element.
+#
+# Arguments to this function are as follows:
+#
+#  dictionary for the layout element of interest
+#  dictionary of InfoLabels from kodi
+#  screen mode, as an Enum
+#  layout name, as a string
+#
+# The return value is a boolean, True if the element should be
+# displayed and False if the element should be skipped.
+#
+def check_display_expr(field_dict, info, screen_mode, layout_name):
+    show_element = False
+    func_name = None
+    test_str = None
+    check_equal = True
+
+    if ("display_if" not in field_dict and
+        "display_ifnot" not in field_dict):
+        return True
+
+    if ("display_if" in field_dict and
+        type(field_dict["display_if"]) == list):
+        func_name = field_dict["display_if"][0]
+        test_str  = field_dict["display_if"][1]
+
+    elif ("display_ifnot" in field_dict and
+          type(field_dict["display_ifnot"]) == list):
+        func_name = field_dict["display_ifnot"][0]
+        test_str  = field_dict["display_ifnot"][1]
+        check_equal = False
+
+    if (not func_name and not test_str):
+        return True
+
+    # Permit func_name to either be an InfoLabel or a string
+    # callback function
+    if func_name in info:
+        result_str = info[func_name]
+    elif func_name in STRING_CB:
+        result_str = STRING_CB[func_name](
+            info,              # Kodo InfoLabel response
+            screen_mode,       # screen mode, as enum
+            layout_name        # layout name, as string
+            )
+    else:
+        # Cannot find func_name, don't display element!
+        return False
+
+    if check_equal:
+        return (result_str == test_str)
+    else:
+        return (result_str != test_str)
+
+
 # Render all layout fields, stepping through the fields array from the
 # layout dictionary that is passed in.
 #
@@ -1235,9 +1312,9 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 #
 def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
 
-    # Pull out the layout's fields
+    # Pull out the layout's array of fields
     field_list = layout.get("fields", [])
-    for field_info in field_list:
+    for field_dict in field_list:
         display_string = None
 
         # Skip over the fields that aren't desired for this
@@ -1251,64 +1328,73 @@ def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             pass
         else:
             if dynamic:
-                if not field_info.get("dynamic", 0):
+                if not field_dict.get("dynamic", 0):
                     continue
             else:
-                if field_info.get("dynamic", 0):
+                if field_dict.get("dynamic", 0):
                     continue
+
+        # Check for any display conditional expression
+        if ("display_if" in field_dict or
+            "display_ifnot" in field_dict):
+            if (not check_display_expr(field_dict,
+                                       info,
+                                       screen_mode,
+                                       layout_name)):
+                # skip this field
+                continue
 
         # Check for any defined callback functions.  If an entry
         # exists in the lookup table, invoke the specified function
         # with all of the arguments discussed in earlier comments.
 
-        if field_info["name"] in ELEMENT_CB:
-            display_string = ELEMENT_CB[field_info["name"]](
+        if field_dict["name"] in ELEMENT_CB:
+            display_string = ELEMENT_CB[field_dict["name"]](
                 image,             # Image instance
                 draw,              # ImageDraw instance
                 info,              # Kodo InfoLabel response
-                field_info,        # layout details for field
+                field_dict,        # layout details for field
                 screen_mode,       # screen mode, as enum
                 layout_name        # layout name, as string
             )
-            # print("Invoked element CB for", field_info["name"],"; received back '", display_string, "'")
+            # print("Invoked element CB for", field_dict["name"],"; received back '", display_string, "'")
 
             # still permit prefix and suffix options
             if (display_string != "" and
-                ("prefix" in field_info or "suffix" in field_info)):
-                display_string = (field_info.get("prefix", "") +
+                ("prefix" in field_dict or "suffix" in field_dict)):
+                display_string = (field_dict.get("prefix", "") +
                                   display_string +
-                                  field_info.get("suffix", ""))
+                                  field_dict.get("suffix", ""))
 
-        elif field_info["name"] in STRING_CB:
-            display_string = STRING_CB[field_info["name"]](
+        elif field_dict["name"] in STRING_CB:
+            display_string = STRING_CB[field_dict["name"]](
                 info,              # Kodo InfoLabel response
                 screen_mode,       # screen mode, as enum
                 layout_name        # layout name, as string
             )
-            # print("Invoked string CB for", field_info["name"],"; received back '", display_string, "'")
+            # print("Invoked string CB for", field_dict["name"],"; received back '", display_string, "'")
 
             # still permit prefix and suffix options
             if (display_string != "" and
-                ("prefix" in field_info or "suffix" in field_info)):
-                display_string = (field_info.get("prefix", "") +
+                ("prefix" in field_dict or "suffix" in field_dict)):
+                display_string = (field_dict.get("prefix", "") +
                                   display_string +
-                                  field_info.get("suffix", ""))
+                                  field_dict.get("suffix", ""))
 
         else:
             if (# name corresponds to a non-empty InfoLabel -OR-
-                (field_info["name"] in info and info[field_info["name"]] != "") or
+                (field_dict["name"] in info and info[field_dict["name"]] != "") or
                 # entry has a format_str specified for use
-                ("format_str" in field_info)):
+                ("format_str" in field_dict)):
 
-                # Use format_str or prefix/suffic approach, in that order
-
-                if field_info.get("format_str", ""):
+                # use format_str or prefix/suffic approach, in that order
+                if field_dict.get("format_str", ""):
                     display_string = format_InfoLabels(
-                        field_info["format_str"], info, screen_mode, layout_name)
-                elif field_info["name"] in info:
-                    display_string = (field_info.get("prefix", "") +
-                                      info[field_info["name"]] +
-                                      field_info.get("suffix", ""))
+                        field_dict["format_str"], info, screen_mode, layout_name)
+                elif field_dict["name"] in info:
+                    display_string = (field_dict.get("prefix", "") +
+                                      info[field_dict["name"]] +
+                                      field_dict.get("suffix", ""))
 
 
         # if the string to display is empty, move on to the next field,
@@ -1317,42 +1403,42 @@ def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
             continue
 
         # check for any exclusions
-        if "exclude" in field_info:
-            if type(field_info["exclude"]) == str:
-                if display_string == field_info["exclude"]:
+        if "exclude" in field_dict:
+            if type(field_dict["exclude"]) == str:
+                if display_string == field_dict["exclude"]:
                     continue
-            elif type(field_info["exclude"]) == list:
-                if display_string in field_info["exclude"]:
+            elif type(field_dict["exclude"]) == list:
+                if display_string in field_dict["exclude"]:
                     continue
 
         # render any label first
-        if "label" in field_info:
-            draw.text((field_info["lposx"], field_info["lposy"]),
-                      field_info["label"],
-                      fill=field_info["lfill"], font=field_info["lfont"])
+        if "label" in field_dict:
+            draw.text((field_dict["lposx"], field_dict["lposy"]),
+                      field_dict["label"],
+                      fill=field_dict["lfill"], font=field_dict["lfont"])
 
-        if "wrap" in field_info.keys():
+        if "wrap" in field_dict.keys():
             render_text_wrap(draw,
-                             (field_info["posx"], field_info["posy"]),
+                             (field_dict["posx"], field_dict["posy"]),
                              display_string,
-                             max_width=field_info["max_width"],
-                             max_lines=field_info["max_lines"],
-                             fill=field_info["fill"],
-                             font=field_info["font"])
-        elif "trunc" in field_info.keys():
+                             max_width=field_dict["max_width"],
+                             max_lines=field_dict["max_lines"],
+                             fill=field_dict["fill"],
+                             font=field_dict["font"])
+        elif "trunc" in field_dict.keys():
             render_text_wrap(draw,
-                             (field_info["posx"], field_info["posy"]),
+                             (field_dict["posx"], field_dict["posy"]),
                              display_string,
                              max_width=_frame_size[0] -
-                             field_info["posx"],
+                             field_dict["posx"],
                              max_lines=1,
-                             fill=field_info["fill"],
-                             font=field_info["font"])
+                             fill=field_dict["fill"],
+                             font=field_dict["font"])
         else:
-            draw.text((field_info["posx"], field_info["posy"]),
+            draw.text((field_dict["posx"], field_dict["posy"]),
                       display_string,
-                      fill=field_info["fill"],
-                      font=field_info["font"])
+                      fill=field_dict["fill"],
+                      font=field_dict["font"])
 
 
 
@@ -1455,32 +1541,56 @@ def audio_screen_static(layout, info):
             image.paste(bg_image, (0,0))
 
 
-    # Retrieve cover image from Kodi, if it exists and needs a refresh
+    # Mimic the display conditional functionality that is provided for
+    # entries in the fields array of a layout, but applied here to
+    # cover art display.
+    #
+    # Unfortunately, since we're not in the middle of a loop, we can't
+    # make use of the simple continue statement as draw_fields() does.
+
+    show_thumb = False
+    thumb_dict = {}
+
     if "thumb" in layout.keys():
+        show_thumb = True
+        thumb_dict = layout["thumb"]
+
+        # If the field has a display conditional (display_cond)
+        # defined, let's test that to decide if we should proceed.
+        if ("display_if" in thumb_dict or
+            "display_ifnot" in thumb_dict):
+            show_thumb = check_display_expr(thumb_dict,
+                                            info,
+                                            ScreenMode.AUDIO,
+                                            audio_dmode.name)
+
+    # Conditionally retrieve cover image from Kodi, if it exists and
+    # needs a refresh
+    if show_thumb:
         _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
-                                  layout["thumb"]["size"], layout["thumb"]["size"])
+                                  thumb_dict["size"], thumb_dict["size"])
         if _last_thumb:
-            if layout["thumb"].get("center", 0):
+            if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
                             (int((_frame_size[0] - _last_thumb.width) / 2),
                              int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (layout["thumb"].get("center_sm", 0) and
-                  (_last_thumb.width < layout["thumb"]["size"] or
-                   _last_thumb.height < layout["thumb"]["size"])):
-                new_x = layout["thumb"]["posx"]
-                new_y = layout["thumb"]["posy"]
-                if _last_thumb.width < layout["thumb"]["size"]:
-                    new_x += int((layout["thumb"]["size"] /
+            elif (thumb_dict.get("center_sm", 0) and
+                  (_last_thumb.width < thumb_dict["size"] or
+                   _last_thumb.height < thumb_dict["size"])):
+                new_x = thumb_dict["posx"]
+                new_y = thumb_dict["posy"]
+                if _last_thumb.width < thumb_dict["size"]:
+                    new_x += int((thumb_dict["size"] /
                                   2) - (_last_thumb.width / 2))
-                if _last_thumb.height < layout["thumb"]["size"]:
-                    new_y += int((layout["thumb"]["size"] /
+                if _last_thumb.height < thumb_dict["size"]:
+                    new_y += int((thumb_dict["size"] /
                                   2) - (_last_thumb.height / 2))
                 image.paste(_last_thumb, (new_x, new_y))
             else:
                 image.paste(
                     _last_thumb,
-                    (layout["thumb"]["posx"],
-                     layout["thumb"]["posy"]))
+                    (thumb_dict["posx"],
+                     thumb_dict["posy"]))
     else:
         _last_thumb = None
 
@@ -1509,24 +1619,43 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
                 ScreenMode.AUDIO, audio_dmode.name,
                 dynamic=1)
 
-    # Progress bar, if present
-    if (prog != -1 and "prog" in layout.keys()):
-        if "vertical" in layout["prog"].keys():
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["len"],
-                         layout["prog"]["height"],
+    # Progress bar, if present and should be displayed
+    show_prog = False
+    prog_dict = {}
+
+    if (prog == -1 or "prog" not in layout.keys()):
+        show_prog = False
+    else:
+        show_prog = True
+        prog_dict = layout["prog"]
+
+        # If the field has a display conditional (display_cond)
+        # defined, let's test that to decide if we should proceed.
+        if ("display_if" in prog_dict or
+            "display_ifnot" in prog_dict):
+            show_prog = check_display_expr(prog_dict,
+                                           info,
+                                           ScreenMode.AUDIO,
+                                           audio_dmode.name)
+
+
+    if show_prog:
+        if "vertical" in prog_dict.keys():
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["len"],
+                         prog_dict["height"],
                          prog, vertical=True)
         elif info['MusicPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["long_len"], layout["prog"]["height"],
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["long_len"], prog_dict["height"],
                          prog)
         else:
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["short_len"], layout["prog"]["height"],
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["short_len"], prog_dict["height"],
                          prog)
 
 
@@ -1662,33 +1791,56 @@ def video_screen_static(layout, info):
             image.paste(bg_image, (0,0))
 
 
-    # Retrieve cover image from Kodi, if it exists and needs a refresh
+    # Mimic the display conditional functionality that is provided for
+    # entries in the fields array of a layout, but applied here to
+    # cover art display.
+    #
+    # Unfortunately, since we're not in the middle of a loop, we can't
+    # make use of the simple continue statement as draw_fields() does.
+
+    show_thumb = False
+    thumb_dict = {}
+
     if "thumb" in layout.keys():
+        show_thumb = True
+        thumb_dict = layout["thumb"]
+
+        # If the field has a display conditional (display_cond)
+        # defined, let's test that to decide if we should proceed.
+        if ("display_if" in thumb_dict or
+            "display_ifnot" in thumb_dict):
+            show_thumb = check_display_expr(thumb_dict,
+                                            info,
+                                            ScreenMode.VIDEO,
+                                            video_dmode.name)
+
+    # Retrieve cover image from Kodi, if it exists and needs a refresh
+    if show_thumb:
         _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
-                                  layout["thumb"]["width"], layout["thumb"]["height"],
+                                  thumb_dict["width"], thumb_dict["height"],
                                   video=1)
         if _last_thumb:
-            if layout["thumb"].get("center", 0):
+            if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
                             (int((_frame_size[0] - _last_thumb.width) / 2),
                              int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (layout["thumb"].get("center_sm", 0) and
-                  (_last_thumb.width < layout["thumb"]["width"] or
-                   _last_thumb.height < layout["thumb"]["height"])):
-                new_x = layout["thumb"]["posx"]
-                new_y = layout["thumb"]["posy"]
-                if _last_thumb.width < layout["thumb"]["width"]:
-                    new_x += int((layout["thumb"]["width"] / 2) -
+            elif (thumb_dict.get("center_sm", 0) and
+                  (_last_thumb.width < thumb_dict["width"] or
+                   _last_thumb.height < thumb_dict["height"])):
+                new_x = thumb_dict["posx"]
+                new_y = thumb_dict["posy"]
+                if _last_thumb.width < thumb_dict["width"]:
+                    new_x += int((thumb_dict["width"] / 2) -
                                  (_last_thumb.width / 2))
-                if _last_thumb.height < layout["thumb"]["height"]:
-                    new_y += int((layout["thumb"]["height"] / 2) -
+                if _last_thumb.height < thumb_dict["height"]:
+                    new_y += int((thumb_dict["height"] / 2) -
                                  (_last_thumb.height / 2))
                 image.paste(_last_thumb, (new_x, new_y))
             else:
                 image.paste(
                     _last_thumb,
-                    (layout["thumb"]["posx"],
-                     layout["thumb"]["posy"]))
+                    (thumb_dict["posx"],
+                     thumb_dict["posy"]))
     else:
         _last_thumb = None
 
@@ -1711,30 +1863,48 @@ def video_screen_static(layout, info):
 #
 def video_screen_dynamic(image, draw, layout, info, prog):
 
-    # All Dynamic layout fields
+    # All dynamic layout fields
     draw_fields(image, draw,
                 layout, info,
                 ScreenMode.VIDEO, video_dmode.name,
                 dynamic=1)
 
-    # Progress bar, if present
-    if (prog != -1 and "prog" in layout.keys()):
-        if "vertical" in layout["prog"].keys():
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["len"],
-                         layout["prog"]["height"],
+    # Progress bar, if present and should be displayed
+    show_prog = False
+    prog_dict = {}
+
+    if (prog == -1 or "prog" not in layout.keys()):
+        show_prog = False
+    else:
+        show_prog = True
+        prog_dict = layout["prog"]
+
+        # If the field has a display conditional (display_cond)
+        # defined, let's test that to decide if we should proceed.
+        if ("display_if" in prog_dict or
+            "display_ifnot" in prog_dict):
+            show_prog = check_display_expr(prog_dict,
+                                           info,
+                                           ScreenMode.VIDEO,
+                                           video_dmode.name)
+
+    if show_prog:
+        if "vertical" in prog_dict.keys():
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["len"],
+                         prog_dict["height"],
                          prog, vertical=True)
         elif info['VideoPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["long_len"], layout["prog"]["height"],
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["long_len"], prog_dict["height"],
                          prog)
         else:
-            progress_bar(draw, layout["prog"]["color_bg"], layout["prog"]["color_fg"],
-                         layout["prog"]["posx"], layout["prog"]["posy"],
-                         layout["prog"]["short_len"], layout["prog"]["height"],
+            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
+                         prog_dict["posx"], prog_dict["posy"],
+                         prog_dict["short_len"], prog_dict["height"],
                          prog)
 
 
@@ -1851,7 +2021,7 @@ def video_screens(image, draw, info):
 #     kodi_display_panel.SLIDESHOW_SELECT_FUNC = my_selection_func
 #
 SLIDESHOW_SELECT_FUNC = None
-    
+
 
 # Slideshow info screens (shown when a photo slideshow is in progress)
 #
@@ -1873,7 +2043,7 @@ def slideshow_screens(image, draw, info):
     # Permit audio content to drive selected layout
     if (SLIDESHOW_LAYOUT_AUTOSELECT and SLIDESHOW_SELECT_FUNC):
         slide_dmode = SLIDESHOW_SELECT_FUNC(info)
-    
+
     # Retrieve layout details
     layout = SLIDESHOW_LAYOUT[slide_dmode.name]
 
