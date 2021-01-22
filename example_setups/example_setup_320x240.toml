@@ -183,6 +183,15 @@ SLAYOUT_NAMES = [ "DEFAULT" ]
 SLAYOUT_INITIAL = "DEFAULT"
 
 
+# Codec Lookup
+#
+#   The codec_name lookup table can be augmented, or existing entries
+#   changed.  The style of entries is identical to what is done for
+#   the COLORS table below.
+#
+#[CODECS]
+
+
 
 # Colors
 #

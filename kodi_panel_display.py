@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.29"
+PANEL_VER = "v1.30"
 
 #
 # Audio/Video codec lookup table
@@ -59,6 +59,8 @@ PANEL_VER = "v1.29"
 #   Should any collision in codec names occur, this table may have to
 #   be split for distinct audio and video codecs.  Until then, though,
 #   we can use it for both.
+#
+#   The codec table can now be extended via the setup.toml file
 #
 codec_name = {
     "ac3": "DD",
@@ -256,6 +258,7 @@ else:
     print("fonts table must specify a 'font_main' entry!  Stopping.")
     sys.exit(1)
 
+
 #
 # Color lookup table
 #
@@ -285,6 +288,14 @@ if ("VIDEO_LABELS" in config.settings.keys() and
 if ("SLIDESHOW_LABELS" in config.settings.keys() and
         type(config.settings["SLIDESHOW_LABELS"]) == list):
     SLIDESHOW_LABELS += config.settings["SLIDESHOW_LABELS"]
+
+
+#
+# Permit codec_name table to be augmented
+#
+if ("CODECS" in config.settings.keys() and
+    type(config.settings["CODECS"]) == dict):
+    codec_name.update( config.settings["CODECS"] )
 
 
 #
