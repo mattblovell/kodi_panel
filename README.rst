@@ -70,7 +70,7 @@ working.  A prequisite is thus understanding the GPIO pinout of your
 SBC.  Be aware the GPIO pins have both *physical* numbers and numbers
 or names as assigned by whatever software one happens to be using to
 control and access them.  Since luma.lcd makes use of RPi.GPIO, the
-numbers you'll see in ``kodi_panel.py`` all correspond to RPi.GPIO's
+numbers you'll see in the code or in setup files all correspond to RPi.GPIO's
 numbering scheme (which is derived from the Broadcom chip that drives
 the pins).  Fortunately, that scheme is well-documented all over the
 web, for instance at this `SparkFun GPIO
