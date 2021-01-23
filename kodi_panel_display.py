@@ -545,7 +545,7 @@ if (SLIDESHOW_ENABLED and "S_LAYOUT" in config.settings.keys()):
 elif SLIDESHOW_ENABLED:
     warnings.warn(
         "Cannot find any S_LAYOUT screen settings in setup file!  Disabling slideshow screens.")
-    VIDEO_ENABLED = 0
+    SLIDESHOW_ENABLED = 0
 
 # Layout control for status screen, used by status_screen()
 if ("STATUS_LAYOUT" in config.settings.keys()):
