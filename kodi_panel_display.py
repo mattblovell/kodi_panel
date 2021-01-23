@@ -354,10 +354,7 @@ if AUDIO_ENABLED:
         # At startup, use the default layout mode specified in settings
         audio_dmode = ADisplay[config.settings["ALAYOUT_INITIAL"]]
 
-        # Should audio content (in InfoLabels) be used to select
-        # layout?  See remarks below for VIDEO_LAYOUT_AUTOSELECT.
-        # This variable just permits for copying that functionality on
-        # the audio side of things.
+        # Should audio content (in InfoLabels) be used to select layout?
         AUDIO_LAYOUT_AUTOSELECT = config.settings.get(
             "ALAYOUT_AUTOSELECT", False)
 
@@ -379,12 +376,6 @@ if VIDEO_ENABLED:
         video_dmode = VDisplay[config.settings["VLAYOUT_INITIAL"]]
 
         # Should video layout be auto-determined as part of video_screens()
-        # execution, based upon InfoLabel settings?  That is, should video
-        # content be used to select layout?
-        #
-        # This is different behavior than using the touch-interrupt to
-        # just cycle through the list of video modes, but seems warranted
-        # based on the differences that exist for Movies, TV, and PVR.
         VIDEO_LAYOUT_AUTOSELECT = config.settings.get(
             "VLAYOUT_AUTOSELECT", False)
 
@@ -405,8 +396,7 @@ if SLIDESHOW_ENABLED:
         # At startup, use the default layout mode specified in settings
         slide_dmode = SDisplay[config.settings["SLAYOUT_INITIAL"]]
 
-        # Provide the same auto-selection hooks as exist for the
-        # other modes.
+        # Provide the same hook as for the other modes
         SLIDESHOW_LAYOUT_AUTOSELECT = config.settings.get(
             "SLAYOUT_AUTOSELECT", False)
 
@@ -424,6 +414,11 @@ if SLIDESHOW_ENABLED:
 # Define an enumerated type (well, it's still Python, so a class)
 # representing whether the screen being drawn is for audio playback,
 # video playback, or is just a status screen.
+#
+# This state was added mainly to pass down to the element and string
+# callback functions, in case a callback gets used in layouts for
+# completely different media.
+#
 
 class ScreenMode(Enum):
     STATUS = 0   # kodi_panel status screen
@@ -500,7 +495,7 @@ def fixup_array(array):
     return newarray
 
 
-# Patch up the audio layout nested dictionary...
+# Patch up the audio layout nested dictionary
 if (AUDIO_ENABLED and "A_LAYOUT" in config.settings.keys()):
     AUDIO_LAYOUT = fixup_layouts(config.settings["A_LAYOUT"])
 elif AUDIO_ENABLED:
@@ -508,7 +503,7 @@ elif AUDIO_ENABLED:
         "Cannot find any A_LAYOUT screen settings in setup file!  Disabling audio screens.")
     AUDIO_ENABLED = 0
 
-# Patch up the video layout nested dictionary...
+# Patch up the video layout nested dictionary
 if (VIDEO_ENABLED and "V_LAYOUT" in config.settings.keys()):
     VIDEO_LAYOUT = fixup_layouts(config.settings["V_LAYOUT"])
 elif VIDEO_ENABLED:
@@ -516,7 +511,7 @@ elif VIDEO_ENABLED:
         "Cannot find any V_LAYOUT screen settings in setup file!  Disabling video screens.")
     VIDEO_ENABLED = 0
 
-# Patch up the slideshow layout nested dictionary...
+# Patch up the slideshow layout nested dictionary
 if (SLIDESHOW_ENABLED and "S_LAYOUT" in config.settings.keys()):
     SLIDESHOW_LAYOUT = fixup_layouts(config.settings["S_LAYOUT"])
 elif SLIDESHOW_ENABLED:
@@ -524,7 +519,7 @@ elif SLIDESHOW_ENABLED:
         "Cannot find any S_LAYOUT screen settings in setup file!  Disabling slideshow screens.")
     SLIDESHOW_ENABLED = 0
 
-# Layout control for status screen, used by status_screen()
+# Finally, patch up the status screen layout
 if ("STATUS_LAYOUT" in config.settings.keys()):
     STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 else:
@@ -600,6 +595,10 @@ DEMO_MODE = False
 #
 # Finally, create the needed Pillow objects
 #
+#   These persist for the duration of program execution.  The new
+#   Image objects that get created by audio_screen_static() and
+#   video_screen_static() get transfered to this image instance.
+#
 image = Image.new('RGB', (_frame_size), 'black')
 draw = ImageDraw.Draw(image)
 
@@ -612,8 +611,8 @@ draw = ImageDraw.Draw(image)
 #
 # These callbacks provide the "special treatment" of textfields that
 # was previously provided via if-elif trees within audio- and
-# video-specific functions.  See additional comment block after all of
-# the function definitions.
+# video-specific functions.  See the additional comment block after
+# all of the function definitions.
 #
 # Each function listed in the ELEMENT_CB dictionary must accept the
 # following 6 arguments:
@@ -635,20 +634,20 @@ draw = ImageDraw.Draw(image)
 #
 # In addition, each function MUST return a string, even if empty.  The
 # string return value is useful for the format_InfoLabels / format_str
-# interpolation feature.
+# interpolation feature.  The calling function is responsible for
+# rendering that returned string.
 #
-# For purely text display, the calling function is responsible for
-# rendering the returned string.  This callback ONLY needs to perform
-# the desired string manipulation.  If the callback function does take
-# it upon itself to modify the passed Image or ImageDraw objects
-# directly, then it should return an empty string.
+# Since image and draw are passed in, element callback functions are
+# free to render or draw anything desired.  If the callback function
+# does take it upon itself to modify the passed Image or ImageDraw
+# objects directly, then it should return an empty string.
 #
 # It is also possible to define a simpler set of callback functions
-# that only perform string manipulation.  Functions in that lookup
+# that ONLY perform string manipulation.  Functions in that lookup
 # table only need to accept 3 arguments:
 #
-#   info         dictionary containing InfoLabels from JSON-RPC response,
-#                possibly augmented by calling function
+#   info         dictionary containing InfoLabels from JSON-RPC
+#                response (possibly augmented by calling function)
 #
 #   screen_mode  instance of ScreenMode enumerated type, specifying
 #                whether screen is STATUS, AUDIO, or VIDEO
@@ -664,7 +663,7 @@ draw = ImageDraw.Draw(image)
 # careful, a loop could be possible that will end up just crashing
 # Python.  In general, it is NOT recommended that callback functions
 # directly make use of format_InfoLabels() themselves.
-
+#
 
 # Empty callback function, largely for testing
 def element_empty(image, draw, info, field, screen_mode, layout_name):
@@ -677,7 +676,6 @@ def strcb_empty(info, screen_mode, layout_name):
 
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
-
 def strcb_codec(info, screen_mode, layout_name):
     if 'MusicPlayer.Codec' in info:
         if info['MusicPlayer.Codec'] in codec_name:
@@ -688,7 +686,6 @@ def strcb_codec(info, screen_mode, layout_name):
 
 
 # Similar function for AudioCodec lookup when playing video
-
 def strcb_acodec(info, screen_mode, layout_name):
     if 'VideoPlayer.AudioCodec' in info:
         if info['VideoPlayer.AudioCodec'] in codec_name.keys():
@@ -738,6 +735,9 @@ def strcb_full_codec(info, screen_mode, layout_name):
 # has been replaced with a more-general "exclude" check within
 # the draw_fields() function.
 #
+# ToDo: With the change to using exclude, this callback could be
+#       switched over to STRING_CB.
+#
 
 def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
     if screen_mode == ScreenMode.AUDIO:
@@ -754,7 +754,6 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
 
         return display_string
     return ""
-
 
 
 # Return string with current kodi_panel version
@@ -826,7 +825,7 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 #   top-level elements within a layout such as "thumb" and "prog".
 #   However, the end user can *already* override that functionality by
 #
-#    1. Not making use of "thumb" or "prog" in their layouts.
+#    1. Not making use of "thumb" or "prog" in any layouts.
 #
 #    2. Providing equivalent, customized functionality via their own
 #       element callback functions, adding to ELEMENT_CB.  (The new
