@@ -110,7 +110,6 @@ STATUS_LABELS = [
     "System.Time",
     "System.BuildVersion",
     "System.BuildDate",
-    "System.FreeSpace",
 ]
 
 # Audio screen information
