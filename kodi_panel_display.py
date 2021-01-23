@@ -309,8 +309,8 @@ SLIDESHOW_ENABLED = config.settings.get("ENABLE_SLIDESHOW_SCREENS", False)
 IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 
 
-# Audio screen enumeration
-# ------------------------
+# Screen / Layout Enumeration
+# ---------------------------
 #
 #   Use an enumerated type to capture all the distinct layouts for
 #   audio screens.  The next() function that makes available then
@@ -324,7 +324,8 @@ IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 #   added.
 #
 
-class ADisplay(Enum):
+# Base class, providing the next() functionality
+class LayoutEnum(Enum):
     def next(self):
         cls = self.__class__
         members = list(cls)
@@ -333,8 +334,16 @@ class ADisplay(Enum):
             index = 0
         return members[index]
 
+# Provide the same behavior across audio, video, and slideshow
+class ADisplay(LayoutEnum): pass
+class VDisplay(LayoutEnum): pass
+class SDisplay(LayoutEnum): pass
 
-# Populate enum based upon settings file
+
+#
+# Populate each enum based upon settings file
+#
+
 if AUDIO_ENABLED:
     if ("ALAYOUT_NAMES" in config.settings.keys() and
             "ALAYOUT_INITIAL" in config.settings.keys()):
@@ -356,22 +365,6 @@ if AUDIO_ENABLED:
             "Cannot find settings for ALAYOUT_NAMES and/or ALAYOUT_INITIAL!")
         print("Disabling audio screens (AUDIO_ENABLED=0)")
         AUDIO_ENABLED = 0
-
-
-# Video screen enumeration
-# ------------------------
-#
-#   Same functionality as ADisplay above
-#
-
-class VDisplay(Enum):
-    def next(self):
-        cls = self.__class__
-        members = list(cls)
-        index = members.index(self) + 1
-        if index >= len(members):
-            index = 0
-        return members[index]
 
 
 if VIDEO_ENABLED:
@@ -401,24 +394,6 @@ if VIDEO_ENABLED:
         VIDEO_ENABLED = 0
 
 
-# Slideshow screen enumeration
-# ----------------------------
-#
-#   This should seem familiar by now...
-#
-#   We'll use "S" for slideshow.
-#
-
-class SDisplay(Enum):
-    def next(self):
-        cls = self.__class__
-        members = list(cls)
-        index = members.index(self) + 1
-        if index >= len(members):
-            index = 0
-        return members[index]
-
-
 if SLIDESHOW_ENABLED:
     if ("SLAYOUT_NAMES" in config.settings.keys() and
             "SLAYOUT_INITIAL" in config.settings.keys()):
@@ -441,7 +416,8 @@ if SLIDESHOW_ENABLED:
         SLIDESHOW_ENABLED = 0
 
 
-# Overall Screen Mode
+
+# Current Screen Mode
 # -------------------
 #
 # Define an enumerated type (well, it's still Python, so a class)
