@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.30"
+PANEL_VER = "v1.31"
 
 #
 # Audio/Video codec lookup table
@@ -2277,8 +2277,13 @@ def update_display(touched=False):
                 data=json.dumps(payload),
                 headers=headers).json()
 
-            # add the summary string above to the response dictionary
-            status_resp['result']['summary'] = summary
+            # Add the summary string above to the response dictionary.
+            # The try/except is in case Kodi communication gets
+            # disrupted while showing the status screen!
+            try:
+                status_resp['result']['summary'] = summary
+            except:
+                pass
 
             status_screen(image, draw, status_resp['result'])
             screen_on()
@@ -2497,47 +2502,55 @@ def main(device_handle):
             }
 
             try:
+                print(datetime.now(), "Trying ping...")
                 response = requests.post(
-                    rpc_url, data=json.dumps(payload), headers=headers).json()
+                    rpc_url, data=json.dumps(payload), headers=headers,
+                    timeout=5).json()
                 if response['result'] != 'pong':
-                    print(
-                        datetime.now(),
-                        "Kodi not available via HTTP-transported JSON-RPC.  Waiting...")
-                    time.sleep(5)
+                    print(datetime.now(), "Kodi not available via HTTP-transported JSON-RPC.  Waiting...")
+                    time.sleep(2)
                 else:
                     break
-            except BaseException:
+            except (ConnectionRefusedError,
+                    requests.exceptions.ConnectionError):
+                if _lock.locked():
+                    _lock.release()
                 time.sleep(5)
-                pass
+                continue
+            except BaseException:
+                print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
+                time.sleep(5)
+                continue
 
-        print(
-            datetime.now(),
-            "Connected with Kodi.  Entering update_display() loop.")
+        print(datetime.now(), "Connected with Kodi.  Entering update_display() loop.")
         screen_off()
 
         # Loop until Kodi goes away
         _kodi_connected = True
         _screen_press = False
         while True:
+            start_time = time.time()
+            if DEMO_MODE:
+                keys = device._pygame.key.get_pressed()
+                if keys[device._pygame.K_SPACE]:
+                    _screen_press = True
+                    print(datetime.now(), "Touchscreen pressed (emulated)")
+
             try:
-                start_time = time.time()
-                if DEMO_MODE:
-                    keys = device._pygame.key.get_pressed()
-                    if keys[device._pygame.K_SPACE]:
-                        _screen_press = True
-                        print(datetime.now(), "Touchscreen pressed (emulated)")
                 update_display()
             except (ConnectionRefusedError,
                     requests.exceptions.ConnectionError):
-                print(datetime.now(), "Communication disrupted.")
+                print(datetime.now(), "Communication disrupted!")
                 _kodi_connected = False
                 _kodi_playing = False
+                if _lock.locked():
+                    _lock.release()
                 break
             except (SystemExit):
                 shutdown()
-            except BaseException:
-                print("Unexpected error: ", sys.exc_info()[0])
-                raise
+            except:
+                print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
+                pass
 
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
