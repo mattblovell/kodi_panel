@@ -312,7 +312,7 @@ IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 # ---------------------------
 #
 #   Use an enumerated type to capture all the distinct layouts for
-#   audio screens.  The next() function that makes available then
+#   audio screens, etc.  The next() function that makes available then
 #   serves to switch modes in response to screen touches.
 #
 #   The number of audio layouts can grow, based on the contents
@@ -320,7 +320,9 @@ IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 #
 #   During development, the ability to support different layouts got
 #   somewhat re-purposed, after general video screen support was
-#   added.
+#   added.  The "auto-selection" feature provides hooks by which the
+#   media being played can determine which layout to use.  This was
+#   originally suggested by @noggin in the CE Forums.
 #
 
 # Base class, providing the next() functionality
