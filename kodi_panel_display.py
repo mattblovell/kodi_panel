@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.32"
+PANEL_VER = "v1.33"
 
 #
 # Audio/Video codec lookup table
@@ -2246,7 +2246,7 @@ def update_display(touched=False):
                 "jsonrpc": "2.0",
                 "method": "XBMC.GetInfoLabels",
                 "params": {"labels": STATUS_LABELS},
-                "id": "4s",
+                "id": "4st",
             }
             status_resp = requests.post(
                 rpc_url,
@@ -2277,10 +2277,7 @@ def update_display(touched=False):
             _screen_press = False
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
-                print(
-                    datetime.now(),
-                    "video display mode now",
-                    video_dmode.name)
+                print(datetime.now(), "video display mode now", video_dmode.name)
                 _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
@@ -2377,7 +2374,7 @@ def update_display(touched=False):
             _screen_press = False
             if not SLIDESHOW_LAYOUT_AUTOSELECT:
                 slide_dmode = slide_dmode.next()
-                print(datetime.now(), "slideshow display mode now", audio_dmode.name)
+                print(datetime.now(), "slideshow display mode now", slide_dmode.name)
                 _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
@@ -2389,7 +2386,7 @@ def update_display(touched=False):
             "jsonrpc": "2.0",
             "method": "XBMC.GetInfoLabels",
             "params": {"labels": SLIDESHOW_LABELS},
-            "id": "4a",
+            "id": "4s",
         }
         response = requests.post(
             rpc_url,
