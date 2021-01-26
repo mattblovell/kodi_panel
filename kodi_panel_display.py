@@ -985,7 +985,7 @@ def text_wrap(text, font, max_width, max_lines=None):
 # if the string is too wide to display in its entirety.
 def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
     line_array = text_wrap(text, font, max_width, max_lines)
-    line_height = font.getsize('Ahg')[1]
+    line_height = font.getsize('Ahgy')[1]
     (posx, posy) = xy
     for line in line_array:
         pil_draw.text((posx, posy), line, fill, font)

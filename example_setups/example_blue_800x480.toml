@@ -738,7 +738,7 @@ center_sm = 1
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
 posx = 485    # upper-left corner x-position
-posy = 5      # upper-left corner y-position
+posy = 10      # upper-left corner y-position
 height = 8
 short_len = 292
 color_fg = "color_7S"
@@ -776,7 +776,7 @@ color_bg = "color_gray"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "long_time_display"
 posx = 630
-posy = 19
+posy = 26
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
 font = "font7S_med"
@@ -786,7 +786,7 @@ dynamic = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
 posx = 682
-posy = 19
+posy = 26
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S_med"
@@ -798,13 +798,13 @@ dynamic = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.TrackNumber"
 posx = 485
-posy = 49
+posy = 54
 font = "font7S"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
   lposx = 485
-  lposy = 19
+  lposy = 26
   lfont = "font_tiny"
   lfill = "white"
 
@@ -812,36 +812,37 @@ fill = "color_7S"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec"   # internal callback
 posx = 590
-posy = 62
+posy = 67
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.Genre" 
 posx = 590
-posy = 87
+posy = 93
 font = "font_tiny"
 fill = "white"
 wrap = 1
 max_width = 180
 max_lines = 1
 
+
 # Draw a line
-# -------------------------------------------------
+# ------------------------------------------------------------------------
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "thin_line"
 posx = 485
-posy = 120
+posy = 125
 endx = 790
-endy = 120
+endy = 125
 fill = "gray"
-# -------------------------------------------------
+# ------------------------------------------------------------------------
 
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "artist"   # internal callback
 posx  = 485
-posy  = 130
+posy  = 135
 font  = "font_artist"
 fill  = "color_artist"
 trunc = 1
@@ -851,7 +852,7 @@ exclude = "Unknown"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Album"
 posx  = 485
-posy  = 175
+posy  = 180
 font  = "font_sm"
 fill  = "white"
 wrap  = 1
