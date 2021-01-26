@@ -153,10 +153,11 @@ DEFAULT_AIRPLAY = "images/airplay_thumb.png"    # Airplay file w/o artwork
 #   the ALAYOUT dictionary defined below.
 #
 ALAYOUT_NAMES = [
-	"A_DEFAULT",     # artwork, elapsed time, track info
-	"A_FULLSCREEN",  # fullscreen cover only
-	"A_FULL_PROG",   # fullscreen cover with vertical progress bar
-	"A_NOTIME",      # similar to default, but dropping elapsed time
+	"A_DEFAULT",      # artwork, elapsed time, track info
+	"A_FULLSCREEN",   # fullscreen cover only
+	"A_FULL_PROG",    # fullscreen cover with vertical progress bar
+	"FULL_ALTERNATE"  # fullscreen cover but including track info
+	#"A_NOTIME",      # similar to default, but dropping elapsed time
 ]
 
 # Initial mode to use upon startup
@@ -301,10 +302,17 @@ SLAYOUT_INITIAL = "DEFAULT"
 # a decent number of characters).
 
 [[fonts]]
-  name = "font_bold"
+  name = "font_lg"
 #  path = "fonts/RobotoCondensed-Light.ttf"
   path = "fonts/ArchivoNarrow-Medium.ttf"
   size = 54
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_med"
+#  path = "fonts/RobotoCondensed-Light.ttf"
+  path = "fonts/ArchivoNarrow-Medium.ttf"
+  size = 48
   encoding = 'unic'
 
 [[fonts]]
@@ -330,6 +338,11 @@ SLAYOUT_INITIAL = "DEFAULT"
   name = "font7S"
   path = "fonts/DSEG7Classic-Regular.ttf"
   size = 58
+
+[[fonts]]
+  name = "font7S_med"
+  path = "fonts/DSEG7Classic-Regular.ttf"
+  size = 28
 
 [[fonts]]
   name = "font7S_sm"
@@ -624,7 +637,7 @@ fill = "white"
 name  = "MusicPlayer.Title"
 posx  = 4
 posy  = 408
-font  = "font_bold"
+font  = "font_lg"
 fill  = "white"
 trunc = 1
 
@@ -695,6 +708,165 @@ fill = "color_7S"
   lposy = 4
   lfont = "font_tiny"
   lfill = "white"
+
+
+# --------------------------------------------------------------------
+#
+# Fullscreen artwork with all other info as well
+#
+
+[A_LAYOUT.FULL_ALTERNATE.thumb]
+posx = 0
+posy = 0
+size = 480
+center_sm = 1
+
+# Vertical progress bar
+#
+#    Wrap width for text fields would have to be modified
+#    to ensure they don't collide with a vertical bar
+#
+# [A_LAYOUT.FULL_ALTERNATE.prog]
+# vertical = 1
+# posx = 786    # upper-left corner x-position
+# posy = 1      # upper-left corner y-position
+# len  = 14     # pixel width for a vertical bar
+# height = 478  # total height for the vertical bar
+# color_fg = "color_7S"
+# color_bg = "color_gray"
+
+# Horizontal progress bar
+[A_LAYOUT.FULL_ALTERNATE.prog]
+posx = 485    # upper-left corner x-position
+posy = 5      # upper-left corner y-position
+height = 8
+short_len = 292
+color_fg = "color_7S"
+color_bg = "color_gray"
+
+#
+# Track Duration or Elapsed Time
+#
+#   Pick one or the other.
+#
+#   The time is effectively right-justified, since the starting
+#   position differs depending upon the MusicPlayer.Duration string
+#   coming from Kodi.
+#
+
+# [[A_LAYOUT.FULL_ALTERNATE.fields]]
+# name = "long_time_display"
+# posx = 630
+# posy = 5
+# format_str = "{MusicPlayer.Duration}"
+# display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
+# font = "font7S_med"
+# fill = "color_7S"
+
+# [[A_LAYOUT.FULL_ALTERNATE.fields]]
+# name = "short_time_display"
+# posx = 682
+# posy = 5
+# format_str = "{MusicPlayer.Duration}"
+# display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
+# font = "font7S_med"
+# fill = "color_7S"
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "long_time_display"
+posx = 630
+posy = 19
+format_str = "{MusicPlayer.Time}"
+display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
+font = "font7S_med"
+fill = "color_7S"
+dynamic = 1
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "short_time_display"
+posx = 682
+posy = 19
+format_str = "{MusicPlayer.Time}"
+display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
+font = "font7S_med"
+fill = "color_7S"
+dynamic = 1
+
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 485
+posy = 49
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 485
+  lposy = 19
+  lfont = "font_tiny"
+  lfill = "white"
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "codec"   # internal callback
+posx = 590
+posy = 62
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "MusicPlayer.Genre" 
+posx = 590
+posy = 87
+font = "font_tiny"
+fill = "white"
+wrap = 1
+max_width = 180
+max_lines = 1
+
+# Draw a line
+# -------------------------------------------------
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "thin_line"
+posx = 485
+posy = 120
+endx = 790
+endy = 120
+fill = "gray"
+# -------------------------------------------------
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "artist"   # internal callback
+posx  = 485
+posy  = 130
+font  = "font_artist"
+fill  = "color_artist"
+trunc = 1
+# Drop artist display if "Unknown"
+exclude = "Unknown"
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "MusicPlayer.Album"
+posx  = 485
+posy  = 175
+font  = "font_sm"
+fill  = "white"
+wrap  = 1
+max_width = 314
+max_lines = 2
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "MusicPlayer.Title"
+posx  = 485
+posy  = 285
+font  = "font_med"
+fill  = "white"
+wrap  = 1
+max_width = 314
+max_lines = 3
 
 
 # --------------------------------------------------------------------
@@ -778,7 +950,7 @@ fill = "white"
 name  = "MusicPlayer.Title"
 posx  = 4
 posy  = 408
-font  = "font_bold"
+font  = "font_lg"
 fill  = "white"
 trunc = 1
 
@@ -859,7 +1031,7 @@ dynamic = 1
 name  = "VideoPlayer.Title"
 posx  = 340
 posy  = 100
-font  = "font_bold"
+font  = "font_lg"
 fill  = "white"
 wrap  = 1
 max_width = 445
@@ -1003,7 +1175,7 @@ name = "greeting"
 posx = 5
 posy = 0
 format_str = "Slideshow"
-font = "font_bold"
+font = "font_lg"
 fill = "white"
 
 [[S_LAYOUT.DEFAULT.fields]]

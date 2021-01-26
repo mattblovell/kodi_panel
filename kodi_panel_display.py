@@ -225,6 +225,13 @@ _default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_
 _airtunes_re = re.compile(
     r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
+
+# Debug flags
+DEBUG_FIELDS = config.settings.get("DEBUG_FIELDS", False)
+if DEBUG_FIELDS:
+    print("DEBUG_FIELDS print statements enabled.")
+
+
 #
 # Load all user-specified fonts
 #
@@ -674,6 +681,16 @@ def strcb_empty(info, screen_mode, layout_name):
     return ""
 
 
+# Determine if the duration is short (min:sec) or long (hr:min:sec).
+# In combintionation the display_if[not] key, this can permit for
+# changing precisely where the duration gets displayed on screen.
+def strcb_audio_duration(info, screen_mode, layout_name):
+    if 'MusicPlayer.Duration' in info:
+        return str(info['MusicPlayer.Duration'].count(":"))
+    else:
+        return "0"
+
+
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
 def strcb_codec(info, screen_mode, layout_name):
@@ -753,6 +770,17 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
             display_string = "(" + info['MusicPlayer.Property(Role.Composer)'] + ")"
 
         return display_string
+    return ""
+
+
+
+# Draw a thin line
+def element_thin_line(image, draw, info, field, screen_mode, layout_name):
+    draw.line(
+        [field["posx"], field["posy"], field["endx"], field["endy"]],
+         fill = field["fill"],
+         width = field.get("width", 1)
+        )
     return ""
 
 
@@ -849,6 +877,9 @@ ELEMENT_CB = {
 
     # Status screen fields
     'time_hrmin' : element_time_hrmin,
+
+    # Any
+    'thin_line'  : element_thin_line,
     }
 
 
@@ -856,8 +887,9 @@ ELEMENT_CB = {
 
 STRING_CB = {
     # Audio screen fields
-    'codec'      : strcb_codec,
-    'full_codec' : strcb_full_codec,
+    'codec'          : strcb_codec,
+    'full_codec'     : strcb_full_codec,
+    'audio_duration' : strcb_audio_duration,
 
     # Video screen fields
     'acodec'     : strcb_acodec,
@@ -1270,6 +1302,9 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
         # Cannot find func_name, don't display element!
         return False
 
+    if DEBUG_FIELDS:
+        print("  display_expr: result of '" + func_name + "' was '" + result_str + "'")
+
     if check_equal:
         return (result_str == test_str)
     else:
@@ -1303,6 +1338,9 @@ def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dyn
     field_list = layout.get("fields", [])
     for field_dict in field_list:
         display_string = None
+
+        if DEBUG_FIELDS:
+            print("Examining field: ", field_dict)
 
         # Skip over the fields that aren't desired for this
         # invocation, based on static vs dynamic.
@@ -1633,7 +1671,8 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
                          prog_dict["len"],
                          prog_dict["height"],
                          prog, vertical=True)
-        elif info['MusicPlayer.Time'].count(":") == 2:
+        elif (info['MusicPlayer.Time'].count(":") == 2 and
+              "long_len" in prog_dict):
             # longer bar for longer displayed time
             progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
                          prog_dict["posx"], prog_dict["posy"],
