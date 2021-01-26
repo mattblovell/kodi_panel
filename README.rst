@@ -66,8 +66,9 @@ RPi Zero W.  As others try additional SBCs, please feel free to suggest addition
 changes to this documentation.
 
 The first step is really to get your display of choice connected and
-working.  A prequisite is thus understanding the GPIO pinout of your
-SBC.  Be aware the GPIO pins have both *physical* numbers and numbers
+working.  For a SPI-attached display, a prequisite is therefore 
+understanding the GPIO pinout of your SBC.  
+Be aware the GPIO pins have both *physical* numbers and numbers
 or names as assigned by whatever software one happens to be using to
 control and access them.  Since luma.lcd makes use of RPi.GPIO, the
 numbers you'll see in the code or in setup files all correspond to RPi.GPIO's
