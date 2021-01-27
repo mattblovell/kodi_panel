@@ -2577,7 +2577,7 @@ def main(device_handle):
                 if _lock.locked():
                     _lock.release()
                 break
-            except (SystemExit):
+            except (SystemExit, KeyboardInterrupt):
                 shutdown()
             except:
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
