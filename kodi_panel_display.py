@@ -996,21 +996,40 @@ def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
 # Draw a horizontal (by default) progress bar at the specified
 # location, filling from left to right.  A vertical bar can be drawn
 # if specified, filling from bottom to top.
-def progress_bar(pil_draw, bgcolor, color, x, y,
-                 w, h, progress, vertical=False):
-    pil_draw.rectangle((x, y, x + w, y + h), fill=bgcolor)
+def progress_bar(draw, bgcolor, color,
+                 x, y, w, h,
+                 progress, field_dict):
+
+    # Background rectangle
+    draw.rectangle((x, y, x + w, y + h), fill=bgcolor)
 
     if progress <= 0:
-        progress = 0.01
+        progress = 0.001
     if progress > 1:
         progress = 1
-
-    if vertical:
+        
+    # Foreground rectangle (progress indictor)
+    if "vertical" in field_dict.keys():
         dh = h * progress
-        pil_draw.rectangle((x, y + h - dh, x + w, y + h), fill=color)
+        draw.rectangle((x, y + h - dh, x + w, y + h), fill=color)
+        if "circle" in field_dict.keys():
+            r = int(field_dict["circle"])  # radius
+            draw.ellipse(
+                (x+(0.5*w)-r, y+h-dh-r, x+(0.5*w)+r, y+h-dh+r),
+                fill    = field_dict.get("circle_fill","black"),
+                outline = field_dict.get("circle_outline","white")
+            )
+
     else:
         dw = w * progress
-        pil_draw.rectangle((x, y, x + dw, y + h), fill=color)
+        draw.rectangle((x, y, x + dw, y + h), fill=color)
+        if "circle" in field_dict.keys():
+            r = int(field_dict["circle"])  # radius
+            draw.ellipse(
+                (x+dw-r, y+(0.5*h)-r, x+dw+r, y+(0.5*h)+r),
+                fill    = field_dict.get("circle_fill","black"),
+                outline = field_dict.get("circle_outline","white")
+            )
 
 
 # Retrieve cover art or a default thumbnail.  Cover art gets resized
@@ -1670,19 +1689,19 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["len"],
                          prog_dict["height"],
-                         prog, vertical=True)
+                         prog, prog_dict)
         elif (info['MusicPlayer.Time'].count(":") == 2 and
               "long_len" in prog_dict):
             # longer bar for longer displayed time
             progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["long_len"], prog_dict["height"],
-                         prog)
+                         prog, prog_dict)
         else:
             progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["short_len"], prog_dict["height"],
-                         prog)
+                         prog, prog_dict)
 
 
 
@@ -1920,18 +1939,18 @@ def video_screen_dynamic(image, draw, layout, info, prog):
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["len"],
                          prog_dict["height"],
-                         prog, vertical=True)
+                         prog, prog_dict)
         elif info['VideoPlayer.Time'].count(":") == 2:
             # longer bar for longer displayed time
             progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["long_len"], prog_dict["height"],
-                         prog)
+                         prog, prog_dict)
         else:
             progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
                          prog_dict["posx"], prog_dict["posy"],
                          prog_dict["short_len"], prog_dict["height"],
-                         prog)
+                         prog, prog_dict)
 
 
 
