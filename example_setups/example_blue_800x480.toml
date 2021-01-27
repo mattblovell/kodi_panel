@@ -842,7 +842,7 @@ fill = "gray"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "artist"   # internal callback
 posx  = 487
-posy  = 138
+posy  = 150
 font  = "font_artist"
 fill  = "color_artist"
 trunc = 1
@@ -852,7 +852,7 @@ exclude = "Unknown"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Album"
 posx  = 487
-posy  = 183
+posy  = 195
 font  = "font_sm"
 fill  = "white"
 wrap  = 1
@@ -862,7 +862,7 @@ max_lines = 2
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Title"
 posx  = 487
-posy  = 285
+posy  = 300
 font  = "font_med"
 fill  = "white"
 wrap  = 1
