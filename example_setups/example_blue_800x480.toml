@@ -161,7 +161,7 @@ ALAYOUT_NAMES = [
 ]
 
 # Initial mode to use upon startup
-ALAYOUT_INITIAL = "A_DEFAULT"
+ALAYOUT_INITIAL = "FULL_ALTERNATE"
 
 
 # Video Layout Names
