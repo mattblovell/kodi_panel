@@ -737,12 +737,15 @@ center_sm = 1
 
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
-posx = 487    # upper-left corner x-position
+posx = 487     # upper-left corner x-position
 posy = 10      # upper-left corner y-position
-height = 8
+height = 4
 short_len = 298
 color_fg = "color_7S"
 color_bg = "color_gray"
+ circle = 6   # radius
+ circle_fill = "white"
+ circle_outline = "white"
 
 #
 # Track Duration or Elapsed Time
