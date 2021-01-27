@@ -737,10 +737,10 @@ center_sm = 1
 
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
-posx = 485    # upper-left corner x-position
+posx = 487    # upper-left corner x-position
 posy = 10      # upper-left corner y-position
 height = 8
-short_len = 300
+short_len = 298
 color_fg = "color_7S"
 color_bg = "color_gray"
 
@@ -775,7 +775,7 @@ color_bg = "color_gray"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "long_time_display"
-posx = 485
+posx = 487
 posy = 28
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
@@ -785,7 +785,7 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
-posx = 485
+posx = 487
 posy = 28
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
@@ -811,13 +811,13 @@ fill = "color_7S"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec"   # internal callback
-posx = 485
+posx = 487
 posy = 93
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
-name = "MusicPlayer.Genre"
+name = "MusicPlayer.Genre" 
 posx = 590
 posy = 93
 font = "font_tiny"
@@ -831,7 +831,7 @@ max_lines = 1
 # ------------------------------------------------------------------------
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "thin_line"
-posx = 485
+posx = 487
 posy = 125
 endx = 790
 endy = 125
@@ -841,7 +841,7 @@ fill = "gray"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "artist"   # internal callback
-posx  = 485
+posx  = 487
 posy  = 138
 font  = "font_artist"
 fill  = "color_artist"
@@ -851,22 +851,22 @@ exclude = "Unknown"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Album"
-posx  = 485
+posx  = 487
 posy  = 183
 font  = "font_sm"
 fill  = "white"
 wrap  = 1
-max_width = 314
+max_width = 312
 max_lines = 2
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Title"
-posx  = 485
+posx  = 487
 posy  = 285
 font  = "font_med"
 fill  = "white"
 wrap  = 1
-max_width = 314
+max_width = 312
 max_lines = 3
 
 
