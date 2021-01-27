@@ -342,7 +342,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 [[fonts]]
   name = "font7S_med"
   path = "fonts/DSEG7Classic-Regular.ttf"
-  size = 28
+  size = 36
 
 [[fonts]]
   name = "font7S_sm"
@@ -799,7 +799,7 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.TrackNumber"
-posx = 740
+posx = 732
 posy = 53
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S_med"
@@ -807,7 +807,7 @@ fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
   lposx = 732
-  lposy = 28
+  lposy = 26
   lfont = "font_tiny"
   lfill = "white"
 
@@ -836,7 +836,7 @@ max_lines = 1
 name = "thin_line"
 posx = 487
 posy = 125
-endx = 790
+endx = 785
 endy = 125
 fill = "gray"
 # ------------------------------------------------------------------------
