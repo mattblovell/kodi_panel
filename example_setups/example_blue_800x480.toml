@@ -738,8 +738,8 @@ center_sm = 1
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
 posx = 487     # upper-left corner x-position
-posy = 10      # upper-left corner y-position
-height = 4
+posy = 9       # upper-left corner y-position
+height = 6
 short_len = 298
 color_fg = "color_7S"
 color_bg = "color_gray"
