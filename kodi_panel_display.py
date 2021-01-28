@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.35"
+PANEL_VER = "v1.36"
 
 #
 # Audio/Video codec lookup table
@@ -996,9 +996,39 @@ def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
 # Draw a horizontal (by default) progress bar at the specified
 # location, filling from left to right.  A vertical bar can be drawn
 # if specified, filling from bottom to top.
-def progress_bar(draw, bgcolor, color,
-                 x, y, w, h,
-                 progress, field_dict):
+#
+# Originally, this function was passed all of the location and
+# dimensions as separate arguments.  That was subsequently changed,
+# but see the remark below regarding use_long_len.
+def progress_bar(draw,
+                 field_dict,
+                 progress,
+                 use_long_len = False):
+
+    # Pull out colors, position, and size info from field_dict
+    bgcolor = field_dict["color_bg"]
+    color   = field_dict["color_fg"]
+
+    x = field_dict["posx"]
+    y = field_dict["posy"]
+    h = field_dict["height"]
+
+    # Due to development history, the key for the remaining dimension
+    # of the progress bar varies, depending upon whether it should be
+    # vertical or not and the duration.  The caller is responsible for
+    # setting use_long_len appropriately.
+
+    if field_dict.get("vertical",False):
+        w = field_dict.get("len", 0)
+    elif use_long_len:
+        w = field_dict.get("long_len", 0)
+    else:
+        w = field_dict.get("short_len", 0)
+
+    # If we cannot determine that long dimension, just return
+    # without rendering anything.
+    if w == 0:
+        return
 
     # Background rectangle
     draw.rectangle((x, y, x + w, y + h), fill=bgcolor)
@@ -1007,7 +1037,7 @@ def progress_bar(draw, bgcolor, color,
         progress = 0.001
     if progress > 1:
         progress = 1
-        
+
     # Foreground rectangle (progress indictor)
     if "vertical" in field_dict.keys():
         dh = h * progress
@@ -1684,25 +1714,10 @@ def audio_screen_dynamic(image, draw, layout, info, prog):
 
 
     if show_prog:
-        if "vertical" in prog_dict.keys():
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["len"],
-                         prog_dict["height"],
-                         prog, prog_dict)
-        elif (info['MusicPlayer.Time'].count(":") == 2 and
-              "long_len" in prog_dict):
-            # longer bar for longer displayed time
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["long_len"], prog_dict["height"],
-                         prog, prog_dict)
-        else:
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["short_len"], prog_dict["height"],
-                         prog, prog_dict)
-
+        progress_bar(
+            draw, prog_dict, prog,
+            use_long_len = (info['MusicPlayer.Time'].count(":") == 2)
+        )
 
 
 
@@ -1934,23 +1949,10 @@ def video_screen_dynamic(image, draw, layout, info, prog):
                                            video_dmode.name)
 
     if show_prog:
-        if "vertical" in prog_dict.keys():
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["len"],
-                         prog_dict["height"],
-                         prog, prog_dict)
-        elif info['VideoPlayer.Time'].count(":") == 2:
-            # longer bar for longer displayed time
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["long_len"], prog_dict["height"],
-                         prog, prog_dict)
-        else:
-            progress_bar(draw, prog_dict["color_bg"], prog_dict["color_fg"],
-                         prog_dict["posx"], prog_dict["posy"],
-                         prog_dict["short_len"], prog_dict["height"],
-                         prog, prog_dict)
+        progress_bar(
+            draw, prog_dict, prog,
+            use_long_len = (info['VideoPlayer.Time'].count(":") == 2)
+        )
 
 
 
