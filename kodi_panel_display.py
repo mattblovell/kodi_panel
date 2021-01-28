@@ -1017,13 +1017,18 @@ def progress_bar(draw,
     # of the progress bar varies, depending upon whether it should be
     # vertical or not and the duration.  The caller is responsible for
     # setting use_long_len appropriately.
+    #
+    # For vertical progress bars, only "len" is expected.
 
-    if field_dict.get("vertical",False):
-        w = field_dict.get("len", 0)
-    elif use_long_len:
-        w = field_dict.get("long_len", 0)
+    w = 0
+    if field_dict.get("vertical",False) and "len" in field_dict:
+        w = field_dict["len"]
+    elif use_long_len and "long_len" in field_dict:
+        w = field_dict["long_len"]
+    elif "short_len" in field_dict:
+        w = field_dict["short_len"]
     else:
-        w = field_dict.get("short_len", 0)
+        w = field_dict.get("len", 0)
 
     # If we cannot determine that long dimension, just return
     # without rendering anything.
