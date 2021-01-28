@@ -800,14 +800,14 @@ dynamic = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.TrackNumber"
 posx = 732
-posy = 53
+posy = 51
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S_med"
 fill = "color_7S"
   # Label only appears if the field is present and non-empty
   label = "Track"
   lposx = 732
-  lposy = 26
+  lposy = 23
   lfont = "font_tiny"
   lfill = "white"
 
