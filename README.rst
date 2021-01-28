@@ -23,7 +23,7 @@ SIL Open Font License or Apache 2.0; see
 `fonts/sources.txt <https://github.com/mattblovell/kodi_panel/blob/master/fonts/sources.txt>`_ 
 for further information.  Album and Movie cover art in photos or in emulator
 screenshots below is *not* a part of kodi_display and is shown
-under a Fair Use.
+under the Fair Use doctrine.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
