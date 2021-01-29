@@ -100,6 +100,32 @@ codec_name = {
 #   must be present if artwork is desired.  Current time and file
 #   duration must be present if a progress bar is desired.
 #
+#
+# NOTES:
+#
+# Here is how the Player.Filenameandpath InfoLabel behaves for me:
+#
+# - UPnP/DLNA music:  http://10.0.0.3:52100/Music/F1205284.m4a?Reader=32652
+# - UPnP/DLNA movie:  http://10.0.0.3:52100/Video/F233148.mkv
+# - Library movie:    smb://10.0.0.3/Movies/Amelie.mkv
+# - AirPlay audio:    pipe://11/
+#
+# It therefore seems useful to have a test whether the current media's
+# path starts with "http://" (and potentially "https://").  This is
+# solely because Kodi parsing of UPnP fields seems somewhat
+# incomplete.  Knowing the path could be helpful in making display of
+# some info conditional.
+#
+# Also, AirPlay starts off for ~2 seconds with MusicPlayer.Title equal
+# to "AirPlay", the Filenameandpath as shown above, but with many
+# other fields blank or set according to whatever was previously
+# playing.  I may use that in update_display() below to filter out the
+# two seconds of default cover art that then results.
+#
+# Based on feedback from @nico1080, it seems like PVR recordings start
+# out with "pvr://".  That gets used below for video auto-selection of
+# screen mode.
+#
 
 # Status screen information
 STATUS_LABELS = [
@@ -114,6 +140,7 @@ STATUS_LABELS = [
 
 # Audio screen information
 AUDIO_LABELS = [
+    "Player.Filenameandpath",
     "MusicPlayer.Title",
     "MusicPlayer.Album",
     "MusicPlayer.Artist",
