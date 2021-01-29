@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.36"
+PANEL_VER = "v1.37"
 
 #
 # Audio/Video codec lookup table
@@ -501,9 +501,10 @@ def fixup_layouts(nested_dict):
             newdict[key] = fixup_array(value)
         else:
             if ((key.startswith("color") or key == "lcolor" or
-                 key == "outline" or
-                 key == "fill" or key == "lfill") and
-                    value.startswith("color_")):
+                 key.endswith("outline") or
+                 key.startswith("fill") or
+                 key.endswith("fill")) and
+                value.startswith("color_")):
                 # Lookup color
                 newdict[key] = _colors[value]
             elif (key == "font" or key == "lfont" or
@@ -718,6 +719,18 @@ def strcb_audio_duration(info, screen_mode, layout_name):
         return "0"
 
 
+# Return "1" if media Filenameandpath starts with http:// or
+# https://.  We'll take that as indicative of UPnP / DLNA
+# playback.
+def strcb_upnp_playback(info, screen_mode, layout_name):
+    if 'Player.Filenameandpath' in info:
+        if (info['Player.Filenameandpath'].startswith("http://") or
+            info['Player.Filenameandpath'].startswith("https://")):
+            return "1"
+        else:
+            return "0"
+    return "0"
+    
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
 def strcb_codec(info, screen_mode, layout_name):
@@ -920,11 +933,14 @@ STRING_CB = {
     'audio_duration' : strcb_audio_duration,
 
     # Video screen fields
-    'acodec'     : strcb_acodec,
+    'acodec' : strcb_acodec,
 
     # Status screen fields
     'version'      : strcb_version,
     'kodi_version' : strcb_kodi_version,
+
+    # Any
+    'upnp_playback' : strcb_upnp_playback,
     }
 
 

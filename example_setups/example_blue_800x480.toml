@@ -1049,16 +1049,21 @@ font  = "font_sm"
 fill  = "white"
 trunc = 1
 
-# NOTE: When playing a movie via UPnP/DLNA, Kodi Leia doesn't seem to
-#  get the release year parsed correctly.  All movies show a Year of
-#  1969.  If that is your primary path of playing video, perhaps this
-#  field should just be commented out
-#[[V_LAYOUT.V_DEFAULT.fields]]
-#name  = "VideoPlayer.Year"
-#posx  = 340
-#posy  = 430
-#font  = "font_sm"
-#fill  = "white"
+# NOTE:
+#
+#  When playing a movie via UPnP/DLNA, Kodi Leia doesn't seem to get
+#  the release year parsed correctly.  All movies just show a Year of
+#  1969!  If that is your primary path of playing video, perhaps this
+#  field should just be commented out.  That's effectively what the
+#  display_ifnot test below accomplishes.
+#
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Year"
+posx  = 340
+posy  = 430
+font  = "font_sm"
+fill  = "white"
+display_ifnot = [ "upnp_playback", "1" ]
 
 [[V_LAYOUT.V_DEFAULT.fields]]
 name  = "VideoPlayer.Rating"
