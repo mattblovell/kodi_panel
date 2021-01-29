@@ -762,7 +762,8 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
         # Artist is blank.  The combination of JRiver Media Center
         # and UPnP/DLNA playback via Kodi didn't quite permit this
         # to work, unfortunately.
-
+        display_string = ""
+        
         if info['MusicPlayer.Artist'] != "":
             display_string = info['MusicPlayer.Artist']
 
@@ -2557,6 +2558,9 @@ def main(device_handle):
                 continue
             except BaseException:
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
                 time.sleep(5)
                 continue
 
@@ -2586,9 +2590,12 @@ def main(device_handle):
                 break
             except (SystemExit, KeyboardInterrupt):
                 shutdown()
-            except:
-                print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
-                pass
+            # except:
+            #     print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
+            #     exc_type, exc_obj, exc_tb = sys.exc_info()
+            #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            #     print(exc_type, fname, exc_tb.tb_lineno)                
+            #     pass
 
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
