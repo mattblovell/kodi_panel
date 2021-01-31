@@ -61,6 +61,35 @@ running on an RPi 3.
 Installation
 ------------
 
+
+Kodi setup
+**********
+
+Before proceeding, a few minor setup changes may be necessary for your 
+Kodi installation:
+
+- For JSON-RPC calls to work over HTTP transport, Kodi's 
+  `web server <https://kodi.wiki/view/Webserver#Enabling_the_webserver>`_ must be enabled.
+  See the brief instructions at that link for details.  (I've not experimented with
+  the authentication option that is available; if anyone tries it and has suggestions
+  for necessary code changes, please let me know.)
+
+- Artwork is retrieved over the network via Kodi's
+  `Virtual File System <https://kodi.wiki/view/Webserver#Virtual_File_System_.2Fvfs>`_ (vfs).
+  Starting with the XBMC release in 2013, vfs provides access to files *only* if
+  the path is enabled as a *media source* (i.e., a path enabled for video, music,
+  photos, or programs).  If you encounter any issues with artwork retrieval
+  for kodi_panel, be sure the examine how Kodi's media sources are configured.
+
+  - For AirPlay cover art, Kodi makes use of a file in temporary storage,
+    specifically ``special://temp/airtunes_album_thumb.jpg`` or a similar PNG file.
+    The ``special://temp`` path must be added as a media source (not just a file browser
+    source) if one wants AirPlay cover art to be functional.
+
+
+GPIOs
+*****
+
 When I started, I only had direct access to a Raspberry Pi 3 Model B and an Odroid C4.
 I subsequently got the script running on an RPi 4 Model B and an 
 RPi Zero W.  As others try additional SBCs, please feel free to suggest additions or
@@ -79,13 +108,12 @@ web, for instance at this `SparkFun GPIO
 <https://learn.sparkfun.com/tutorials/raspberry-gpio/gpio-pinout>`_
 page.
 
-On another note, for *all* the display modules that I tried before settling
-on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
+On another note, for *all* the display modules that I tried before first 
+settling on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
 avoided having to worry about `level shifters <https://www.adafruit.com/product/1875>`_.
 Be careful wiring up your SBC; if you're not familiar with them
 generally, see the warnings documented on the RPi
 `GPIO usage <https://www.raspberrypi.org/documentation/usage/gpio/>`_ page.
-
 
 
 Raspberry Pi
