@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.37"
+PANEL_VER = "v1.38"
 
 #
 # Audio/Video codec lookup table
@@ -253,10 +253,14 @@ _airtunes_re = re.compile(
     r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 
+#
 # Debug flags
+#
 DEBUG_FIELDS = config.settings.get("DEBUG_FIELDS", False)
-if DEBUG_FIELDS:
-    print("DEBUG_FIELDS print statements enabled.")
+DEBUG_ART    = config.settings.get("DEBUG_ART", False)
+
+if DEBUG_FIELDS: print("DEBUG_FIELDS print statements enabled.")
+if DEBUG_ART:    print("DEBUG_ART print statements enabled.")
 
 
 #
@@ -730,7 +734,7 @@ def strcb_upnp_playback(info, screen_mode, layout_name):
         else:
             return "0"
     return "0"
-    
+
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
 def strcb_codec(info, screen_mode, layout_name):
@@ -803,7 +807,7 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
         # and UPnP/DLNA playback via Kodi didn't quite permit this
         # to work, unfortunately.
         display_string = ""
-        
+
         if info['MusicPlayer.Artist'] != "":
             display_string = info['MusicPlayer.Artist']
 
@@ -1111,6 +1115,121 @@ def progress_bar(draw,
             )
 
 
+
+
+# Retrieve AirPlay (audio) cover art.
+#
+# This function is distinct from the more general get_artwork() since
+# Kodi (at least Kodi Leia), always makes use of the same temporary
+# file to store the current AirPlay cover.  The file is identified
+# via a special:// path that must also, if running remotely from Kodi,
+# be enabled as a media source in order for HTTP retrieval to work.
+#
+# Since the name (and path) are always the same, this function checks
+# the modification time of the temporary file to decide whether a
+# re-fetching is needed.
+#
+# Due to that time-check we do NOT make use of lru_cache decoration.
+# This function therefore still relies upon the caller passing in
+# the previously-fetched AirPlay cover (as prev_image).
+#
+def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
+    global _last_image_time, _image_default
+    image_url = None
+    image_set = False
+    resize_needed = False
+    cover = None  # used for retrieved artwork, original size
+
+    if not _local_kodi:
+        image_path = cover_path
+        if DEBUG_ART: print("Airplay image_path : ", image_path) # debug info
+
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "Files.GetFileDetails",
+            "params": {"file": image_path,
+                       "properties": ["lastmodified"]
+                       },
+            "id": "5b",
+        }
+        response = requests.post(
+            rpc_url,
+            data=json.dumps(payload),
+            headers=headers).json()
+        if DEBUG_ART: print("Airplay image details: ", json.dumps(response))  # debug info
+
+        new_image_time = None
+        try:
+            new_image_time = response['result']['filedetails']['lastmodified']
+        except BaseException:
+            pass
+        if DEBUG_ART: print("Airplay new_image_time", new_image_time)  # debug info
+        if (not prev_image or
+            (new_image_time and new_image_time != _last_image_time)):
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "Files.PrepareDownload",
+                "params": {"path": image_path},
+                "id": "5c",
+            }
+            response = requests.post(
+                rpc_url,
+                data=json.dumps(payload),
+                headers=headers).json()
+            if DEBUG_ART: print("Airplay prepare response: ", json.dumps(response))  # debug info
+
+            try:
+                image_url = base_url + "/" + \
+                    response['result']['details']['path']
+                if DEBUG_ART: print("image_url : ", image_url) # debug info
+            except BaseException:
+                pass
+
+            r = requests.get(image_url, stream=True)
+            # check that the retrieval was successful before proceeding
+            if r.status_code == 200:
+                try:
+                    r.raw.decode_content = True
+                    cover = Image.open(io.BytesIO(r.content))
+                    image_set = True
+                    resize_needed = True
+                    _last_image_time = new_image_time
+                    _image_default = False
+                except BaseException:
+                    cover = Image.open(_default_audio_thumb)
+                    prev_image = cover
+                    image_set = True
+                    resize_needed = True
+                    _image_default = True
+        else:
+            image_set = True
+
+    # We proceed through this code when running local to Kodi.
+    if not image_set:
+        if _airtunes_re.match(cover_path):
+            airplay_thumb = "/storage/.kodi/temp/" + \
+                _airtunes_re.match(cover_path).group(1)
+            if os.path.isfile(airplay_thumb):
+                _image_default = False
+                resize_needed = True
+            else:
+                _image_default = True
+                resize_needed = True
+
+    # is resizing needed?
+    if (image_set and resize_needed):
+        # resize while maintaining aspect ratio, which should
+        # be precisely what thumbnail accomplishes
+        cover.thumbnail((thumb_width, thumb_height))
+        prev_image = cover
+
+    if image_set:
+        return prev_image
+    else:
+        return None
+
+
+
 # Retrieve cover art or a default thumbnail.  Cover art gets resized
 # to the provided thumb_width and thumb_height.  (This now applies
 # to default images as well.)
@@ -1129,7 +1248,7 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
     image_set = False
     resize_needed = False
 
-    cover = None   # retrieved artwork, original size
+    cover = None  # used for retrieved artwork, original size
 
     if (cover_path != '' and
         cover_path != 'DefaultVideoCover.png' and
@@ -1181,107 +1300,20 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
                     resize_needed = True
                     _image_default = True
 
-
-    # Airplay artwork
-    #
-    # If artwork is NOT local, then we'll have to retrieve it over the
-    # network. Airplay coverart is always stored to the same file.
-    # So, we start by getting the last modification time to figure out
-    # if we need to retrieve it.
-    #
-    if (not image_set and
-        _airtunes_re.match(cover_path) and
-            not _local_kodi):
-
-        image_path = cover_path
-        # print("image_path : ", image_path) # debug info
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "Files.GetFileDetails",
-            "params": {"file": image_path,
-                       "properties": ["lastmodified"]
-                       },
-            "id": "5b",
-        }
-        response = requests.post(
-            rpc_url,
-            data=json.dumps(payload),
-            headers=headers).json()
-        # print("Airplay image details: ", json.dumps(response))  # debug info
-        new_image_time = None
-        try:
-            new_image_time = response['result']['filedetails']['lastmodified']
-        except BaseException:
-            pass
-        # print("new_image_time", new_image_time)  # debug info
-        if (new_image_time and new_image_time != _last_image_time):
-            payload = {
-                "jsonrpc": "2.0",
-                "method": "Files.PrepareDownload",
-                "params": {"path": image_path},
-                "id": "5c",
-            }
-            response = requests.post(
-                rpc_url,
-                data=json.dumps(payload),
-                headers=headers).json()
-            # print("Response: ", json.dumps(response))  # debug info
-
-            try:
-                image_url = base_url + "/" + \
-                    response['result']['details']['path']
-                # print("image_url : ", image_url) # debug info
-            except BaseException:
-                pass
-
-            r = requests.get(image_url, stream=True)
-            # check that the retrieval was successful before proceeding
-            if r.status_code == 200:
-                try:
-                    r.raw.decode_content = True
-                    cover = Image.open(io.BytesIO(r.content))
-                    image_set = True
-                    resize_needed = True
-                    _last_image_time = new_image_time
-                    _image_default = False
-                except BaseException:
-                    cover = Image.open(_default_audio_thumb)
-                    prev_image = cover
-                    image_set = True
-                    resize_needed = True
-                    _image_default = True
-        else:
-            image_set = True
-
-    # Finally, if we still don't have anything, check if we are local
-    # to Kodi and Airplay artwork can just be opened.  Otherwise, use
-    # default images.
+    # use default images if we haven't retrieved anything
     if not image_set:
-        resize_needed = True
-        if _airtunes_re.match(cover_path):
-            airplay_thumb = "/storage/.kodi/temp/" + \
-                _airtunes_re.match(cover_path).group(1)
-            if os.path.isfile(airplay_thumb):
-                _last_image_path = airplay_thumb
-                resize_needed = True
-                _image_default = False
-            else:
-                _last_image_path = _default_airplay_thumb
-                _image_default = True
+        if video:
+            _last_image_path = _default_video_thumb
+            _image_default = True
         else:
-            # use default image when no artwork is available
-            if video:
-                _last_image_path = _default_video_thumb
-                _image_default = True
-            else:
-                _last_image_path = _default_audio_thumb
-                _image_default = True
+            _last_image_path = _default_audio_thumb
+            _image_default = True
 
         cover = Image.open(_last_image_path)
         prev_image = cover
         image_set = True
+        resize_needed = True
 
-    # is resizing needed?
     if (image_set and resize_needed):
         # resize while maintaining aspect ratio, which should
         # be precisely what thumbnail accomplishes
@@ -1688,10 +1720,16 @@ def audio_screen_static(layout, info):
                                             audio_dmode.name)
 
     # Conditionally retrieve cover image from Kodi, if it exists and
-    # needs a refresh
+    # needs a refresh.  AirPlay cover art must be handled specially.
     if show_thumb:
-        _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
-                                  thumb_dict["size"], thumb_dict["size"])
+
+        if _airtunes_re.match(info['MusicPlayer.Cover']):
+            _last_thumb = get_airplay_art(info['MusicPlayer.Cover'], _last_thumb,
+                                          thumb_dict["size"], thumb_dict["size"])
+        else:
+            _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
+                                      thumb_dict["size"], thumb_dict["size"])
+
         if _last_thumb:
             if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
@@ -2456,7 +2494,7 @@ def update_display(touched=False):
         # print("Response: ", json.dumps(response))
         try:
             track_info = response['result']
-            
+
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a
                 # moment when nothing is actually playing, according to
@@ -2636,12 +2674,12 @@ def main(device_handle):
                 break
             except (SystemExit, KeyboardInterrupt):
                 shutdown()
-            except:
-                print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)                
-                pass
+            # except:
+            #     print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
+            #     exc_type, exc_obj, exc_tb = sys.exc_info()
+            #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            #     print(exc_type, fname, exc_tb.tb_lineno)
+            #     pass
 
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
