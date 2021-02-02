@@ -983,14 +983,16 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 # Drawing-capable element callback functions
 
 ELEMENT_CB = {
-    # Audio screen fields
-    'artist'     : element_audio_artist,
+    # Audio screen elements
+    'artist'      : element_audio_artist,
+    'audio_cover' : element_audio_cover,
 
-    # Status screen fields
+    # Status screen elements
     'time_hrmin' : element_time_hrmin,
 
     # Any
-    'thin_line'  : element_thin_line,
+    'thin_line'       : element_thin_line,
+    'generic_artwork' : element_generic_artwork,
     }
 
 
