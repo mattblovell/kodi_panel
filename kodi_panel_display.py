@@ -1340,7 +1340,7 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 #                 back to default images if unsuccessful at
 #                 retrieving artwork
 #
-@lru_cache(maxsize=16)
+@lru_cache(maxsize=18)
 def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
     image_url = None
     image_set = False
