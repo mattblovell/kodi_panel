@@ -828,6 +828,73 @@ def element_thin_line(image, draw, info, field, screen_mode, layout_name):
     return ""
 
 
+# Draw (audio) album cover.  Invoking this callback, from a layout's
+# fields array, is an alternative to using the top-level "thumb"
+# entry.
+#
+# The InfoLabel name that specifies the path to the artwork can be
+# specified via the optional "use_path" key.  If no such key is
+# provided, then the default of MusicPlayer.Cover is used.
+#
+# In constrast to a similar function for generic artwork, audio
+# artwork retrieval has a special-case to handle AirPlay covers.
+# However, this code path does NOT attempt to make use of _last_thumb
+# to prevent re-fetching of the AirPlay cover.  If that is desired,
+# one is better off using the top-level "thumb" entry within a layout.
+#
+# This function also assumes that the cover art is square, only
+# looking for a "size" key.
+#
+def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
+    if 'use_path' in field:
+        image_path = info.get(field['use_path'], "")
+    else:
+        image_path = info.get('MusicPlayer.Cover', "")
+
+    if image_path == "": return
+
+    artwork = None
+    if _airtunes_re.match(image_path):
+        artwork = get_airplay_art(image_path, None,
+                                  field["size"], field["size"])
+    else:
+        artwork = get_artwork(image_path,
+                              field["size"], field["size"],
+                              use_defaults=True)
+
+    if artwork:
+        paste_artwork(image, artwork, field)
+
+    # Return string required for all callbacks
+    return ""
+
+
+# Similar image rendering function as element_audio_cover(), but with
+# no provision for AirPlay covers and expecting "height" and "width"
+# to be specified rather than a single size.
+#
+# The image path must be specified via a "use_path" key, falling back
+# to using VideoPlayer.Cover otherwise.
+#
+def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
+    if 'use_path' in field:
+        image_path = info.get(field['use_path'], "")
+    else:
+        image_path = info.get('VideoPlayer.Cover', "")
+
+    if image_path == "": return
+
+    artwork = None
+    artwork = get_artwork(image_path,
+                          field["width"], field["height"],
+                          use_defaults=True)
+    if _last_thumb:
+        paste_artwork(image, artwork, field)
+
+    # Return string required for all callbacks
+    return ""
+
+
 # Return string with current kodi_panel version
 def strcb_version(info, screen_mode, layout_name):
     return "kodi_panel " + PANEL_VER
