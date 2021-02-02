@@ -79,7 +79,7 @@ Kodi installation:
   Starting with the XBMC release in 2013, vfs provides access to files *only* if
   the path is enabled as a *media source* (i.e., a path enabled for video, music,
   photos, or programs).  If you encounter any issues with artwork retrieval
-  for kodi_panel, be sure the examine how Kodi's media sources are configured.
+  for kodi_panel, be sure to examine how Kodi's media sources are configured.
 
   - For AirPlay cover art, Kodi makes use of a file in temporary storage,
     specifically ``special://temp/airtunes_album_thumb.jpg`` or a similar PNG file.
