@@ -219,7 +219,6 @@ else:
     sys.exit(1)
 
 # State to prevent re-fetching cover art unnecessarily
-_last_image_path = None
 _last_thumb = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
@@ -1156,14 +1155,18 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
-        if DEBUG_ART: print("Airplay image details: ", json.dumps(response))  # debug info
+        if DEBUG_ART:
+            print("Airplay image details: ", json.dumps(response))  # debug info
 
         new_image_time = None
         try:
             new_image_time = response['result']['filedetails']['lastmodified']
         except BaseException:
             pass
-        if DEBUG_ART: print("Airplay new_image_time", new_image_time)  # debug info
+
+        if DEBUG_ART:
+            print("Airplay new_image_time", new_image_time)  # debug info
+
         if (not prev_image or
             (new_image_time and new_image_time != _last_image_time)):
             payload = {
@@ -1176,12 +1179,13 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
                 rpc_url,
                 data=json.dumps(payload),
                 headers=headers).json()
-            if DEBUG_ART: print("Airplay prepare response: ", json.dumps(response))  # debug info
+            if DEBUG_ART:
+                print("Airplay prepare response: ", json.dumps(response))  # debug info
 
             try:
                 image_url = base_url + "/" + \
                     response['result']['details']['path']
-                if DEBUG_ART: print("image_url : ", image_url) # debug info
+                if DEBUG_ART: print("Airplay image_url : ", image_url) # debug info
             except BaseException:
                 pass
 
@@ -1237,13 +1241,19 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 # Note that details of retrieval seem to differ depending upon whether
 # Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
 #
-# The global _last_image_path is intended to let any given image file
-# be fetched and resized just *once*.  Subsequent calls just reuse the
-# same data, provided that the caller preserves and passes in
-# prev_image.
+# Originally, this function replied upon a prev_image argument being
+# passed in, together with storing the incoming cover_path string to a
+# _last_image_path global.  Switching the function to be memoized via
+# the lru_cached decorator removed the need for both of those
+# practices.
 #
-def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
-    global _last_image_path, _last_image_time, _image_default
+# With AirPlay artwork now handled separately, the caching should
+# permit for returning the same cover_path image, at a given size,
+# without the need for any network activity.
+#
+
+@lru_cache(maxsize=16)
+def get_artwork(cover_path, thumb_width, thumb_height, video=0, use_defaults=0):
     image_url = None
     image_set = False
     resize_needed = False
@@ -1256,61 +1266,50 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
             not _airtunes_re.match(cover_path)):
 
         image_path = cover_path
-        # print("image_path : ", image_path) # debug info
+        if DEBUG_ART: print("image_path : ", image_path) # debug info
 
-        if (image_path == _last_image_path and prev_image):
-            # Fall through and just return prev_image
-            image_set = True
+        if (image_path.startswith("http://") or
+            image_path.startswith("https://")):
+            image_url = image_path
         else:
-            _last_image_path = image_path
-            if (image_path.startswith("http://") or
-                    image_path.startswith("https://")):
-                image_url = image_path
-            else:
-                payload = {
-                    "jsonrpc": "2.0",
-                    "method": "Files.PrepareDownload",
-                    "params": {"path": image_path},
-                    "id": 5,
-                }
-                response = requests.post(
-                    rpc_url, data=json.dumps(payload), headers=headers).json()
-                # print("Response: ", json.dumps(response))  # debug info
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "Files.PrepareDownload",
+                "params": {"path": image_path},
+                "id": 5,
+            }
+            response = requests.post(
+                rpc_url, data=json.dumps(payload), headers=headers).json()
+            if DEBUG_ART:
+                print("PrepareDownload Response: ", json.dumps(response))  # debug info
 
-                try:
-                    image_url = base_url + "/" + \
-                        response['result']['details']['path']
-                    # print("image_url : ", image_url) # debug info
-                except BaseException:
-                    pass
+            try:
+                image_url = base_url + "/" + \
+                    response['result']['details']['path']
+                if DEBUG_ART: print("image_url : ", image_url) # debug info
+            except BaseException:
+                pass
 
-            r = requests.get(image_url, stream=True)
-            # check that the retrieval was successful before proceeding
-            if r.status_code == 200:
-                try:
-                    r.raw.decode_content = True
-                    cover = Image.open(io.BytesIO(r.content))
-                    image_set = True
-                    resize_needed = True
-                    _image_default = False
-                except BaseException:
-                    cover = Image.open(_default_audio_thumb)
-                    prev_image = cover
-                    image_set = True
-                    resize_needed = True
-                    _image_default = True
+        r = requests.get(image_url, stream=True)
+        # check that the retrieval was successful before proceeding
+        if r.status_code == 200:
+            try:
+                r.raw.decode_content = True
+                cover = Image.open(io.BytesIO(r.content))
+                image_set = True
+                resize_needed = True
+            except BaseException:
+                image_set = False
 
     # use default images if we haven't retrieved anything
-    if not image_set:
+    if (not image_set and use_defaults):
+        default_path = ""
         if video:
-            _last_image_path = _default_video_thumb
-            _image_default = True
+            default_path = _default_video_thumb
         else:
-            _last_image_path = _default_audio_thumb
-            _image_default = True
+            default_path = _default_audio_thumb
 
-        cover = Image.open(_last_image_path)
-        prev_image = cover
+        cover = Image.open(default_path)
         image_set = True
         resize_needed = True
 
@@ -1318,12 +1317,8 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
         # resize while maintaining aspect ratio, which should
         # be precisely what thumbnail accomplishes
         cover.thumbnail((thumb_width, thumb_height))
-        prev_image = cover
 
-    if image_set:
-        return prev_image
-    else:
-        return None
+    return cover
 
 
 # Provide a mechanism for interpolation of format strings containing
@@ -1663,7 +1658,7 @@ def status_screen(image, draw, kodi_status):
 #  Second argument is a dictionary loaded from Kodi with relevant InfoLabels
 #
 def audio_screen_static(layout, info):
-    global _last_thumb, _last_image_path
+    global _last_thumb
 
     # Create new Image and ImageDraw objects
     if ("background" in layout and
@@ -1727,8 +1722,9 @@ def audio_screen_static(layout, info):
             _last_thumb = get_airplay_art(info['MusicPlayer.Cover'], _last_thumb,
                                           thumb_dict["size"], thumb_dict["size"])
         else:
-            _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
-                                      thumb_dict["size"], thumb_dict["size"])
+            _last_thumb = get_artwork(info['MusicPlayer.Cover'],
+                                      thumb_dict["size"], thumb_dict["size"],
+                                      use_defaults=1)
 
         if _last_thumb:
             if thumb_dict.get("center", 0):
@@ -1905,7 +1901,7 @@ def audio_screens(image, draw, info):
 
 # Render the static portion of video screens
 def video_screen_static(layout, info):
-    global _last_thumb, _last_image_path
+    global _last_thumb
 
     # Create new Image and ImageDraw objects
     if ("background" in layout and
@@ -1963,9 +1959,9 @@ def video_screen_static(layout, info):
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if show_thumb:
-        _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
+        _last_thumb = get_artwork(info['VideoPlayer.Cover'],
                                   thumb_dict["width"], thumb_dict["height"],
-                                  video=1)
+                                  video=1, use_defaults=1)
         if _last_thumb:
             if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
@@ -2308,7 +2304,7 @@ def screen_off():
 #
 def update_display(touched=False):
     global _kodi_playing
-    global _last_image_path, _last_thumb, _static_image
+    global _last_thumb, _static_image
     global _screen_press, _screen_active, _screen_offtime
     global audio_dmode, video_dmode
 
@@ -2368,7 +2364,6 @@ def update_display(touched=False):
 
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
-        _last_image_path = None
         _last_image_time = None
         _last_thumb = None
         _static_image = None
@@ -2425,7 +2420,6 @@ def update_display(touched=False):
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
                 print(datetime.now(), "video display mode now", video_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
@@ -2473,7 +2467,6 @@ def update_display(touched=False):
             if not AUDIO_LAYOUT_AUTOSELECT:
                 audio_dmode = audio_dmode.next()
                 print(datetime.now(), "audio display mode now", audio_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
@@ -2525,7 +2518,6 @@ def update_display(touched=False):
             if not SLIDESHOW_LAYOUT_AUTOSELECT:
                 slide_dmode = slide_dmode.next()
                 print(datetime.now(), "slideshow display mode now", slide_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
