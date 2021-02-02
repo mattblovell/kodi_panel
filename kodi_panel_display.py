@@ -990,7 +990,7 @@ ELEMENT_CB = {
     # Status screen elements
     'time_hrmin' : element_time_hrmin,
 
-    # Any
+    # Any screen
     'thin_line'       : element_thin_line,
     'generic_artwork' : element_generic_artwork,
     }
@@ -1011,7 +1011,7 @@ STRING_CB = {
     'version'      : strcb_version,
     'kodi_version' : strcb_kodi_version,
 
-    # Any
+    # Any screen
     'upnp_playback' : strcb_upnp_playback,
     }
 
