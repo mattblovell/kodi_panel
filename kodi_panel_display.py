@@ -51,7 +51,7 @@ import warnings
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.37"
+PANEL_VER = "v1.38"
 
 #
 # Audio/Video codec lookup table
@@ -219,7 +219,6 @@ else:
     sys.exit(1)
 
 # State to prevent re-fetching cover art unnecessarily
-_last_image_path = None
 _last_thumb = None
 _last_image_time = None   # used with airtunes / airplay coverart
 
@@ -253,10 +252,14 @@ _airtunes_re = re.compile(
     r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
 
 
+#
 # Debug flags
+#
 DEBUG_FIELDS = config.settings.get("DEBUG_FIELDS", False)
-if DEBUG_FIELDS:
-    print("DEBUG_FIELDS print statements enabled.")
+DEBUG_ART    = config.settings.get("DEBUG_ART", False)
+
+if DEBUG_FIELDS: print("DEBUG_FIELDS print statements enabled.")
+if DEBUG_ART:    print("DEBUG_ART print statements enabled.")
 
 
 #
@@ -730,7 +733,7 @@ def strcb_upnp_playback(info, screen_mode, layout_name):
         else:
             return "0"
     return "0"
-    
+
 # Perform a table lookup to convert Kodi's codec names into more
 # common names.
 def strcb_codec(info, screen_mode, layout_name):
@@ -803,7 +806,7 @@ def element_audio_artist(image, draw, info, field, screen_mode, layout_name):
         # and UPnP/DLNA playback via Kodi didn't quite permit this
         # to work, unfortunately.
         display_string = ""
-        
+
         if info['MusicPlayer.Artist'] != "":
             display_string = info['MusicPlayer.Artist']
 
@@ -822,6 +825,83 @@ def element_thin_line(image, draw, info, field, screen_mode, layout_name):
          fill = field["fill"],
          width = field.get("width", 1)
         )
+    return ""
+
+
+# Draw (audio) album cover.  Invoking this callback, from a layout's
+# fields array, is an alternative to using the top-level "thumb"
+# entry.
+#
+# The InfoLabel name that specifies the path to the artwork can be
+# specified via the optional "use_path" key.  If no such key is
+# provided, then the default of MusicPlayer.Cover is used.
+#
+# In constrast to a similar function for generic artwork, audio
+# artwork retrieval has a special-case to handle AirPlay covers.
+# However, this code path does NOT attempt to make use of _last_thumb
+# to prevent re-fetching of the AirPlay cover.  If that is desired,
+# one is better off using the top-level "thumb" entry within a layout.
+#
+# This function also assumes that the cover art is square, only
+# looking for a "size" key.
+#
+# Finally, recall that the field array walk in draw_fields() handles
+# the display_if or display_ifnot conditionals.
+#
+def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
+    if 'use_path' in field:
+        image_path = info.get(field['use_path'], "")
+    else:
+        image_path = info.get('MusicPlayer.Cover', "")
+
+    if image_path == "": return
+
+    # The following is somewhat redundate with code that
+    # exists in audio_screen_static().
+    artwork = None
+    if _airtunes_re.match(image_path):
+        artwork = get_airplay_art(image_path, None,
+                                  field["size"], field["size"])
+    else:
+        artwork = get_artwork(image_path,
+                              field["size"], field["size"],
+                              use_defaults=True)
+
+    if artwork:
+        paste_artwork(image, artwork, field)
+
+    # Return string required for all callbacks
+    return ""
+
+
+# Similar image rendering function as element_audio_cover(), but with
+# no provision for AirPlay covers and expecting "height" and "width"
+# to be specified rather than a single size.
+#
+# The image path must be specified via a "use_path" key, falling back
+# to using VideoPlayer.Cover otherwise.
+#
+# Finally, recall that the field array walk in draw_fields() handles
+# the display_if or display_ifnot conditionals.
+#
+def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
+    if 'use_path' in field:
+        image_path = info.get(field['use_path'], "")
+    else:
+        image_path = info.get('VideoPlayer.Cover', "")
+
+    if image_path == "": return
+
+    # The following is somewhat redundate with code that
+    # exists in video_screen_static().    
+    artwork = None
+    artwork = get_artwork(image_path,
+                          field["width"], field["height"],
+                          use_defaults=True)
+    if artwork:
+        paste_artwork(image, artwork, field)
+
+    # Return string required for all callbacks
     return ""
 
 
@@ -913,14 +993,16 @@ def element_time_hrmin(image, draw, info, field, screen_mode, layout_name):
 # Drawing-capable element callback functions
 
 ELEMENT_CB = {
-    # Audio screen fields
-    'artist'     : element_audio_artist,
+    # Audio screen elements
+    'artist'      : element_audio_artist,
+    'audio_cover' : element_audio_cover,
 
-    # Status screen fields
+    # Status screen elements
     'time_hrmin' : element_time_hrmin,
 
-    # Any
-    'thin_line'  : element_thin_line,
+    # Any screen
+    'thin_line'       : element_thin_line,
+    'generic_artwork' : element_generic_artwork,
     }
 
 
@@ -939,7 +1021,7 @@ STRING_CB = {
     'version'      : strcb_version,
     'kodi_version' : strcb_kodi_version,
 
-    # Any
+    # Any screen
     'upnp_playback' : strcb_upnp_playback,
     }
 
@@ -1111,90 +1193,36 @@ def progress_bar(draw,
             )
 
 
-# Retrieve cover art or a default thumbnail.  Cover art gets resized
-# to the provided thumb_width and thumb_height.  (This now applies
-# to default images as well.)
+
+
+# Retrieve AirPlay (audio) cover art.
 #
-# Note that details of retrieval seem to differ depending upon whether
-# Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
+# This function is distinct from the more general get_artwork() since
+# Kodi (at least Kodi Leia), always makes use of the same temporary
+# file to store the current AirPlay cover.  The file is identified
+# via a special:// path that must also, if running remotely from Kodi,
+# be enabled as a media source in order for HTTP retrieval to work.
 #
-# The global _last_image_path is intended to let any given image file
-# be fetched and resized just *once*.  Subsequent calls just reuse the
-# same data, provided that the caller preserves and passes in
-# prev_image.
+# Since the name (and path) are always the same, this function checks
+# the modification time of the temporary file to decide whether a
+# re-fetching is needed.
 #
-def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
-    global _last_image_path, _last_image_time, _image_default
+# Due to that time-check we do NOT make use of lru_cache decoration.
+# This function therefore still relies upon the caller passing in
+# the previously-fetched AirPlay cover (as prev_image).
+#
+
+def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
+    global _last_image_time, _image_default
     image_url = None
     image_set = False
     resize_needed = False
+    cover = None  # used for retrieved artwork, original size
 
-    cover = None   # retrieved artwork, original size
-
-    if (cover_path != '' and
-        cover_path != 'DefaultVideoCover.png' and
-        cover_path != 'DefaultAlbumCover.png' and
-            not _airtunes_re.match(cover_path)):
-
+    if not _local_kodi:
         image_path = cover_path
-        # print("image_path : ", image_path) # debug info
+        if DEBUG_ART: print("Airplay image_path : ", image_path) # debug info
 
-        if (image_path == _last_image_path and prev_image):
-            # Fall through and just return prev_image
-            image_set = True
-        else:
-            _last_image_path = image_path
-            if (image_path.startswith("http://") or
-                    image_path.startswith("https://")):
-                image_url = image_path
-            else:
-                payload = {
-                    "jsonrpc": "2.0",
-                    "method": "Files.PrepareDownload",
-                    "params": {"path": image_path},
-                    "id": 5,
-                }
-                response = requests.post(
-                    rpc_url, data=json.dumps(payload), headers=headers).json()
-                # print("Response: ", json.dumps(response))  # debug info
-
-                try:
-                    image_url = base_url + "/" + \
-                        response['result']['details']['path']
-                    # print("image_url : ", image_url) # debug info
-                except BaseException:
-                    pass
-
-            r = requests.get(image_url, stream=True)
-            # check that the retrieval was successful before proceeding
-            if r.status_code == 200:
-                try:
-                    r.raw.decode_content = True
-                    cover = Image.open(io.BytesIO(r.content))
-                    image_set = True
-                    resize_needed = True
-                    _image_default = False
-                except BaseException:
-                    cover = Image.open(_default_audio_thumb)
-                    prev_image = cover
-                    image_set = True
-                    resize_needed = True
-                    _image_default = True
-
-
-    # Airplay artwork
-    #
-    # If artwork is NOT local, then we'll have to retrieve it over the
-    # network. Airplay coverart is always stored to the same file.
-    # So, we start by getting the last modification time to figure out
-    # if we need to retrieve it.
-    #
-    if (not image_set and
-        _airtunes_re.match(cover_path) and
-            not _local_kodi):
-
-        image_path = cover_path
-        # print("image_path : ", image_path) # debug info
         payload = {
             "jsonrpc": "2.0",
             "method": "Files.GetFileDetails",
@@ -1207,14 +1235,20 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
-        # print("Airplay image details: ", json.dumps(response))  # debug info
+        if DEBUG_ART:
+            print("Airplay image details: ", json.dumps(response))  # debug info
+
         new_image_time = None
         try:
             new_image_time = response['result']['filedetails']['lastmodified']
         except BaseException:
             pass
-        # print("new_image_time", new_image_time)  # debug info
-        if (new_image_time and new_image_time != _last_image_time):
+
+        if DEBUG_ART:
+            print("Airplay new_image_time", new_image_time)  # debug info
+
+        if (not prev_image or
+            (new_image_time and new_image_time != _last_image_time)):
             payload = {
                 "jsonrpc": "2.0",
                 "method": "Files.PrepareDownload",
@@ -1225,12 +1259,13 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
                 rpc_url,
                 data=json.dumps(payload),
                 headers=headers).json()
-            # print("Response: ", json.dumps(response))  # debug info
+            if DEBUG_ART:
+                print("Airplay prepare response: ", json.dumps(response))  # debug info
 
             try:
                 image_url = base_url + "/" + \
                     response['result']['details']['path']
-                # print("image_url : ", image_url) # debug info
+                if DEBUG_ART: print("Airplay image_url : ", image_url) # debug info
             except BaseException:
                 pass
 
@@ -1253,33 +1288,17 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
         else:
             image_set = True
 
-    # Finally, if we still don't have anything, check if we are local
-    # to Kodi and Airplay artwork can just be opened.  Otherwise, use
-    # default images.
+    # We proceed through this code when running local to Kodi.
     if not image_set:
-        resize_needed = True
         if _airtunes_re.match(cover_path):
             airplay_thumb = "/storage/.kodi/temp/" + \
                 _airtunes_re.match(cover_path).group(1)
             if os.path.isfile(airplay_thumb):
-                _last_image_path = airplay_thumb
-                resize_needed = True
                 _image_default = False
+                resize_needed = True
             else:
-                _last_image_path = _default_airplay_thumb
                 _image_default = True
-        else:
-            # use default image when no artwork is available
-            if video:
-                _last_image_path = _default_video_thumb
-                _image_default = True
-            else:
-                _last_image_path = _default_audio_thumb
-                _image_default = True
-
-        cover = Image.open(_last_image_path)
-        prev_image = cover
-        image_set = True
+                resize_needed = True
 
     # is resizing needed?
     if (image_set and resize_needed):
@@ -1292,6 +1311,163 @@ def get_artwork(cover_path, prev_image, thumb_width, thumb_height, video=0):
         return prev_image
     else:
         return None
+
+
+
+# Retrieve cover art or a default thumbnail.  Cover art gets resized
+# to the provided thumb_width and thumb_height.  (This now applies
+# to default images as well.)
+#
+# Note that details of retrieval seem to differ depending upon whether
+# Kodi is playing from its library, from UPnp/DLNA, or from Airplay.
+#
+# Originally, this function replied upon a prev_image argument being
+# passed in, together with storing the incoming cover_path string to a
+# _last_image_path global.  Switching the function to be memoized via
+# the lru_cached decorator removed the need for both of those
+# practices.
+#
+# With AirPlay artwork now handled separately, the caching should
+# permit for returning the same cover_path image, at a given size,
+# without the need for any network activity.
+#
+# Arguments:
+#
+#  cover_path    string from Kodi InfoLabel providing path to artwork
+#  thumb_width   desired pixel width for artwork
+#  thumb_height  desired pixel height for artwork
+#  use_defaults  flag indicating whether algorithm should fall
+#                 back to default images if unsuccessful at
+#                 retrieving artwork
+#
+@lru_cache(maxsize=18)
+def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
+    image_url = None
+    image_set = False
+    resize_needed = False
+
+    cover = None  # used for retrieved artwork, original size
+
+    if (cover_path != '' and
+        (not cover_path.startswith('DefaultVideoCover')) and
+        (not cover_path.startswith('DefaultAlbumCover')) and
+        (not _airtunes_re.match(cover_path))):
+
+        image_path = cover_path
+        if DEBUG_ART: print("image_path : ", image_path) # debug info
+
+        if (image_path.startswith("http://") or
+            image_path.startswith("https://")):
+            image_url = image_path
+        else:
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "Files.PrepareDownload",
+                "params": {"path": image_path},
+                "id": 5,
+            }
+            response = requests.post(
+                rpc_url, data=json.dumps(payload), headers=headers).json()
+            if DEBUG_ART:
+                print("PrepareDownload Response: ", json.dumps(response))  # debug info
+
+            try:
+                image_url = base_url + "/" + \
+                    response['result']['details']['path']
+                if DEBUG_ART: print("image_url : ", image_url) # debug info
+            except BaseException:
+                pass
+
+        r = requests.get(image_url, stream=True)
+        # check that the retrieval was successful before proceeding
+        if r.status_code == 200:
+            try:
+                r.raw.decode_content = True
+                cover = Image.open(io.BytesIO(r.content))
+                image_set = True
+                resize_needed = True
+            except BaseException:
+                image_set = False
+
+    # use default images if we haven't retrieved anything
+    if (not image_set and use_defaults):
+        default_path = ""
+
+        if cover_path.startswith('DefaultVideoCover'):
+            default_path = _default_video_thumb
+        else:
+            default_path = _default_audio_thumb
+
+        cover = Image.open(default_path)
+        image_set = True
+        resize_needed = True
+
+    if (image_set and resize_needed):
+        # resize while maintaining aspect ratio, which should
+        # be precisely what thumbnail accomplishes
+        cover.thumbnail((thumb_width, thumb_height))
+
+    return cover
+
+
+
+# Paste retrieve artwork into the Pillow Image being rendered,
+# positioning it based upon the based dictionary (from either a
+# layout's "thumb" entry or one entry from its fields array) and the
+# now-resized artwork.
+#
+# Some of the expected or possible keys within the dictionary are:
+#
+#  posx       Horizontal position for artwork's upper-left corner
+#  posy       Vertical position for artwork's upper-left corner
+#  width      Expected pixel width of artwork
+#  height     Expected pixel height of artwork
+#  size       Pixel width and height if artwork is square
+#  center     Boolean indicating art should be centered on-screen
+#  center_sm  Boolean indicating that art should be centered
+#               at the position that it would have been located
+#               if it was full-size
+#
+# Note that the caller is responsible for handling any display_if or
+# display_ifnot conditional.  Those are NOT examined here.
+#
+#
+# Arguments:
+#
+#   image       Image object representing screen
+#   artwork     Image object for the artwork
+#   field_dict  Dictionary from layout
+#
+def paste_artwork(image, artwork, field_dict):
+    if "size" in field_dict:
+        height = field_dict["size"]
+        width  = field_dict["size"]
+    else:
+        height = field_dict["height"]
+        width  = field_dict["width"]
+
+    if field_dict.get("center", 0):
+        image.paste(artwork,
+                    (int((_frame_size[0] - artwork.width) / 2),
+                     int((_frame_size[1] - artwork.height) / 2)))
+    elif (field_dict.get("center_sm", 0) and
+          (artwork.width < width or
+           artwork.height < height)):
+        new_x = field_dict["posx"]
+        new_y = field_dict["posy"]
+        if artwork.width < width:
+            new_x += int((width / 2) -
+                         (artwork.width / 2))
+        if artwork.height < height:
+            new_y += int((height / 2) -
+                         (artwork.height / 2))
+            image.paste(artwork, (new_x, new_y))
+    else:
+        image.paste(
+            artwork,
+            (field_dict["posx"],
+             field_dict["posy"]))
+
 
 
 # Provide a mechanism for interpolation of format strings containing
@@ -1430,7 +1606,8 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
 #  dynamic      Boolean flag, set for dynamic screen updates
 #
 #
-def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
+def draw_fields(image, draw, layout, info,
+                screen_mode=None, layout_name="", dynamic=False):
 
     # Pull out the layout's array of fields
     field_list = layout.get("fields", [])
@@ -1631,7 +1808,7 @@ def status_screen(image, draw, kodi_status):
 #  Second argument is a dictionary loaded from Kodi with relevant InfoLabels
 #
 def audio_screen_static(layout, info):
-    global _last_thumb, _last_image_path
+    global _last_thumb
 
     # Create new Image and ImageDraw objects
     if ("background" in layout and
@@ -1688,32 +1865,19 @@ def audio_screen_static(layout, info):
                                             audio_dmode.name)
 
     # Conditionally retrieve cover image from Kodi, if it exists and
-    # needs a refresh
+    # needs a refresh.  AirPlay cover art must be handled specially.
     if show_thumb:
-        _last_thumb = get_artwork(info['MusicPlayer.Cover'], _last_thumb,
-                                  thumb_dict["size"], thumb_dict["size"])
+
+        if _airtunes_re.match(info['MusicPlayer.Cover']):
+            _last_thumb = get_airplay_art(info['MusicPlayer.Cover'], _last_thumb,
+                                          thumb_dict["size"], thumb_dict["size"])
+        else:
+            _last_thumb = get_artwork(info['MusicPlayer.Cover'],
+                                      thumb_dict["size"], thumb_dict["size"],
+                                      use_defaults=True)
+
         if _last_thumb:
-            if thumb_dict.get("center", 0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0] - _last_thumb.width) / 2),
-                             int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (thumb_dict.get("center_sm", 0) and
-                  (_last_thumb.width < thumb_dict["size"] or
-                   _last_thumb.height < thumb_dict["size"])):
-                new_x = thumb_dict["posx"]
-                new_y = thumb_dict["posy"]
-                if _last_thumb.width < thumb_dict["size"]:
-                    new_x += int((thumb_dict["size"] /
-                                  2) - (_last_thumb.width / 2))
-                if _last_thumb.height < thumb_dict["size"]:
-                    new_y += int((thumb_dict["size"] /
-                                  2) - (_last_thumb.height / 2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(
-                    _last_thumb,
-                    (thumb_dict["posx"],
-                     thumb_dict["posy"]))
+            paste_artwork(image, _last_thumb, thumb_dict)
     else:
         _last_thumb = None
 
@@ -1867,7 +2031,7 @@ def audio_screens(image, draw, info):
 
 # Render the static portion of video screens
 def video_screen_static(layout, info):
-    global _last_thumb, _last_image_path
+    global _last_thumb
 
     # Create new Image and ImageDraw objects
     if ("background" in layout and
@@ -1925,31 +2089,11 @@ def video_screen_static(layout, info):
 
     # Retrieve cover image from Kodi, if it exists and needs a refresh
     if show_thumb:
-        _last_thumb = get_artwork(info['VideoPlayer.Cover'], _last_thumb,
+        _last_thumb = get_artwork(info['VideoPlayer.Cover'],
                                   thumb_dict["width"], thumb_dict["height"],
-                                  video=1)
+                                  use_defaults=True)
         if _last_thumb:
-            if thumb_dict.get("center", 0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0] - _last_thumb.width) / 2),
-                             int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (thumb_dict.get("center_sm", 0) and
-                  (_last_thumb.width < thumb_dict["width"] or
-                   _last_thumb.height < thumb_dict["height"])):
-                new_x = thumb_dict["posx"]
-                new_y = thumb_dict["posy"]
-                if _last_thumb.width < thumb_dict["width"]:
-                    new_x += int((thumb_dict["width"] / 2) -
-                                 (_last_thumb.width / 2))
-                if _last_thumb.height < thumb_dict["height"]:
-                    new_y += int((thumb_dict["height"] / 2) -
-                                 (_last_thumb.height / 2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(
-                    _last_thumb,
-                    (thumb_dict["posx"],
-                     thumb_dict["posy"]))
+            paste_artwork(image, _last_thumb, thumb_dict)
     else:
         _last_thumb = None
 
@@ -2270,7 +2414,7 @@ def screen_off():
 #
 def update_display(touched=False):
     global _kodi_playing
-    global _last_image_path, _last_thumb, _static_image
+    global _last_thumb, _static_image
     global _screen_press, _screen_active, _screen_offtime
     global audio_dmode, video_dmode
 
@@ -2330,7 +2474,6 @@ def update_display(touched=False):
 
         # Check for screen press before proceeding.  A press when idle
         # generates the status screen.
-        _last_image_path = None
         _last_image_time = None
         _last_thumb = None
         _static_image = None
@@ -2387,7 +2530,6 @@ def update_display(touched=False):
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
                 print(datetime.now(), "video display mode now", video_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
@@ -2435,7 +2577,6 @@ def update_display(touched=False):
             if not AUDIO_LAYOUT_AUTOSELECT:
                 audio_dmode = audio_dmode.next()
                 print(datetime.now(), "audio display mode now", audio_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
@@ -2456,7 +2597,7 @@ def update_display(touched=False):
         # print("Response: ", json.dumps(response))
         try:
             track_info = response['result']
-            
+
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a
                 # moment when nothing is actually playing, according to
@@ -2487,7 +2628,6 @@ def update_display(touched=False):
             if not SLIDESHOW_LAYOUT_AUTOSELECT:
                 slide_dmode = slide_dmode.next()
                 print(datetime.now(), "slideshow display mode now", slide_dmode.name)
-                _last_image_path = None
                 _last_image_time = None
                 _last_thumb = None
                 _static_image = None
@@ -2640,7 +2780,7 @@ def main(device_handle):
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)                
+                print(exc_type, fname, exc_tb.tb_lineno)
                 pass
 
             # If connecting to Kodi over an actual network connection,
