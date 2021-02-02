@@ -115,9 +115,8 @@ Be careful wiring up your SBC; if you're not familiar with them
 generally, see the warnings documented on the RPi
 `GPIO usage <https://www.raspberrypi.org/documentation/usage/gpio/>`_ page.
 
-Of course, the GPIO pins aren't too interesting if you're using an HDMI-attached
-display.  Of course, you might like to control the backlight for that display,
-in which case you will still need the info above.
+Of course, the GPIO pins aren't very interesting if you're using an HDMI-attached
+display (unless you would like to control the backlight for such a display).
 
 
 Raspberry Pi
