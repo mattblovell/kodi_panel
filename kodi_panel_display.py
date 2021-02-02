@@ -247,10 +247,6 @@ _default_audio_thumb = config.settings.get("DEFAULT_AUDIO", "images/music_icon2_
 _default_video_thumb = config.settings.get("DEFAULT_VIDEO", "images/video_icon2.png")
 _default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
-# RegEx for recognizing AirPlay images (compiled once)
-_airtunes_re = re.compile(
-    r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
-
 
 #
 # Debug flags
@@ -1132,6 +1128,11 @@ def progress_bar(draw,
 # This function therefore still relies upon the caller passing in
 # the previously-fetched AirPlay cover (as prev_image).
 #
+
+# RegEx for recognizing AirPlay images (compiled once)
+_airtunes_re = re.compile(
+    r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+
 def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
     global _last_image_time, _image_default
     image_url = None
