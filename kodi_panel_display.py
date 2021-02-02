@@ -845,6 +845,9 @@ def element_thin_line(image, draw, info, field, screen_mode, layout_name):
 # This function also assumes that the cover art is square, only
 # looking for a "size" key.
 #
+# Finally, recall that the field array walk in draw_fields() handles
+# the display_if or display_ifnot conditionals.
+#
 def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
     if 'use_path' in field:
         image_path = info.get(field['use_path'], "")
@@ -853,6 +856,8 @@ def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
 
     if image_path == "": return
 
+    # The following is somewhat redundate with code that
+    # exists in audio_screen_static().
     artwork = None
     if _airtunes_re.match(image_path):
         artwork = get_airplay_art(image_path, None,
@@ -876,6 +881,9 @@ def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
 # The image path must be specified via a "use_path" key, falling back
 # to using VideoPlayer.Cover otherwise.
 #
+# Finally, recall that the field array walk in draw_fields() handles
+# the display_if or display_ifnot conditionals.
+#
 def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
     if 'use_path' in field:
         image_path = info.get(field['use_path'], "")
@@ -884,6 +892,8 @@ def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
 
     if image_path == "": return
 
+    # The following is somewhat redundate with code that
+    # exists in video_screen_static().    
     artwork = None
     artwork = get_artwork(image_path,
                           field["width"], field["height"],
