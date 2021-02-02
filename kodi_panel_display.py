@@ -1251,9 +1251,17 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 # permit for returning the same cover_path image, at a given size,
 # without the need for any network activity.
 #
-
+# Arguments:
+#
+#  cover_path    string from Kodi InfoLabel providing path to artwork
+#  thumb_width   desired pixel width for artwork
+#  thumb_height  desired pixel height for artwork
+#  use_defaults  flag indicating whether algorithm should fall
+#                 back to default images if unsuccessful at
+#                 retrieving artwork
+#
 @lru_cache(maxsize=16)
-def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=0):
+def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
     image_url = None
     image_set = False
     resize_needed = False
@@ -1725,7 +1733,7 @@ def audio_screen_static(layout, info):
         else:
             _last_thumb = get_artwork(info['MusicPlayer.Cover'],
                                       thumb_dict["size"], thumb_dict["size"],
-                                      use_defaults=1)
+                                      use_defaults=True)
 
         if _last_thumb:
             if thumb_dict.get("center", 0):
@@ -1962,7 +1970,7 @@ def video_screen_static(layout, info):
     if show_thumb:
         _last_thumb = get_artwork(info['VideoPlayer.Cover'],
                                   thumb_dict["width"], thumb_dict["height"],
-                                  use_defaults=1)
+                                  use_defaults=True)
         if _last_thumb:
             if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
