@@ -888,7 +888,7 @@ def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
     artwork = get_artwork(image_path,
                           field["width"], field["height"],
                           use_defaults=True)
-    if _last_thumb:
+    if artwork:
         paste_artwork(image, artwork, field)
 
     # Return string required for all callbacks
