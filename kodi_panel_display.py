@@ -1330,6 +1330,66 @@ def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
     return cover
 
 
+
+# Paste retrieve artwork into the Pillow Image being rendered,
+# positioning it based upon the based dictionary (from either a
+# layout's "thumb" entry or one entry from its fields array) and the
+# now-resized artwork.
+#
+# Some of the expected or possible keys within the dictionary are:
+#
+#  posx       Horizontal position for artwork's upper-left corner
+#  posy       Vertical position for artwork's upper-left corner
+#  width      Expected pixel width of artwork
+#  height     Expected pixel height of artwork
+#  size       Pixel width and height if artwork is square
+#  center     Boolean indicating art should be centered on-screen
+#  center_sm  Boolean indicating that art should be centered
+#               at the position that it would have been located
+#               if it was full-size
+#
+# Note that the caller is responsible for handling any display_if or
+# display_ifnot conditional.  Those are NOT examined here.
+#
+#
+# Arguments:
+#
+#   image       Image object representing screen
+#   artwork     Image object for the artwork
+#   field_dict  Dictionary from layout
+#
+def paste_artwork(image, artwork, field_dict):
+    if "size" in field_dict:
+        height = field_dict["size"]
+        width  = field_dict["size"]
+    else:
+        height = field_dict["height"]
+        width  = field_dict["width"]
+
+    if field_dict.get("center", 0):
+        image.paste(artwork,
+                    (int((_frame_size[0] - artwork.width) / 2),
+                     int((_frame_size[1] - artwork.height) / 2)))
+    elif (field_dict.get("center_sm", 0) and
+          (artwork.width < width or
+           artwork.height < height)):
+        new_x = field_dict["posx"]
+        new_y = field_dict["posy"]
+        if artwork.width < width:
+            new_x += int((width / 2) -
+                         (artwork.width / 2))
+        if artwork.height < height:
+            new_y += int((height / 2) -
+                         (artwork.height / 2))
+            image.paste(artwork, (new_x, new_y))
+    else:
+        image.paste(
+            artwork,
+            (field_dict["posx"],
+             field_dict["posy"]))
+
+
+
 # Provide a mechanism for interpolation of format strings containing
 # InfoLabel fields denoted with curly braces.  For example, providing
 # substution for a string such as
@@ -1736,27 +1796,7 @@ def audio_screen_static(layout, info):
                                       use_defaults=True)
 
         if _last_thumb:
-            if thumb_dict.get("center", 0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0] - _last_thumb.width) / 2),
-                             int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (thumb_dict.get("center_sm", 0) and
-                  (_last_thumb.width < thumb_dict["size"] or
-                   _last_thumb.height < thumb_dict["size"])):
-                new_x = thumb_dict["posx"]
-                new_y = thumb_dict["posy"]
-                if _last_thumb.width < thumb_dict["size"]:
-                    new_x += int((thumb_dict["size"] /
-                                  2) - (_last_thumb.width / 2))
-                if _last_thumb.height < thumb_dict["size"]:
-                    new_y += int((thumb_dict["size"] /
-                                  2) - (_last_thumb.height / 2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(
-                    _last_thumb,
-                    (thumb_dict["posx"],
-                     thumb_dict["posy"]))
+            paste_artwork(image, _last_thumb, thumb_dict)
     else:
         _last_thumb = None
 
@@ -1972,27 +2012,7 @@ def video_screen_static(layout, info):
                                   thumb_dict["width"], thumb_dict["height"],
                                   use_defaults=True)
         if _last_thumb:
-            if thumb_dict.get("center", 0):
-                image.paste(_last_thumb,
-                            (int((_frame_size[0] - _last_thumb.width) / 2),
-                             int((_frame_size[1] - _last_thumb.height) / 2)))
-            elif (thumb_dict.get("center_sm", 0) and
-                  (_last_thumb.width < thumb_dict["width"] or
-                   _last_thumb.height < thumb_dict["height"])):
-                new_x = thumb_dict["posx"]
-                new_y = thumb_dict["posy"]
-                if _last_thumb.width < thumb_dict["width"]:
-                    new_x += int((thumb_dict["width"] / 2) -
-                                 (_last_thumb.width / 2))
-                if _last_thumb.height < thumb_dict["height"]:
-                    new_y += int((thumb_dict["height"] / 2) -
-                                 (_last_thumb.height / 2))
-                image.paste(_last_thumb, (new_x, new_y))
-            else:
-                image.paste(
-                    _last_thumb,
-                    (thumb_dict["posx"],
-                     thumb_dict["posy"]))
+            paste_artwork(image, _last_thumb, thumb_dict)
     else:
         _last_thumb = None
 
