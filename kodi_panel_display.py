@@ -247,6 +247,10 @@ _default_audio_thumb = config.settings.get("DEFAULT_AUDIO", "images/music_icon2_
 _default_video_thumb = config.settings.get("DEFAULT_VIDEO", "images/video_icon2.png")
 _default_airplay_thumb = config.settings.get("DEFAULT_AIRPLAY", "images/airplay_thumb.png")
 
+# RegEx for recognizing AirPlay images (compiled once)
+_airtunes_re = re.compile(
+    r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
+
 
 #
 # Debug flags
@@ -1129,10 +1133,6 @@ def progress_bar(draw,
 # the previously-fetched AirPlay cover (as prev_image).
 #
 
-# RegEx for recognizing AirPlay images (compiled once)
-_airtunes_re = re.compile(
-    r'^special:\/\/temp\/(airtunes_album_thumb\.(png|jpg))')
-
 def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
     global _last_image_time, _image_default
     image_url = None
@@ -1527,7 +1527,8 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
 #  dynamic      Boolean flag, set for dynamic screen updates
 #
 #
-def draw_fields(image, draw, layout, info, screen_mode=None, layout_name="", dynamic=False):
+def draw_fields(image, draw, layout, info,
+                screen_mode=None, layout_name="", dynamic=False):
 
     # Pull out the layout's array of fields
     field_list = layout.get("fields", [])
