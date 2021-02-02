@@ -1253,7 +1253,7 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 #
 
 @lru_cache(maxsize=16)
-def get_artwork(cover_path, thumb_width, thumb_height, video=0, use_defaults=0):
+def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=0):
     image_url = None
     image_set = False
     resize_needed = False
@@ -1261,9 +1261,9 @@ def get_artwork(cover_path, thumb_width, thumb_height, video=0, use_defaults=0):
     cover = None  # used for retrieved artwork, original size
 
     if (cover_path != '' and
-        cover_path != 'DefaultVideoCover.png' and
-        cover_path != 'DefaultAlbumCover.png' and
-            not _airtunes_re.match(cover_path)):
+        (not cover_path.startswith('DefaultVideoCover')) and
+        (not cover_path.startswith('DefaultAlbumCover')) and
+        (not _airtunes_re.match(cover_path))):
 
         image_path = cover_path
         if DEBUG_ART: print("image_path : ", image_path) # debug info
@@ -1304,7 +1304,8 @@ def get_artwork(cover_path, thumb_width, thumb_height, video=0, use_defaults=0):
     # use default images if we haven't retrieved anything
     if (not image_set and use_defaults):
         default_path = ""
-        if video:
+
+        if cover_path.startswith('DefaultVideoCover'):
             default_path = _default_video_thumb
         else:
             default_path = _default_audio_thumb
@@ -1961,7 +1962,7 @@ def video_screen_static(layout, info):
     if show_thumb:
         _last_thumb = get_artwork(info['VideoPlayer.Cover'],
                                   thumb_dict["width"], thumb_dict["height"],
-                                  video=1, use_defaults=1)
+                                  use_defaults=1)
         if _last_thumb:
             if thumb_dict.get("center", 0):
                 image.paste(_last_thumb,
