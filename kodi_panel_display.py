@@ -1462,7 +1462,7 @@ def paste_artwork(image, artwork, field_dict):
         if artwork.height < height:
             new_y += int((height / 2) -
                          (artwork.height / 2))
-            image.paste(artwork, (new_x, new_y))
+        image.paste(artwork, (new_x, new_y))
     else:
         image.paste(
             artwork,
