@@ -342,6 +342,8 @@ AUDIO_ENABLED     = config.settings.get("ENABLE_AUDIO_SCREENS", False)
 VIDEO_ENABLED     = config.settings.get("ENABLE_VIDEO_SCREENS", False)
 SLIDESHOW_ENABLED = config.settings.get("ENABLE_SLIDESHOW_SCREENS", False)
 
+# Status screen is handled differently
+STATUS_ENABLED    = config.settings.get("ENABLE_STATUS_SCREEN", True)
 # Should the status screen always be shown when idle?
 IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 
@@ -559,11 +561,11 @@ elif SLIDESHOW_ENABLED:
     SLIDESHOW_ENABLED = 0
 
 # Finally, patch up the status screen layout
-if ("STATUS_LAYOUT" in config.settings.keys()):
+if (STATUS_ENABLED and "STATUS_LAYOUT" in config.settings.keys()):
     STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 else:
-    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Exiting.")
-    sys.exit(1)
+    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Disabling status screen.")
+    STATUS_ENABLED = 0
 
 
 # GPIO assignments and display options
@@ -894,7 +896,7 @@ def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
     if image_path == "": return
 
     # The following is somewhat redundate with code that
-    # exists in video_screen_static().    
+    # exists in video_screen_static().
     artwork = None
     artwork = get_artwork(image_path,
                           field["width"], field["height"],
@@ -2484,7 +2486,9 @@ def update_display(touched=False):
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
-        if _screen_active or IDLE_STATUS_ENABLED:
+        if ((_screen_active or IDLE_STATUS_ENABLED) and
+            STATUS_ENABLED):
+
             # Idle status screen
             if len(response['result']) == 0:
                 summary = "Idle"
