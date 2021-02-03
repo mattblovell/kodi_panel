@@ -2613,7 +2613,8 @@ def update_display(touched=False):
                 track_info["MusicPlayer.Cover"] == "") or
                 (# AirPlay starts out with only semi-accurate information
                 track_info["Player.Filenameandpath"].startswith("pipe://") and
-                track_info["MusicPlayer.Title"] == "AirPlay")):
+                (track_info["MusicPlayer.Title"] == "AirPlay" or
+                 track_info["MusicPlayer.Title"] == ""))):
                 pass
             else:
                 audio_screens(image, draw, track_info)
