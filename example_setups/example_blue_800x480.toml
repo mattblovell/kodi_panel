@@ -552,9 +552,15 @@ SLAYOUT_INITIAL = "DEFAULT"
   posx = 3
   posy = 4
   size = 405
+
   # If artwork is smaller than the above size, should it be centered
   # where the fullsize artwork would have been placed?
   center_sm = 1
+
+  # Normally, artwork only gets reduced in size.  Setting this flag
+  # enables upsizing to occur.  Note that the result may be blocky or
+  # blurry in appearance.
+  # enlarge = 1
 
 # Note that one can optionally specify a display_if or display_ifnot
 # expression for the progress bar (prog)
