@@ -1422,7 +1422,7 @@ def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False, enlar
 
             new_width  = int( image.size[0] * ratio )
             new_height = int( image.size[1] * ratio )
-            cover = cover.resize((new_width, new_height), PIL.Image.ANTIALIAS)
+            cover = cover.resize((new_width, new_height))
 
         else:
             # reduce while maintaining aspect ratio, which should
@@ -1816,12 +1816,27 @@ def status_screen(image, draw, kodi_status):
 
     # Kodi logo, if desired
     if "thumb" in layout.keys():
+        thumb_dict = layout["thumb"]
         kodi_icon = Image.open(_kodi_thumb)
-        kodi_icon.thumbnail((layout["thumb"]["size"], layout["thumb"]["size"]))
+
+        if (thumb_dict.get("enlarge", False) and
+            (kodi_icon.size[0] < thumb_dict["size"] or
+             kodi_icon.size[1] < thumb_dict["size"])):
+            width_enlarge  = thumb_dict["size"] / float(kodi_icon.size[0])
+            height_enlarge = thumb_dict["size"] / float(kodi_icon.size[1])
+            ratio = min( width_enlarge, height_enlarge )
+
+            new_width  = int( kodi_icon.size[0] * ratio )
+            new_height = int( kodi_icon.size[1] * ratio )
+            kodi_icon = kodi_icon.resize((new_width, new_height))
+
+        else:
+            kodi_icon.thumbnail((thumb_dict["size"], thumb_dict["size"]))
+
         image.paste(
             kodi_icon,
-            (layout["thumb"]["posx"],
-             layout["thumb"]["posy"]))
+            (thumb_dict["posx"],
+             thumb_dict["posy"]))
 
     # go through all layout fields, if any
     if "fields" not in layout.keys():
