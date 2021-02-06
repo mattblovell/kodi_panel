@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.40"
+PANEL_VER = "v1.41"
 
 #
 # Audio/Video codec lookup table
@@ -868,7 +868,8 @@ def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
     else:
         artwork = get_artwork(image_path,
                               field["size"], field["size"],
-                              use_defaults=True)
+                              use_defaults=True,
+                              enlarge=field.get("enlarge", False))
 
     if artwork:
         paste_artwork(image, artwork, field)
@@ -900,7 +901,8 @@ def element_generic_artwork(image, draw, info, field, screen_mode, layout_name):
     artwork = None
     artwork = get_artwork(image_path,
                           field["width"], field["height"],
-                          use_defaults=True)
+                          use_defaults=True,
+                          enlarge=field.get("enlarge", False))
     if artwork:
         paste_artwork(image, artwork, field)
 
@@ -1339,12 +1341,14 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 #  cover_path    string from Kodi InfoLabel providing path to artwork
 #  thumb_width   desired pixel width for artwork
 #  thumb_height  desired pixel height for artwork
-#  use_defaults  flag indicating whether algorithm should fall
+#  use_defaults  boolean indicating whether algorithm should fall
 #                 back to default images if unsuccessful at
 #                 retrieving artwork
+#  enlarge       boolean indicating if artwork should be enlarged
+#                 if smaller than the specified width and height
 #
 @lru_cache(maxsize=18)
-def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
+def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False, enlarge=False):
     image_url = None
     image_set = False
     resize_needed = False
@@ -1406,9 +1410,24 @@ def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
         resize_needed = True
 
     if (image_set and resize_needed):
-        # resize while maintaining aspect ratio, which should
-        # be precisely what thumbnail accomplishes
-        cover.thumbnail((thumb_width, thumb_height))
+
+        if (enlarge and (image.size[0] < thumb_width or
+                         image.size[1] < thumb_height)):
+
+            # Figure out which dimension is the constraint
+            # for maintenance of the aspect ratio
+            width_enlarge  = thumb_width / float(image.size[0])
+            height_enlarge = thumb_height / float(image.size[1])
+            ratio = min( width_enlarge, height_enlarge )
+
+            new_width  = int( image.size[0] * ratio )
+            new_height = int( image.size[1] * ratio )
+            cover = cover.resize((new_width, new_height), PIL.Image.ANTIALIAS)
+
+        else:
+            # reduce while maintaining aspect ratio, which should
+            # be precisely what thumbnail accomplishes
+            cover.thumbnail((thumb_width, thumb_height))
 
     return cover
 
@@ -1426,7 +1445,15 @@ def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False):
 #  width      Expected pixel width of artwork
 #  height     Expected pixel height of artwork
 #  size       Pixel width and height if artwork is square
-#  center     Boolean indicating art should be centered on-screen
+#
+#  center     Boolean indicating art should be centered on-screen,
+#               rather than use posx, posy for position.
+#
+#  enlarge    Boolean indicating art can be enlarged as part
+#               of get_artwork() processing.  If this flag
+#               is set, then there is point to also specifying
+#               center_sm.
+#
 #  center_sm  Boolean indicating that art should be centered
 #               at the position that it would have been located
 #               if it was full-size
@@ -1453,6 +1480,7 @@ def paste_artwork(image, artwork, field_dict):
         image.paste(artwork,
                     (int((_frame_size[0] - artwork.width) / 2),
                      int((_frame_size[1] - artwork.height) / 2)))
+
     elif (field_dict.get("center_sm", 0) and
           (artwork.width < width or
            artwork.height < height)):
@@ -1877,7 +1905,9 @@ def audio_screen_static(layout, info):
         else:
             _last_thumb = get_artwork(info['MusicPlayer.Cover'],
                                       thumb_dict["size"], thumb_dict["size"],
-                                      use_defaults=True)
+                                      use_defaults=True,
+                                      enlarge=thumb_dict.get("enlarge", False))
+
 
         if _last_thumb:
             paste_artwork(image, _last_thumb, thumb_dict)
@@ -2094,7 +2124,8 @@ def video_screen_static(layout, info):
     if show_thumb:
         _last_thumb = get_artwork(info['VideoPlayer.Cover'],
                                   thumb_dict["width"], thumb_dict["height"],
-                                  use_defaults=True)
+                                  use_defaults=True,
+                                  enlarge=thumb_dict.get("enlarge", False))
         if _last_thumb:
             paste_artwork(image, _last_thumb, thumb_dict)
     else:
