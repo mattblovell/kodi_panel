@@ -1593,7 +1593,6 @@ def format_InfoLabels(orig_str, kodi_info, screen_mode=None, layout_name=""):
 # displayed and False if the element should be skipped.
 #
 def check_display_expr(field_dict, info, screen_mode, layout_name):
-    show_element = False
     func_name = None
     test_str = None
     check_equal = True
@@ -2820,9 +2819,8 @@ def main(device_handle):
                 continue
             except BaseException:
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
+                track = traceback.format_exc()
+                print(track)
                 time.sleep(5)
                 continue
 
