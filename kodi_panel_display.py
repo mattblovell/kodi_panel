@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.41"
+PANEL_VER = "v1.42"
 
 #
 # Audio/Video codec lookup table
@@ -1217,7 +1217,7 @@ def progress_bar(draw,
 # the previously-fetched AirPlay cover (as prev_image).
 #
 
-def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
+def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height, enlarge=False):
     global _last_image_time, _image_default
     image_url = None
     image_set = False
@@ -1307,9 +1307,24 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height):
 
     # is resizing needed?
     if (image_set and resize_needed):
-        # resize while maintaining aspect ratio, which should
-        # be precisely what thumbnail accomplishes
-        cover.thumbnail((thumb_width, thumb_height))
+        if (enlarge and (image.size[0] < thumb_width or
+                         image.size[1] < thumb_height)):
+
+            # Figure out which dimension is the constraint
+            # for maintenance of the aspect ratio
+            width_enlarge  = thumb_width / float(image.size[0])
+            height_enlarge = thumb_height / float(image.size[1])
+            ratio = min( width_enlarge, height_enlarge )
+
+            new_width  = int( image.size[0] * ratio )
+            new_height = int( image.size[1] * ratio )
+            cover = cover.resize((new_width, new_height))
+
+        else:
+            # reduce while maintaining aspect ratio, which should
+            # be precisely what thumbnail accomplishes
+            cover.thumbnail((thumb_width, thumb_height))
+
         prev_image = cover
 
     if image_set:
