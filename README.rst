@@ -22,7 +22,7 @@ of the XBMC Foundation.  Fonts are redestributed under either the
 SIL Open Font License or Apache 2.0; see 
 `fonts/sources.txt <https://github.com/mattblovell/kodi_panel/blob/master/fonts/sources.txt>`_ 
 for further information.  Album and movie cover art (in photos or in emulator
-screenshots) is *not* a part of kodi_display and is shown under the Fair Use doctrine.
+screenshots) is *not* a part of kodi_panel and is shown under the Fair Use doctrine.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
