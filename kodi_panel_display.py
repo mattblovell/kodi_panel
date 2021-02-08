@@ -1132,6 +1132,13 @@ def render_text_wrap(pil_draw, xy, text, max_width, max_lines, fill, font):
 # Originally, this function was passed all of the location and
 # dimensions as separate arguments.  That was subsequently changed,
 # but see the remark below regarding use_long_len.
+#
+# If drawing a circle at the progress point, some care may be needed
+# with regarding to the progress bar's thickness.  The circle is
+# centered the half-way point of that thickness.  For fairly narrow
+# bars, this looks far better if the tickness is an even number of
+# pixels.  Similar caution is needed for the circle's radius.
+#
 def progress_bar(draw,
                  field_dict,
                  progress,
