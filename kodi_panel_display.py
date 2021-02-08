@@ -864,7 +864,8 @@ def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
     artwork = None
     if _airtunes_re.match(image_path):
         artwork = get_airplay_art(image_path, None,
-                                  field["size"], field["size"])
+                                  field["size"], field["size"],
+                                  enlarge=field.get("enlarge", False))
     else:
         artwork = get_artwork(image_path,
                               field["size"], field["size"],
@@ -1931,7 +1932,8 @@ def audio_screen_static(layout, info):
 
         if _airtunes_re.match(info['MusicPlayer.Cover']):
             _last_thumb = get_airplay_art(info['MusicPlayer.Cover'], _last_thumb,
-                                          thumb_dict["size"], thumb_dict["size"])
+                                          thumb_dict["size"], thumb_dict["size"],
+                                          enlarge=thumb_dict.get("enlarge", False))
         else:
             _last_thumb = get_artwork(info['MusicPlayer.Cover'],
                                       thumb_dict["size"], thumb_dict["size"],
