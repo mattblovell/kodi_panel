@@ -145,8 +145,8 @@ Python modules are needed:
 
 
 The ``example_setup_320x240.toml`` file should be copied to ``setup.toml``
-and edited as appropriate for your needs.  Additional example files may
-get populated at other display resolutions.  If kodi_panel is to run on
+and edited as appropriate for your needs.  Additional example files at other
+display resolutions are also available.  If kodi_panel is to run on
 the same SBC as hosting the display, the ``BASE_URL`` within ``setup.toml``
 can be left using ``localhost``.  Otherwise, set it as needed.
 
@@ -295,8 +295,8 @@ as a consequence of the Entware installation.
 7. In the ``kodi_panel/`` directory, copy and rename
    ``example_setup_320x240.toml`` to ``setup.toml``.  Open the file
    for editing, checking that at least ``BASE_URL`` and display width
-   and height are correct.  (Additional example files at other
-   resolutions will hopefully get populated.)
+   and height are correct.  (A few example setup files at other
+   resolutions are also available.)
      
 Assuming the above is all successful, you should now be able to
 run any of the demonstrations from luma.examples.  If Kodi is up
