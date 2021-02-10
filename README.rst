@@ -486,7 +486,7 @@ HDMI IPS panel.  Getting the 3.5-inch ILI9486 display working required extending
 luma.lcd, and its authors welcomed the addition.  I got the HDMI display working
 thanks to a few additions to luma.core's framebuffer support.
 
-So, here's a photo showing the two IPS panels, both from Waveshare.  The 3.5-inch
+Here's a photo showing the two IPS panels, both from Waveshare.  The 3.5-inch
 display is on the left, and the 4-inch display is on the right.
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/dualing_displays.jpg
