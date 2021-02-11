@@ -2845,7 +2845,6 @@ def main(device_handle):
                 print(datetime.now(), "Communication disrupted!")
                 _kodi_connected = False
                 _kodi_playing = False
-                if _lock.locked():
                 _screen_press = False
                 if _lock.locked():  _lock.release()
                 break
