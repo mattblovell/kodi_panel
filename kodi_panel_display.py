@@ -2846,7 +2846,8 @@ def main(device_handle):
                 _kodi_connected = False
                 _kodi_playing = False
                 if _lock.locked():
-                    _lock.release()
+                _screen_press = False
+                if _lock.locked():  _lock.release()
                 break
             except (SystemExit, KeyboardInterrupt):
                 shutdown()
@@ -2854,6 +2855,11 @@ def main(device_handle):
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
                 track = traceback.format_exc()
                 print(track)
+                # Releasing the lock isn't necessary if we're exiting,
+                # but it is useful to have in place should this
+                # exception handling be modified.  Forgetting about
+                # the lock can too easily just lead to a hang.
+                if _lock.locked():  _lock.release()
                 sys.exit(1)
 
             # If connecting to Kodi over an actual network connection,
