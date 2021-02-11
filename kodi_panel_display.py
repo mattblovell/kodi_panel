@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.42"
+PANEL_VER = "v1.43"
 
 #
 # Audio/Video codec lookup table
@@ -2862,8 +2862,8 @@ def main(device_handle):
             # takes and then sleep whatever remains of that second.
 
             elapsed = time.time() - start_time
-            if elapsed < 0.999:
-                time.sleep(0.999 - elapsed)
+            if elapsed < 0.985:
+                time.sleep(0.985 - elapsed)
             else:
                 time.sleep(1.0)
 
