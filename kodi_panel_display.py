@@ -2854,7 +2854,7 @@ def main(device_handle):
                 print(datetime.now(), "Unexpected error: ", sys.exc_info()[0])
                 track = traceback.format_exc()
                 print(track)
-                pass
+                sys.exit(1)
 
             # If connecting to Kodi over an actual network connection,
             # update times can vary.  Rather than sleeping for a fixed
