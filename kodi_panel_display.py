@@ -334,6 +334,25 @@ if ("SLIDESHOW_LABELS" in config.settings.keys() and
         type(config.settings["SLIDESHOW_LABELS"]) == list):
     SLIDESHOW_LABELS += config.settings["SLIDESHOW_LABELS"]
 
+#
+# Also check for any additional InfoBooleans to retrieve
+#
+
+if ("STATUS_BOOLEANS" in config.settings.keys() and
+        type(config.settings["STATUS_BOOLEANS"]) == list):
+    STATUS_BOOLEANS += config.settings["STATUS_BOOLEANS"]
+
+if ("AUDIO_BOOLEANS" in config.settings.keys() and
+        type(config.settings["AUDIO_BOOLEANS"]) == list):
+    AUDIO_BOOLEANS += config.settings["AUDIO_BOOLEANS"]
+
+if ("VIDEO_BOOLEANS" in config.settings.keys() and
+        type(config.settings["VIDEO_BOOLEANS"]) == list):
+    VIDEO_BOOLEANS += config.settings["VIDEO_BOOLEANS"]
+
+if ("SLIDESHOW_BOOLEANS" in config.settings.keys() and
+        type(config.settings["SLIDESHOW_BOOLEANS"]) == list):
+    SLIDESHOW_BOOLEANS += config.settings["SLIDESHOW_BOOLEANS"]
 
 #
 # Permit codec_name table to be augmented
