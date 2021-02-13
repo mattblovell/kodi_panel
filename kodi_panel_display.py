@@ -192,6 +192,14 @@ SLIDESHOW_LABELS = [
     "Slideshow.FocalLength",
 ]
 
+
+# Kodi InfoBooleans to retrieve
+STATUS_BOOLEANS    = ['System.ScreenSaverActive']
+AUDIO_BOOLEANS     = ['Player.Paused']
+VIDEO_BOOLEANS     = ['Player.Paused']
+SLIDESHOW_BOOLEANS = ['Slideshow.IsPaused']
+
+
 # ----------------------------------------------------------------------------
 
 #
@@ -1618,7 +1626,7 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
     # Permit func_name to either be an InfoLabel or a string
     # callback function
     if func_name in info:
-        result_str = info[func_name]
+        result_str = str(info[func_name])
     elif func_name in STRING_CB:
         result_str = STRING_CB[func_name](
             info,              # Kodo InfoLabel response
@@ -1632,10 +1640,20 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
     if DEBUG_FIELDS:
         print("  display_expr: result of '" + func_name + "' was '" + result_str + "'")
 
-    if check_equal:
-        return (result_str == test_str)
+    # Perform case-insensitive comparisons if testing against the
+    # strings "true" and "false", so as to try and minimize the pain
+    # of TOML versus Python differences.
+
+    if test_str.lower() == "true" or test_str.lower() == "false":
+        if check_equal:
+            return (result_str.lower() == test_str.lower())
+        else:
+            return (result_str.lower() != test_str.lower())
     else:
-        return (result_str != test_str)
+        if check_equal:
+            return (result_str == test_str)
+        else:
+            return (result_str != test_str)
 
 
 # Render all layout fields, stepping through the fields array from the
@@ -2658,19 +2676,23 @@ def update_display(touched=False):
                 text_wrap.cache_clear()
 
         # Retrieve all music InfoLabels in a single JSON-RPC call.
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": AUDIO_LABELS},
-            "id": "4a",
-        }
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": AUDIO_LABELS},
+                     "id": "4a" },
+                   { "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoBooleans",
+                     "params": {"booleans": AUDIO_BOOLEANS},
+                     "id": "4ai" },
+                   ]
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            track_info = response['result']
+            track_info = response[0]['result']
+            track_info.update(response[1]['result'])
 
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a
