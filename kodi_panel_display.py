@@ -196,6 +196,8 @@ SLIDESHOW_LABELS = [
 #
 # Kodi InfoBooleans to retrieve
 #
+#   https://kodi.wiki/view/List_of_boolean_conditions
+#
 #   The results get included in the *same* dictionary that carries the
 #   InfoLabels above.  This is possible since all names appear to be
 #   distinct.

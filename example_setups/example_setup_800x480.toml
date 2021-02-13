@@ -139,6 +139,8 @@ ENABLE_SLIDESHOW_SCREENS = false
 #
 # With v1.44, InfoBooleans can also be retrieved
 #
+#   https://kodi.wiki/view/List_of_boolean_conditions
+#
 # STATUS_BOOLEANS = []
 # AUDIO_BOOLEANS = []
 # VIDEO_BOOLEANS = []
