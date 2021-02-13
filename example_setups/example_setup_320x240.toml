@@ -118,6 +118,16 @@ ENABLE_SLIDESHOW_SCREENS = false
 # List of additional InfoLabels to retrieve for slideshow
 # SLIDESHOW_LABELS = []
 
+#
+# With v1.44, InfoBooleans can also be retrieved
+#
+#   https://kodi.wiki/view/List_of_boolean_conditions
+#
+# STATUS_BOOLEANS = []
+# AUDIO_BOOLEANS = []
+# VIDEO_BOOLEANS = []
+# SLIDESHOW_BOOLEANS = []
+
 
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
@@ -150,8 +160,8 @@ ALAYOUT_INITIAL = "A_DEFAULT"
 #   following tidbit ...
 #
 #   Should the layout for video screens be auto-selected (within the
-#   video_screens() function) based upon which InfoLabel fields are
-#   populated?  If so, then set VLAYOUT_AUTOSELECT to true.
+#   video_screens() function) based upon content of InfoLabel fields
+#   or InfoBooleans?  If so, then set VLAYOUT_AUTOSELECT to true.
 #
 #   If that flag is set to true, then VLAYOUT_NAMES should be
 #   populated with entries that match the heuristic if-then that is
@@ -321,24 +331,25 @@ SLAYOUT_INITIAL = "DEFAULT"
 #   customization does require a bit of Python programming.
 #
 #   Note that the available InfoLabels can be augmented via use of
-#   the AUDIO_LABELS list (see earlier in this file).
+#   the AUDIO_LABELS list (see earlier in this file).  The same
+#   is true for InfoBooleans.
 #
 #   All entries in the "fields" array" MUST have a name (either
 #   specified explicitly or inherited from a shared element
 #   reference).  The 'name' key corresponds to ONE of the following:
 #
-#     - An exact match for one of the InfoLabels retrieved from Kodi.
-#       The entry is only rendered if the corresponding InfoLabel is
-#       non-empty.
+#     - An exact match for one of the InfoLabels or Booleans retrieved
+#       from Kodi.  The entry is only rendered if the corresponding
+#       InfoLabel is non-empty.
 #
 #     - An exact match for one of the callback functions named in the
 #       ELEMENT_CB table or the STRING_CB table.  That match triggers
 #       execution of the corresponding callback function.
 #
-#     - An arbitrary string (not matching an InfoLabel or any callback
-#       function names), provided that the entry ALSO specifies a
-#       'format_str' key.  The interpolated format_str always gets
-#       rendered.
+#     - An arbitrary string (not matching an InfoLabel or Boolean or
+#       any callback function names), provided that the entry ALSO
+#       specifies a 'format_str' key.  The interpolated format_str
+#       always gets rendered.
 #
 #   The execution path followed by any of the above naming choices is
 #   typically expected to yield a text string to display.  Remaining
@@ -407,9 +418,10 @@ SLAYOUT_INITIAL = "DEFAULT"
 #               resulting from "evaluating" the InfoLabel or callback
 #               function.
 #
-#               An example:
+#               Examples:
 #
 #                 display_if = [ "MusicPlayer.TrackNumber", "02" ]
+#                 display_if = [ "Player.Paused", "true" ]
 #
 #
 #   Internal callbacks are used for the 'codec' and 'artist' text
@@ -467,7 +479,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 
 # Note that one can optionally specify a display_if or display_ifnot
 # expression for the progress bar (prog)
-[A_LAYOUT.A_DEFAULT.prog] 
+[A_LAYOUT.A_DEFAULT.prog]
 posx   = 150     # upper-left corner x position
 posy   = 7       # upper-left corner y position
 height = 8       # pixel height
@@ -730,4 +742,3 @@ posx = 5
 posy = 210
 font = "font_sm"
 fill = "white"
-

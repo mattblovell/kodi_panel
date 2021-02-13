@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.43"
+PANEL_VER = "v1.44dev"
 
 #
 # Audio/Video codec lookup table
@@ -192,6 +192,26 @@ SLIDESHOW_LABELS = [
     "Slideshow.FocalLength",
 ]
 
+
+#
+# Kodi InfoBooleans to retrieve
+#
+#   https://kodi.wiki/view/List_of_boolean_conditions
+#
+#   The results get included in the *same* dictionary that carries the
+#   InfoLabels above.  This is possible since all names appear to be
+#   distinct.
+#
+#   If there is ever a name collision between an InfoLabel and an
+#   InfoBoolean, the current implementation will effectively drop the
+#   Label, replacing it with the Boolean.
+#
+STATUS_BOOLEANS    = ['System.ScreenSaverActive']
+AUDIO_BOOLEANS     = ['Player.Paused']
+VIDEO_BOOLEANS     = ['Player.Paused']
+SLIDESHOW_BOOLEANS = []
+
+
 # ----------------------------------------------------------------------------
 
 #
@@ -234,12 +254,12 @@ _image_default = False
 _static_image = None
 _static_video = False  # set True by video_screens(), False by audio_screens()
 
-_last_track_num = None
-_last_track_title = None
-_last_track_album = None
-_last_track_time = None
-_last_video_title = None
-_last_video_time = None
+_last_track_num     = None
+_last_track_title   = None
+_last_track_album   = None
+_last_track_time    = None
+_last_video_title   = None
+_last_video_time    = None
 _last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)
@@ -326,6 +346,25 @@ if ("SLIDESHOW_LABELS" in config.settings.keys() and
         type(config.settings["SLIDESHOW_LABELS"]) == list):
     SLIDESHOW_LABELS += config.settings["SLIDESHOW_LABELS"]
 
+#
+# Also check for any additional InfoBooleans to retrieve
+#
+
+if ("STATUS_BOOLEANS" in config.settings.keys() and
+        type(config.settings["STATUS_BOOLEANS"]) == list):
+    STATUS_BOOLEANS += config.settings["STATUS_BOOLEANS"]
+
+if ("AUDIO_BOOLEANS" in config.settings.keys() and
+        type(config.settings["AUDIO_BOOLEANS"]) == list):
+    AUDIO_BOOLEANS += config.settings["AUDIO_BOOLEANS"]
+
+if ("VIDEO_BOOLEANS" in config.settings.keys() and
+        type(config.settings["VIDEO_BOOLEANS"]) == list):
+    VIDEO_BOOLEANS += config.settings["VIDEO_BOOLEANS"]
+
+if ("SLIDESHOW_BOOLEANS" in config.settings.keys() and
+        type(config.settings["SLIDESHOW_BOOLEANS"]) == list):
+    SLIDESHOW_BOOLEANS += config.settings["SLIDESHOW_BOOLEANS"]
 
 #
 # Permit codec_name table to be augmented
@@ -346,6 +385,43 @@ SLIDESHOW_ENABLED = config.settings.get("ENABLE_SLIDESHOW_SCREENS", False)
 STATUS_ENABLED    = config.settings.get("ENABLE_STATUS_SCREEN", True)
 # Should the status screen always be shown when idle?
 IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
+
+
+# Current Screen Mode
+# -------------------
+#
+# Define an enumerated type (well, it's still Python, so a class)
+# representing whether the screen being drawn is for audio playback,
+# video playback, or is just a status screen.
+#
+# This state was added mainly to pass down to the element and string
+# callback functions, in case a callback gets used in layouts for
+# completely different media.
+#
+
+class ScreenMode(Enum):
+    STATUS = 0   # kodi_panel status/info screen
+    AUDIO  = 1   # audio playback is active
+    VIDEO  = 2   # video playback is active
+    SLIDE  = 3   # slideshow is active
+
+
+# Shared Elements
+# ---------------
+#
+# Provide a lookup table such that elements can be shared across
+# multiple layouts.  Thanks to @nico1080 for the suggestion.
+
+_SHARED_ELEMENT = {}
+_USE_SHARED = False
+
+if ("shared_element" in config.settings.keys() and
+        type(config.settings["shared_element"]) is dict):
+    _SHARED_ELEMENT = config.settings["shared_element"]
+
+if len(_SHARED_ELEMENT.keys()):
+    _USE_SHARED = True
+
 
 
 # Screen / Layout Enumeration
@@ -375,10 +451,14 @@ class LayoutEnum(Enum):
             index = 0
         return members[index]
 
-# Provide the same behavior across audio, video, and slideshow
-class ADisplay(LayoutEnum): pass
-class VDisplay(LayoutEnum): pass
-class SDisplay(LayoutEnum): pass
+# Provide the same behavior across audio, video, and slideshow.  With
+# the addition of InfoLabels, also permit the same flexibility for
+# status.
+
+class ADisplay(LayoutEnum): pass   # audio
+class VDisplay(LayoutEnum): pass   # video
+class SDisplay(LayoutEnum): pass   # slideshow
+class IDisplay(LayoutEnum): pass   # info / idle screen
 
 
 #
@@ -447,41 +527,31 @@ if SLIDESHOW_ENABLED:
         SLIDESHOW_ENABLED = 0
 
 
-
-# Current Screen Mode
-# -------------------
+# The status/info screen(s) is treated differently.  For historical
+# reasons, the setup file may define only a single layout.  So, if no
+# config variables exist declaring other status/info layout names,
+# don't emit any warning.
 #
-# Define an enumerated type (well, it's still Python, so a class)
-# representing whether the screen being drawn is for audio playback,
-# video playback, or is just a status screen.
-#
-# This state was added mainly to pass down to the element and string
-# callback functions, in case a callback gets used in layouts for
-# completely different media.
-#
+# Also, the variable naming for the status/info screens isn't quite
+# consistent due to the development history of this feature.
 
-class ScreenMode(Enum):
-    STATUS = 0   # kodi_panel status screen
-    AUDIO  = 1   # audio playback is active
-    VIDEO  = 2   # video playback is active
-    SLIDE  = 3   # slideshow is active
+if STATUS_ENABLED:
+    if ("STATUS_NAMES" in config.settings.keys() and
+            "STATUS_INITIAL" in config.settings.keys()):
+        # Populate enum based upon settings file
+        for index, value in enumerate(config.settings["STATUS_NAMES"]):
+            extend_enum(IDisplay, value, index)
 
+        # At startup, use the default layout mode specified in settings
+        info_dmode = IDisplay[config.settings["STATUS_INITIAL"]]
 
-# Shared Elements
-# ---------------
-#
-# Provide a lookup table such that elements can be shared across
-# multiple layouts.  Thanks to @nico1080 for the suggestion.
+        # Provide the same hook as for the other modes
+        STATUS_LAYOUT_AUTOSELECT = config.settings.get(
+            "STATUS_AUTOSELECT", False)
+    else:
+        info_dmode = None
+        STATUS_LAYOUT_AUTOSELECT = False
 
-_SHARED_ELEMENT = {}
-_USE_SHARED = False
-
-if ("shared_element" in config.settings.keys() and
-        type(config.settings["shared_element"]) is dict):
-    _SHARED_ELEMENT = config.settings["shared_element"]
-
-if len(_SHARED_ELEMENT.keys()):
-    _USE_SHARED = True
 
 
 # Screen Layouts
@@ -560,11 +630,11 @@ elif SLIDESHOW_ENABLED:
         "Cannot find any S_LAYOUT screen settings in setup file!  Disabling slideshow screens.")
     SLIDESHOW_ENABLED = 0
 
-# Finally, patch up the status screen layout
+# Finally, patch up the status/info screen layout
 if (STATUS_ENABLED and "STATUS_LAYOUT" in config.settings.keys()):
     STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 else:
-    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Disabling status screen.")
+    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Disabling status/info screen.")
     STATUS_ENABLED = 0
 
 
@@ -663,7 +733,8 @@ draw = ImageDraw.Draw(image)
 #   draw         ImageDraw object instance, tied to image
 #
 #   info         dictionary containing InfoLabels from JSON-RPC response,
-#                possibly augmented by calling function
+#                possibly augmented by calling function.  InfoBoolean
+#                results, if any, are also included in this dictionary
 #
 #   field        dictionary containing layout information, originating
 #                from the setup.toml file
@@ -688,7 +759,8 @@ draw = ImageDraw.Draw(image)
 # table only need to accept 3 arguments:
 #
 #   info         dictionary containing InfoLabels from JSON-RPC
-#                response (possibly augmented by calling function)
+#                response, possibly augmented by calling function.
+#                InfoBoolean results, if any, are also included.
 #
 #   screen_mode  instance of ScreenMode enumerated type, specifying
 #                whether screen is STATUS, AUDIO, or VIDEO
@@ -1618,7 +1690,7 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
     # Permit func_name to either be an InfoLabel or a string
     # callback function
     if func_name in info:
-        result_str = info[func_name]
+        result_str = str(info[func_name])
     elif func_name in STRING_CB:
         result_str = STRING_CB[func_name](
             info,              # Kodo InfoLabel response
@@ -1632,10 +1704,20 @@ def check_display_expr(field_dict, info, screen_mode, layout_name):
     if DEBUG_FIELDS:
         print("  display_expr: result of '" + func_name + "' was '" + result_str + "'")
 
-    if check_equal:
-        return (result_str == test_str)
+    # Perform case-insensitive comparisons if testing against the
+    # strings "true" and "false", so as to try and minimize the pain
+    # of TOML versus Python differences.
+
+    if test_str.lower() == "true" or test_str.lower() == "false":
+        if check_equal:
+            return (result_str.lower() == test_str.lower())
+        else:
+            return (result_str.lower() != test_str.lower())
     else:
-        return (result_str != test_str)
+        if check_equal:
+            return (result_str == test_str)
+        else:
+            return (result_str != test_str)
 
 
 # Render all layout fields, stepping through the fields array from the
@@ -1795,8 +1877,16 @@ def draw_fields(image, draw, layout, info,
 
 
 
+# Callback hook for status/info selection
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.STATUS_SELECT_FUNC = my_status_selection
+#
+STATUS_SELECT_FUNC = None
 
-# Idle status screen (often shown upon a screen press)
+
+# Idle status/info screen (often shown upon a screen press)
 #
 #   First two arguments are Pillow Image and ImageDraw objects.
 #   Third argument is a dictionary loaded from Kodi with info fields.
@@ -1807,7 +1897,18 @@ def draw_fields(image, draw, layout, info,
 # manner.
 #
 def status_screen(image, draw, kodi_status):
-    layout = STATUS_LAYOUT
+    global info_dmode
+
+    # Permit Kodi InfoLabels and InfoBooleans to determine a status
+    # screen layout, if everything has been suitably defined.
+    if (STATUS_LAYOUT_AUTOSELECT and STATUS_SELECT_FUNC):
+        info_dmode = STATUS_SELECT_FUNC(kodi_status)
+        layout = STATUS_LAYOUT[info_dmode.name]
+    else:
+        # Historically, one could define just one layout for status,
+        # making the dictionary just a single level deep (no name)
+        info_dmode = None
+        layout = STATUS_LAYOUT
 
     # Draw any user-specified rectangle or load background
     # image for layout
@@ -2508,10 +2609,16 @@ def update_display(touched=False):
 
     # Ask Kodi whether anything is playing...
     #
-    #   JSON-RPC calls can only invoke one method per call.  Unless
-    #   we wish to make a "blind" InfoLabels call asking for all
-    #   interesting MusicPlayer and VideoPlayer fields, we must
-    #   make 2 distinct network calls.
+    #   I was originally under the impression that JSON-RPC calls can
+    #   only invoke one method per call.  Later, when implementing
+    #   support for InfoBoolean retrieval, I learned about batch
+    #   JSON-RPC.  That mechanism is used below to retrieve InfoLabels
+    #   and InfoBooleans together.
+    #
+    #   Nevertheless, at this point in the flow we do not yet know
+    #   Kodi's state.  Unless we wish to make a "blind" call and
+    #   ask for *every* InfoLabel and every InfoBoolean of possible
+    #   interest, we must make 2 distinct network calls.
     #
     #   Over wifi on an RPi3 on my home network, each call seems to
     #   take ~0.025 seconds.
@@ -2568,12 +2675,16 @@ def update_display(touched=False):
             elif response['result'][0]['type'] == 'audio':
                 summary = "Audio playing"
 
-            payload = {
-                "jsonrpc": "2.0",
-                "method": "XBMC.GetInfoLabels",
-                "params": {"labels": STATUS_LABELS},
-                "id": "4st",
-            }
+            payload = [{ "jsonrpc": "2.0",
+                         "method": "XBMC.GetInfoLabels",
+                         "params": {"labels": STATUS_LABELS},
+                         "id": "4st" }]
+            if len(STATUS_BOOLEANS):
+                payload += [{ "jsonrpc": "2.0",
+                              "method": "XBMC.GetInfoBooleans",
+                              "params": {"booleans": STATUS_BOOLEANS},
+                              "id": "4sti" }]
+
             status_resp = requests.post(
                 rpc_url,
                 data=json.dumps(payload),
@@ -2583,11 +2694,15 @@ def update_display(touched=False):
             # The try/except is in case Kodi communication gets
             # disrupted while showing the status screen!
             try:
-                status_resp['result']['summary'] = summary
+                status_dict = status_resp[0]['result']
+                if len(STATUS_BOOLEANS):
+                    status_dict.update(status_resp[1]['result'])
+
+                status_dict['summary'] = summary
             except:
                 pass
 
-            status_screen(image, draw, status_resp['result'])
+            status_screen(image, draw, status_dict)
             screen_on()
         else:
             screen_off()
@@ -2610,20 +2725,26 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        # Retrieve video InfoLabels in a single JSON-RPC call
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": VIDEO_LABELS},
-            "id": "4v",
-        }
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": VIDEO_LABELS},
+                     "id": "4v" }]
+        if len(VIDEO_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": VIDEO_BOOLEANS},
+                          "id": "4vi" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            video_info = response['result']
+            video_info = response[0]['result']
+            if len(VIDEO_BOOLEANS):
+                video_info.update(response[1]['result'])
 
             # There seems to be a hiccup in DLNA/UPnP playback in which a
             # change (or stopping playback) causes a moment when
@@ -2657,20 +2778,26 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        # Retrieve all music InfoLabels in a single JSON-RPC call.
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": AUDIO_LABELS},
-            "id": "4a",
-        }
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": AUDIO_LABELS},
+                     "id": "4a" }]
+        if len(AUDIO_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": AUDIO_BOOLEANS},
+                          "id": "4ai" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            track_info = response['result']
+            track_info = response[0]['result']
+            if len(AUDIO_BOOLEANS):
+                track_info.update(response[1]['result'])
 
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a
@@ -2709,19 +2836,27 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": SLIDESHOW_LABELS},
-            "id": "4s",
-        }
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": SLIDESHOW_LABELS},
+                     "id": "4s" }]
+        if len(SLIDESHOW_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": SLIDESHOW_BOOLEANS},
+                          "id": "4si" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            slide_info = response['result']
+            slide_info = response[0]['result']
+            if len(SLIDESHOW_BOOLEANS):
+                slide_info.update(response[1]['result'])
+
             slideshow_screens(image, draw, slide_info)
             screen_on()
 
