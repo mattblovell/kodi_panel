@@ -1897,7 +1897,8 @@ STATUS_SELECT_FUNC = None
 # manner.
 #
 def status_screen(image, draw, kodi_status):
-
+    global info_dmode
+    
     # Permit Kodi InfoLabels and InfoBooleans to determine a status
     # screen layout, if everything has been suitably defined.
     if (STATUS_LAYOUT_AUTOSELECT and STATUS_SELECT_FUNC):
