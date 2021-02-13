@@ -138,6 +138,15 @@ STATUS_LABELS = [
 # VIDEO_LABELS = []
 
 
+#
+# With v1.44, InfoBooleans can also be retrieved
+#
+# STATUS_BOOLEANS = []
+# AUDIO_BOOLEANS = []
+# VIDEO_BOOLEANS = []
+# SLIDESHOW_BOOLEANS = []
+
+
 # Paths to default thumbnails for audio and status screen.  These now
 # get resized, to whatever is specified for the audio screen used.
 KODI_THUMB      = "images/kodi_thumb.jpg"       # Kodi icon

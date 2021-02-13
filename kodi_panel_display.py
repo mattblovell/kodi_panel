@@ -252,12 +252,12 @@ _image_default = False
 _static_image = None
 _static_video = False  # set True by video_screens(), False by audio_screens()
 
-_last_track_num = None
-_last_track_title = None
-_last_track_album = None
-_last_track_time = None
-_last_video_title = None
-_last_video_time = None
+_last_track_num     = None
+_last_track_title   = None
+_last_track_album   = None
+_last_track_time    = None
+_last_video_title   = None
+_last_video_time    = None
 _last_video_episode = None
 
 # Thumbnail defaults (these now DO get resized as needed)

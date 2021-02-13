@@ -118,6 +118,14 @@ ENABLE_SLIDESHOW_SCREENS = false
 # List of additional InfoLabels to retrieve for slideshow
 # SLIDESHOW_LABELS = []
 
+#
+# With v1.44, InfoBooleans can also be retrieved
+#
+# STATUS_BOOLEANS = []
+# AUDIO_BOOLEANS = []
+# VIDEO_BOOLEANS = []
+# SLIDESHOW_BOOLEANS = []
+
 
 # Paths to default thumbnails.  These do NOT get resized, so they
 # should be created at the desired size.
