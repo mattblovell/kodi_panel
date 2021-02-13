@@ -547,7 +547,7 @@ if STATUS_ENABLED:
 
         # Provide the same hook as for the other modes
         STATUS_LAYOUT_AUTOSELECT = config.settings.get(
-            "STATUS_AUTOSELECT", False)    
+            "STATUS_AUTOSELECT", False)
     else:
         info_dmode = None
         STATUS_LAYOUT_AUTOSELECT = False
@@ -630,11 +630,11 @@ elif SLIDESHOW_ENABLED:
         "Cannot find any S_LAYOUT screen settings in setup file!  Disabling slideshow screens.")
     SLIDESHOW_ENABLED = 0
 
-# Finally, patch up the status screen layout
+# Finally, patch up the status/info screen layout
 if (STATUS_ENABLED and "STATUS_LAYOUT" in config.settings.keys()):
     STATUS_LAYOUT = fixup_layouts(config.settings["STATUS_LAYOUT"])
 else:
-    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Disabling status screen.")
+    warnings.warn("Cannot find any STATUS_LAYOUT screen settings in setup file!  Disabling status/info screen.")
     STATUS_ENABLED = 0
 
 
@@ -1877,8 +1877,16 @@ def draw_fields(image, draw, layout, info,
 
 
 
+# Callback hook for status/info selection
+#
+#   User script can override by assignment, e.g.
+#
+#     kodi_display_panel.STATUS_SELECT_FUNC = my_status_selection
+#
+STATUS_SELECT_FUNC = None
 
-# Idle status screen (often shown upon a screen press)
+
+# Idle status/info screen (often shown upon a screen press)
 #
 #   First two arguments are Pillow Image and ImageDraw objects.
 #   Third argument is a dictionary loaded from Kodi with info fields.
@@ -1889,7 +1897,15 @@ def draw_fields(image, draw, layout, info,
 # manner.
 #
 def status_screen(image, draw, kodi_status):
-    layout = STATUS_LAYOUT
+
+    # Permit Kodi InfoLabels and InfoBooleans to determine a status
+    # screen layout, if everything has been suitably defined.
+    if (STATUS_LAYOUT_AUTOSELECT and STATUS_SELECT_FUNC):
+        info_dmode = STATUS_SELECT_FUNC(kodi_status)
+        layout = STATUS_LAYOUT[info_dmode.name]
+    else:
+        info_dmode = None
+        layout = STATUS_LAYOUT
 
     # Draw any user-specified rectangle or load background
     # image for layout
