@@ -690,7 +690,8 @@ draw = ImageDraw.Draw(image)
 #   draw         ImageDraw object instance, tied to image
 #
 #   info         dictionary containing InfoLabels from JSON-RPC response,
-#                possibly augmented by calling function
+#                possibly augmented by calling function.  InfoBoolean
+#                results, if any, are also included in this dictionary
 #
 #   field        dictionary containing layout information, originating
 #                from the setup.toml file
@@ -715,7 +716,8 @@ draw = ImageDraw.Draw(image)
 # table only need to accept 3 arguments:
 #
 #   info         dictionary containing InfoLabels from JSON-RPC
-#                response (possibly augmented by calling function)
+#                response, possibly augmented by calling function.
+#                InfoBoolean results, if any, are also included.
 #
 #   screen_mode  instance of ScreenMode enumerated type, specifying
 #                whether screen is STATUS, AUDIO, or VIDEO
@@ -2545,10 +2547,16 @@ def update_display(touched=False):
 
     # Ask Kodi whether anything is playing...
     #
-    #   JSON-RPC calls can only invoke one method per call.  Unless
-    #   we wish to make a "blind" InfoLabels call asking for all
-    #   interesting MusicPlayer and VideoPlayer fields, we must
-    #   make 2 distinct network calls.
+    #   I was originally under the impression that JSON-RPC calls can
+    #   only invoke one method per call.  Later, when implementing
+    #   support for InfoBoolean retrieval, I learned about batch
+    #   JSON-RPC.  That mechanism is used below to retrieve InfoLabels
+    #   and InfoBooleans together.
+    #
+    #   Nevertheless, at this point in the flow we do not yet know
+    #   Kodi's state.  Unless we wish to make a "blind" call and
+    #   ask for *every* InfoLabel and every InfoBoolean of possible
+    #   interest, we must make 2 distinct network calls.
     #
     #   Over wifi on an RPi3 on my home network, each call seems to
     #   take ~0.025 seconds.
@@ -2609,7 +2617,6 @@ def update_display(touched=False):
                          "method": "XBMC.GetInfoLabels",
                          "params": {"labels": STATUS_LABELS},
                          "id": "4st" }]
-
             if len(STATUS_BOOLEANS):
                 payload += [{ "jsonrpc": "2.0",
                               "method": "XBMC.GetInfoBooleans",
@@ -2656,12 +2663,11 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        # Retrieve video InfoLabels in a single JSON-RPC call
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
         payload = [{ "jsonrpc": "2.0",
                      "method": "XBMC.GetInfoLabels",
                      "params": {"labels": VIDEO_LABELS},
                      "id": "4v" }]
-
         if len(VIDEO_BOOLEANS):
             payload += [{ "jsonrpc": "2.0",
                           "method": "XBMC.GetInfoBooleans",
@@ -2710,7 +2716,7 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        # Retrieve all music InfoLabels in a single JSON-RPC call.
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
         payload = [{ "jsonrpc": "2.0",
                      "method": "XBMC.GetInfoLabels",
                      "params": {"labels": AUDIO_LABELS},
@@ -2768,11 +2774,11 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
+        # Retrieve InfoLabels and InfoBooleans in a single RPC call
         payload = [{ "jsonrpc": "2.0",
                      "method": "XBMC.GetInfoLabels",
                      "params": {"labels": SLIDESHOW_LABELS},
                      "id": "4s" }]
-
         if len(SLIDESHOW_BOOLEANS):
             payload += [{ "jsonrpc": "2.0",
                           "method": "XBMC.GetInfoBooleans",
