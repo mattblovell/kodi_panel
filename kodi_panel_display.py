@@ -387,6 +387,43 @@ STATUS_ENABLED    = config.settings.get("ENABLE_STATUS_SCREEN", True)
 IDLE_STATUS_ENABLED = config.settings.get("ENABLE_IDLE_STATUS", False)
 
 
+# Current Screen Mode
+# -------------------
+#
+# Define an enumerated type (well, it's still Python, so a class)
+# representing whether the screen being drawn is for audio playback,
+# video playback, or is just a status screen.
+#
+# This state was added mainly to pass down to the element and string
+# callback functions, in case a callback gets used in layouts for
+# completely different media.
+#
+
+class ScreenMode(Enum):
+    STATUS = 0   # kodi_panel status/info screen
+    AUDIO  = 1   # audio playback is active
+    VIDEO  = 2   # video playback is active
+    SLIDE  = 3   # slideshow is active
+
+
+# Shared Elements
+# ---------------
+#
+# Provide a lookup table such that elements can be shared across
+# multiple layouts.  Thanks to @nico1080 for the suggestion.
+
+_SHARED_ELEMENT = {}
+_USE_SHARED = False
+
+if ("shared_element" in config.settings.keys() and
+        type(config.settings["shared_element"]) is dict):
+    _SHARED_ELEMENT = config.settings["shared_element"]
+
+if len(_SHARED_ELEMENT.keys()):
+    _USE_SHARED = True
+
+
+
 # Screen / Layout Enumeration
 # ---------------------------
 #
@@ -414,10 +451,14 @@ class LayoutEnum(Enum):
             index = 0
         return members[index]
 
-# Provide the same behavior across audio, video, and slideshow
-class ADisplay(LayoutEnum): pass
-class VDisplay(LayoutEnum): pass
-class SDisplay(LayoutEnum): pass
+# Provide the same behavior across audio, video, and slideshow.  With
+# the addition of InfoLabels, also permit the same flexibility for
+# status.
+
+class ADisplay(LayoutEnum): pass   # audio
+class VDisplay(LayoutEnum): pass   # video
+class SDisplay(LayoutEnum): pass   # slideshow
+class IDisplay(LayoutEnum): pass   # info / idle screen
 
 
 #
@@ -486,41 +527,31 @@ if SLIDESHOW_ENABLED:
         SLIDESHOW_ENABLED = 0
 
 
-
-# Current Screen Mode
-# -------------------
+# The status/info screen(s) is treated differently.  For historical
+# reasons, the setup file may define only a single layout.  So, if no
+# config variables exist declaring other status/info layout names,
+# don't emit any warning.
 #
-# Define an enumerated type (well, it's still Python, so a class)
-# representing whether the screen being drawn is for audio playback,
-# video playback, or is just a status screen.
-#
-# This state was added mainly to pass down to the element and string
-# callback functions, in case a callback gets used in layouts for
-# completely different media.
-#
+# Also, the variable naming for the status/info screens isn't quite
+# consistent due to the development history of this feature.
 
-class ScreenMode(Enum):
-    STATUS = 0   # kodi_panel status screen
-    AUDIO  = 1   # audio playback is active
-    VIDEO  = 2   # video playback is active
-    SLIDE  = 3   # slideshow is active
+if STATUS_ENABLED:
+    if ("STATUS_NAMES" in config.settings.keys() and
+            "STATUS_INITIAL" in config.settings.keys()):
+        # Populate enum based upon settings file
+        for index, value in enumerate(config.settings["STATUS_NAMES"]):
+            extend_enum(IDisplay, value, index)
 
+        # At startup, use the default layout mode specified in settings
+        info_dmode = IDisplay[config.settings["STATUS_INITIAL"]]
 
-# Shared Elements
-# ---------------
-#
-# Provide a lookup table such that elements can be shared across
-# multiple layouts.  Thanks to @nico1080 for the suggestion.
+        # Provide the same hook as for the other modes
+        STATUS_LAYOUT_AUTOSELECT = config.settings.get(
+            "STATUS_AUTOSELECT", False)    
+    else:
+        info_dmode = None
+        STATUS_LAYOUT_AUTOSELECT = False
 
-_SHARED_ELEMENT = {}
-_USE_SHARED = False
-
-if ("shared_element" in config.settings.keys() and
-        type(config.settings["shared_element"]) is dict):
-    _SHARED_ELEMENT = config.settings["shared_element"]
-
-if len(_SHARED_ELEMENT.keys()):
-    _USE_SHARED = True
 
 
 # Screen Layouts
