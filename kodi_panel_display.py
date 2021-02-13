@@ -2605,12 +2605,17 @@ def update_display(touched=False):
             elif response['result'][0]['type'] == 'audio':
                 summary = "Audio playing"
 
-            payload = {
-                "jsonrpc": "2.0",
-                "method": "XBMC.GetInfoLabels",
-                "params": {"labels": STATUS_LABELS},
-                "id": "4st",
-            }
+            payload = [{ "jsonrpc": "2.0",
+                         "method": "XBMC.GetInfoLabels",
+                         "params": {"labels": STATUS_LABELS},
+                         "id": "4st" }]
+
+            if len(STATUS_BOOLEANS):
+                payload += [{ "jsonrpc": "2.0",
+                              "method": "XBMC.GetInfoBooleans",
+                              "params": {"booleans": STATUS_BOOLEANS},
+                              "id": "4sti" }]
+
             status_resp = requests.post(
                 rpc_url,
                 data=json.dumps(payload),
@@ -2620,11 +2625,15 @@ def update_display(touched=False):
             # The try/except is in case Kodi communication gets
             # disrupted while showing the status screen!
             try:
-                status_resp['result']['summary'] = summary
+                status_dict = status_resp[0]['result']
+                if len(STATUS_BOOLEANS):
+                    status_dict.update(status_resp[1]['result'])
+
+                status_dict['summary'] = summary
             except:
                 pass
 
-            status_screen(image, draw, status_resp['result'])
+            status_screen(image, draw, status_dict)
             screen_on()
         else:
             screen_off()
@@ -2648,19 +2657,26 @@ def update_display(touched=False):
                 text_wrap.cache_clear()
 
         # Retrieve video InfoLabels in a single JSON-RPC call
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": VIDEO_LABELS},
-            "id": "4v",
-        }
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": VIDEO_LABELS},
+                     "id": "4v" }]
+
+        if len(VIDEO_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": VIDEO_BOOLEANS},
+                          "id": "4vi" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            video_info = response['result']
+            video_info = response[0]['result']
+            if len(VIDEO_BOOLEANS):
+                video_info.update(response[1]['result'])
 
             # There seems to be a hiccup in DLNA/UPnP playback in which a
             # change (or stopping playback) causes a moment when
@@ -2698,12 +2714,13 @@ def update_display(touched=False):
         payload = [{ "jsonrpc": "2.0",
                      "method": "XBMC.GetInfoLabels",
                      "params": {"labels": AUDIO_LABELS},
-                     "id": "4a" },
-                   { "jsonrpc": "2.0",
-                     "method": "XBMC.GetInfoBooleans",
-                     "params": {"booleans": AUDIO_BOOLEANS},
-                     "id": "4ai" },
-                   ]
+                     "id": "4a" }]
+        if len(AUDIO_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": AUDIO_BOOLEANS},
+                          "id": "4ai" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
@@ -2711,7 +2728,8 @@ def update_display(touched=False):
         # print("Response: ", json.dumps(response))
         try:
             track_info = response[0]['result']
-            track_info.update(response[1]['result'])
+            if len(AUDIO_BOOLEANS):
+                track_info.update(response[1]['result'])
 
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a
@@ -2750,19 +2768,27 @@ def update_display(touched=False):
                 truncate_line.cache_clear()
                 text_wrap.cache_clear()
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "XBMC.GetInfoLabels",
-            "params": {"labels": SLIDESHOW_LABELS},
-            "id": "4s",
-        }
+        payload = [{ "jsonrpc": "2.0",
+                     "method": "XBMC.GetInfoLabels",
+                     "params": {"labels": SLIDESHOW_LABELS},
+                     "id": "4s" }]
+
+        if len(SLIDESHOW_BOOLEANS):
+            payload += [{ "jsonrpc": "2.0",
+                          "method": "XBMC.GetInfoBooleans",
+                          "params": {"booleans": SLIDESHOW_BOOLEANS},
+                          "id": "4si" }]
+
         response = requests.post(
             rpc_url,
             data=json.dumps(payload),
             headers=headers).json()
         # print("Response: ", json.dumps(response))
         try:
-            slide_info = response['result']
+            slide_info = response[0]['result']
+            if len(SLIDESHOW_BOOLEANS):
+                slide_info.update(response[1]['result'])
+
             slideshow_screens(image, draw, slide_info)
             screen_on()
 
