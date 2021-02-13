@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.43"
+PANEL_VER = "v1.44dev"
 
 #
 # Audio/Video codec lookup table
@@ -197,7 +197,7 @@ SLIDESHOW_LABELS = [
 STATUS_BOOLEANS    = ['System.ScreenSaverActive']
 AUDIO_BOOLEANS     = ['Player.Paused']
 VIDEO_BOOLEANS     = ['Player.Paused']
-SLIDESHOW_BOOLEANS = ['Slideshow.IsPaused']
+SLIDESHOW_BOOLEANS = []
 
 
 # ----------------------------------------------------------------------------
