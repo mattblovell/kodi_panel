@@ -1905,6 +1905,8 @@ def status_screen(image, draw, kodi_status):
         info_dmode = STATUS_SELECT_FUNC(kodi_status)
         layout = STATUS_LAYOUT[info_dmode.name]
     else:
+        # Historically, one could define just one layout for status,
+        # making the dictionary just a single level deep (no name)
         info_dmode = None
         layout = STATUS_LAYOUT
 
