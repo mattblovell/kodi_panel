@@ -193,7 +193,17 @@ SLIDESHOW_LABELS = [
 ]
 
 
+#
 # Kodi InfoBooleans to retrieve
+#
+#   The results get included in the *same* dictionary that carries the
+#   InfoLabels above.  This is possible since all names appear to be
+#   distinct.
+#
+#   If there is ever a name collision between an InfoLabel and an
+#   InfoBoolean, the current implementation will effectively drop the
+#   Label, replacing it with the Boolean.
+#
 STATUS_BOOLEANS    = ['System.ScreenSaverActive']
 AUDIO_BOOLEANS     = ['Player.Paused']
 VIDEO_BOOLEANS     = ['Player.Paused']
