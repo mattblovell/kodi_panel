@@ -911,7 +911,7 @@ def element_thin_line(image, draw, info, field, screen_mode, layout_name):
 # specified via the optional "use_path" key.  If no such key is
 # provided, then the default of MusicPlayer.Cover is used.
 #
-# In constrast to a similar function for generic artwork, audio
+# In contrast to a similar function for generic artwork, audio
 # artwork retrieval has a special-case to handle AirPlay covers.
 # However, this code path does NOT attempt to make use of _last_thumb
 # to prevent re-fetching of the AirPlay cover.  If that is desired,

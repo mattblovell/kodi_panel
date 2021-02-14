@@ -259,7 +259,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 #   video_select_default() in kodi_panel_display.py.  (One must make
 #   use of the kodi_panel_display namespace when making type or
 #   variable references, but the structure of the code itself is
-#   similar to that example funciton.)
+#   similar to that example function.)
 #
 #   The user would define the appropriate functionality in whatever
 #   startup script is used (e.g., kodi_panel_ili9341 or kodi_panel_fb)
