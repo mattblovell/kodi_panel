@@ -39,11 +39,10 @@ with Kodi Leia, one is no longer restricted to Python 2.  Being a standalone
 script also means that one can have a separate SBC driving a "Now Playing"
 screen anywhere one would like.  
 
-The various kodi_panel scripts are also fairly short.  If you are
-familiar with reading and writing Python, and making use of the Pillow
-image library, it should be straightforward to modify it to your taste
+If you are familiar with reading and writing Python, and making use of the Pillow
+image library, it should be straightforward to modify kodi_panel to your taste
 or needs.  Using Python also lets one experiment with and inspect the
-results of the JSON-RPC calls to Kodi quite easily.  The Kodi documentation
+results of the JSON-RPC calls to Kodi.  The Kodi documentation
 on
 `JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_, 
 `InfoLabels <https://kodi.wiki/view/InfoLabels>`_, and
@@ -51,6 +50,12 @@ on
 should give you a complete picture of what information is available.
 (One can also change Kodi's state using JSON-RPC, something I don't even
 attempt here.)
+
+The ``setup.toml`` file provides control over fonts, default images, and
+the layout of elements on the display.  Several hooks for callback functions 
+also exist throughout the main kodi_panel_display.py file.  One can 
+customize many aspects of the display screens via additions to the 
+(very short) startup scripts, rather than modifying kodi_panel_display.py itself.
 
 On an Odroid C4, kodi_panel appears to take ~0.5% of CPU time when idle
 and about ~2.5% when music playback is occurring.  Kodi itself, for
