@@ -51,11 +51,13 @@ should give you a complete picture of what information is available.
 (One can also change Kodi's state using JSON-RPC, something I don't even
 attempt here.)
 
-The ``setup.toml`` file provides control over fonts, default images, and
+The ``setup.toml`` file provides control over fonts, font sizes, colors, default images, and
 the layout of elements on the display.  Several hooks for callback functions 
 also exist throughout the main ``kodi_panel_display.py`` file.  One can 
 customize many aspects of the display screens via additions to the 
-(very short) startup scripts, rather than modifying ``kodi_panel_display.py`` itself.
+very short startup scripts, rather than modifying ``kodi_panel_display.py`` itself.
+(Look for the long comment blocks describing the ``ELEMENT_CB`` and 
+``STRING_CB`` dictionaries and the currently-implemented callbacks for details.)
 
 Running on an Odroid C4 with a 320x480 SPI display, kodi_panel appears to 
 take ~0.5% of CPU time when idle and about ~2.5% when music playback is 
