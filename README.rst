@@ -87,7 +87,9 @@ Kodi installation:
   - For AirPlay cover art, Kodi makes use of a file in temporary storage,
     specifically ``special://temp/airtunes_album_thumb.jpg`` or a similar PNG file.
     The ``special://temp`` path must be added as a media source (not just a file browser
-    source) if one wants AirPlay cover art to be functional.
+    source) if one wants AirPlay cover art to be functional running on a separate
+    SBC from Kodi.  (If kodi_panel is running on the same SBC as Kodi, local file
+    system access suffices.)
 
 
 GPIOs
