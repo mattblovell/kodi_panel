@@ -53,20 +53,21 @@ attempt here.)
 
 The ``setup.toml`` file provides control over fonts, default images, and
 the layout of elements on the display.  Several hooks for callback functions 
-also exist throughout the main kodi_panel_display.py file.  One can 
+also exist throughout the main ``kodi_panel_display.py`` file.  One can 
 customize many aspects of the display screens via additions to the 
-(very short) startup scripts, rather than modifying kodi_panel_display.py itself.
+(very short) startup scripts, rather than modifying ``kodi_panel_display.py`` itself.
 
-On an Odroid C4, kodi_panel appears to take ~0.5% of CPU time when idle
-and about ~2.5% when music playback is occurring.  Kodi itself, for
-comparison, takes 3% CPU when idle and 8% when busy (for ALAC playback).
-The CPU load increases when running remotely from Kodi and as
+Running on an Odroid C4 with a 320x480 SPI display, kodi_panel appears to 
+take ~0.5% of CPU time when idle and about ~2.5% when music playback is 
+occurring.  Kodi itself, for comparison, takes 3% CPU when idle and 
+8% when busy (for ALAC playback).
+
+This CPU load increases when running remotely from Kodi and as
 the display size increases.  For a 800x480 display using network
 calls to query Kodi state, the active load increases to 12 to 15%
-running on an RPi 3.
-
-Using an RPi Zero to drive an HDMI-attached 800x480 display, the active
-CPU load goes up to 25%, with an idle load in the 11% to 14% range.
+running on an RPi 3.  Using an RPi Zero to drive an HDMI-attached 800x480 
+display, the active CPU load goes up to 25%, with an idle load in the 
+11% to 14% range.
 
 
 Installation
