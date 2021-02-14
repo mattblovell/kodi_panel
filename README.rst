@@ -8,7 +8,9 @@ and `luma.lcd <https://github.com/rm-hull/luma.lcd/>`_, which in turn
 depend upon `Pillow <https://python-pillow.org/>`_ and `RPi.GPIO
 <https://pypi.org/project/RPi.GPIO/>`_.  Information and album cover artwork
 is retrieved from Kodi using
-`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_.
+`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_.  The contents shown on the
+display are configured via a 
+`TOML <https://toml.io/en/>`_ setup file, intended to be easily customized.
 
 The script is generally intended to run on the same SBC (single-board
 computer) on which Kodi itself is running.  That's not really
