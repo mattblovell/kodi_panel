@@ -57,10 +57,12 @@ the display size increases.  For a 800x480 display using network
 calls to query Kodi state, the active load increases to 12 to 15%
 running on an RPi 3.
 
+Using an RPi Zero to drive an HDMI-attached 800x480 display, the active
+CPU load goes up to 25%, with an idle load in the 11% to 14% range.
+
 
 Installation
 ------------
-
 
 Kodi setup
 **********
