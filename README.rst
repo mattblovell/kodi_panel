@@ -28,8 +28,8 @@ screenshots) is *not* a part of kodi_panel and is shown under the Fair Use doctr
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
-For Raspberry Pi boards, RPi.GPIO obviously works as-is.  For Odroid
-boards, one must instead make use of
+For Raspberry Pi boards and SPI-attached displays, RPi.GPIO obviously works as-is.  
+For Odroid boards, one must instead make use of
 `RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
 The general approach taken by this project, running separately from Kodi
