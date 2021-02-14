@@ -43,8 +43,9 @@ image library, it should be straightforward to modify it to your taste
 or needs.  Using Python also lets one experiment with and inspect the
 results of the JSON-RPC calls to Kodi quite easily.  The Kodi documentation
 on
-`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_ and
-`InfoLabels <https://kodi.wiki/view/InfoLabels>`_
+`JSON-RPC <https://kodi.wiki/view/JSON-RPC_API>`_, 
+`InfoLabels <https://kodi.wiki/view/InfoLabels>`_, and
+`InfoBooleans <https://kodi.wiki/view/List_of_boolean_conditions>`__ 
 should give you a complete picture of what information is available.
 (One can also change Kodi's state using JSON-RPC, something I don't even
 attempt here.)
