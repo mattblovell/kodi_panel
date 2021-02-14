@@ -457,8 +457,8 @@ class LayoutEnum(Enum):
 
 class ADisplay(LayoutEnum): pass   # audio
 class VDisplay(LayoutEnum): pass   # video
-class SDisplay(LayoutEnum): pass   # slideshow
-class IDisplay(LayoutEnum): pass   # info / idle screen
+class SDisplay(LayoutEnum): pass   # slideshow (photos)
+class IDisplay(LayoutEnum): pass   # status/info screen
 
 
 #
@@ -528,9 +528,9 @@ if SLIDESHOW_ENABLED:
 
 
 # The status/info screen(s) is treated differently.  For historical
-# reasons, the setup file may define only a single layout.  So, if no
-# config variables exist declaring other status/info layout names,
-# don't emit any warning.
+# reasons, the setup file is free to define only a single layout.  So,
+# if no config variables exist declaring other status/info layout
+# names, don't emit any warning.
 #
 # Also, the variable naming for the status/info screens isn't quite
 # consistent due to the development history of this feature.
