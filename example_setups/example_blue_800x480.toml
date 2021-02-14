@@ -217,6 +217,75 @@ SLAYOUT_NAMES = [ "DEFAULT" ]
 SLAYOUT_INITIAL = "DEFAULT"
 
 
+# Status/Info Layout Names
+# ------------------------
+#
+#   This section is entirely optional and thus can be left commented
+#   out unless multiple status/info screens are desired.  If one is
+#   content with just a single layout (shown either upon a touch
+#   interrupt or enabled whenever Kodi is idle), then a single-level
+#   layout table further below suffices.  (This becomes a single-level
+#   dictionary in Python.)
+#
+#   An example single-level status layout consists of entries such as
+#
+#    [STATUS_LAYOUT.thumb]
+#      posx = 5
+#      posy = 5
+#      size = 128
+#
+#    [[STATUS_LAYOUT.fields]]
+#      name = "version"
+#      posx = 145
+#      posy = 8
+#      font = "font_main"
+#      fill = "color_artist"
+#
+#
+#   If multiple status/info layouts are desired, then one MUST
+#   define both of the following variables:
+#
+#      STATUS_NAMES     array of strings specifying the name of
+#                       each status/info screen layout
+#
+#      STATUS_INITIAL   string specifying default layout
+#
+#   Additionally, one's startup script MUST then define an
+#   auto-selection function that decides which layout to use, given
+#   the results of retrieving STATUS_LABELS and STATUS_BOOLEANS from
+#   Kodi.
+#
+#   The auto-selection function would be similar in structure to
+#   video_select_default() in kodi_panel_display.py.  (One must make
+#   use of the kodi_panel_display namespace when making type or
+#   variable references, but the structure of the code itself is
+#   similar to that example funciton.)
+#
+#   The user would define the appropriate functionality in whatever
+#   startup script is used (e.g., kodi_panel_ili9341 or kodi_panel_fb)
+#   and point to it by overriding
+#
+#     kodi_panel_display.STATUS_SELECT_FUNC
+#
+#   Finally, the layout tables defined below for STATUS_LAYOUT must
+#   define the elements desired for each of the names given in the
+#   STATUS_NAMES array.  So, if that array of names is specified
+#   as "my_layoutA" and "my_layoutB", then the tables below will
+#   end up elements such as
+#
+#     [STATUS_LAYOUT.my_layoutA.thumb]  and
+#     [[STATUS_LAYOUT.my_layoutA.fields]]
+#
+#   and
+#
+#     [STATUS_LAYOUT.my_layoutB.thumb]  and
+#     [[STATUS_LAYOUT.my_layoutB.fields]]
+#
+# --------------------------------------------------------------------
+# STATUS_NAMES = []
+# STATUS_INITIAL = ""
+
+
 
 # Codec Lookup
 #
@@ -503,7 +572,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 #               displayed exactly matches, causes the element to not
 #               be drawn.
 #
-#      display_if / display_ifnot
+#      display_if / display_ifnot
 #               An alternative mechanism for controlling element
 #               display.  The value must be a two-element list
 #               providing two strings.
