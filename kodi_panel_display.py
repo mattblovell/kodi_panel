@@ -52,7 +52,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.44"
+PANEL_VER = "v1.45"
 
 #
 # Audio/Video codec lookup table
@@ -1883,6 +1883,19 @@ def draw_fields(image, draw, layout, info,
 #
 #     kodi_display_panel.STATUS_SELECT_FUNC = my_status_selection
 #
+#
+#   Here is an example, complete with the namespace qualification one
+#   would need when using this code in an external startup script.
+#
+#     def my_status_select(info):
+#         if info['System.ScreenSaverActive']:
+#             return kodi_panel_display.IDisplay["screensaver"]
+#         else:
+#             return kodi_panel_display.IDisplay[config.settings["STATUS_INITIAL"]]
+#
+#     kodi_panel_display.STATUS_SELECT_FUNC = my_status_select
+#
+#
 STATUS_SELECT_FUNC = None
 
 
@@ -2324,7 +2337,7 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 
 # Video selection heuristic
 #
-#   Default Heuristic to determine layout based upon populated
+#   Default heuristic to determine layout based upon populated
 #   InfoLabels, if enabled via settings.  Originally suggested by
 #   @noggin and augmented by @nico1080 in CoreELEC Forum discussion.
 #
@@ -2349,9 +2362,9 @@ def video_screen_dynamic(image, draw, layout, info, prog):
 #   variable.  Reassignment of that variable permits an end-user's
 #   script to completely override the above heurstic.
 #
-#  Sole argument is a dictionary containing the video InfoLabels
-#  retrieved from Kodi.  Function MUST return the VDisplay
-#  enumeration to use for the screen update.
+#   The sole argument is a dictionary containing the video InfoLabels
+#   retrieved from Kodi.  Function MUST return the VDisplay
+#   enumeration to use for the screen update.
 #
 def video_select_default(info):
     if (info["Player.Filenameandpath"].startswith("pvr://recordings") and

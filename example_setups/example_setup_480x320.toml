@@ -259,7 +259,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 # --------------------------------------------------------------------
 # STATUS_NAMES = []
 # STATUS_INITIAL = ""
-
+# STATUS_LAYOUT_AUTOSELECT = true
 
 
 # Codec Lookup
