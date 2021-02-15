@@ -214,8 +214,8 @@ framebuffer version of kodi_panel.  Naturally, you can edit the service file to
 match your needs.
 
 
-Odroid Boards
-*************
+Odroid C4
+*********
 
 The instructions below worked for CoreELEC 9.2.x (Kodi 18, Linux 4.9.113) on an Odroid C4. 
 For Raspberry Pi boards and SPI-attached displays, RPi.GPIO obviously works as-is.  
