@@ -21,7 +21,7 @@ HD44780-based character LCDs and apparently some graphical displays as well.
 
 Communication from the addon to the server is sockets based, making use of Python’s telnetlib.
 
-Client/server program: [source](https://github.com/lcdproc/lcdproc), [webpage](http://lcdproc.org/)
+Client/server program: [source](https://github.com/lcdproc/lcdproc), [webpage](http://lcdproc.org/)  
 Kodi addon: [source](https://github.com/herrnst/script.xbmc.lcdproc)
 
 
@@ -35,7 +35,7 @@ thought that this addon only supported a very-specific type of display, which wa
 At least for the HD44780, the actual format of data displayed is handled by the C driver, making local 
 customization not particularly easy.
 
-Kodi addon: [source](https://github.com/arthur-liberman/service.openvfd), [config files](https://github.com/arthur-liberman/vfd-configurations)
+Kodi addon: [source](https://github.com/arthur-liberman/service.openvfd), [config files](https://github.com/arthur-liberman/vfd-configurations)  
 C drivers: [source](https://github.com/arthur-liberman/linux_openvfd)
 
 This addon has several CoreELEC and LibreELEC forum threads:
@@ -46,9 +46,9 @@ This addon has several CoreELEC and LibreELEC forum threads:
 
 ### Odroid N2 OLED Driver
 
-Python-based service addon for Kodi from @roidy, distinct from OpenVFD.  Supports SSD130[69] and 
-SH1106-based OLED graphical displays.  (SSD1309 support is SPI-only as of this writing, but 
-I2C should be possible.)
+Python-based service addon for Kodi from CoreELEC forum member @roidy, distinct from OpenVFD. 
+Supports SSD130[69] and SH1106-based OLED graphical displays.  (SSD1309 support is SPI-only as of 
+this writing, but I2C should be possible.)
 
 Kodi addon: [source](https://github.com/roidy/service.odroidn2.oled)
 
