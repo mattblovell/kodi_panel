@@ -28,9 +28,6 @@ screenshots) is *not* a part of kodi_panel and is shown under the Fair Use doctr
 
 .. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/working_lcd.jpg
 
-For Raspberry Pi boards and SPI-attached displays, RPi.GPIO obviously works as-is.  
-For Odroid boards, one must instead make use of
-`RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
 The general approach taken by this project, running separately from Kodi
 and retrieving all relevant state via JSON-RPC, has been used by 
@@ -220,7 +217,10 @@ match your needs.
 Odroid Boards
 *************
 
-The instructions below worked for CoreELEC 9.2.x (Kodi 18, Linux 4.9.113) on an Odroid C4.  
+The instructions below worked for CoreELEC 9.2.x (Kodi 18, Linux 4.9.113) on an Odroid C4. 
+For Raspberry Pi boards and SPI-attached displays, RPi.GPIO obviously works as-is.  
+For Odroid boards, one must instead make use of
+`RPi.GPIO-Odroid <https://github.com/awesometic/RPi.GPIO-Odroid>`_.
 
 Hardkernel maintains information regarding the GPIO headers for their various
 boards on the `Odroid Wiki <https://wiki.odroid.com/>`_.  I consulted
