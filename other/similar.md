@@ -57,7 +57,7 @@ Kodi addon: [source](https://github.com/roidy/service.odroidn2.oled)
 
 A completely separate Python program (not an addon) that queries Kodi (via JSON-RPC) for 
 what's playing, apparently *including artwork*, and renders it to a TFT LCD display.  Display 
-\duties are handled vi [pygame](https://www.pygame.org/wiki/about), which in turn depends upon the 
+duties are handled vi [pygame](https://www.pygame.org/wiki/about), which in turn depends upon the 
 C-based Simple DirectMedia Layer ([libsdl](http://www.libsdl.org/)).   
 
 The web page unfortunately suggests that the music view with cover thumbnail is a work-in-progress.  The most 
