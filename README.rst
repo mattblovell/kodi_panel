@@ -72,6 +72,12 @@ running on an RPi 3.  Using an RPi Zero to drive that same
 display, the active CPU load goes up to 25%, with an idle load in the 
 11% to 14% range.
 
+If you're interested in learning the development history of kodi_panel, 
+you can read through these two discussions in CoreELEC's forums:
+
+- `Graphical front panel display <https://discourse.coreelec.org/t/graphical-front-panel-display/12932>`_
+- `RPi-GPIO-Odroid & Python Pillow <https://discourse.coreelec.org/t/rpi-gpio-odroid-python-pillow/13088>`_
+
 
 Installation
 ------------
@@ -215,12 +221,6 @@ Odroid Boards
 *************
 
 The instructions below worked for CoreELEC 9.2.x (Kodi 18, Linux 4.9.113) on an Odroid C4.  
-For Odroid boards, if you're interested in learning the (short) development
-history of kodi_panel, you can read through these two discussions in
-CoreELEC's forums:
-
-- `Graphical front panel display <https://discourse.coreelec.org/t/graphical-front-panel-display/12932>`_
-- `RPi-GPIO-Odroid & Python Pillow <https://discourse.coreelec.org/t/rpi-gpio-odroid-python-pillow/13088>`_
 
 Hardkernel maintains information regarding the GPIO headers for their various
 boards on the `Odroid Wiki <https://wiki.odroid.com/>`_.  I consulted
