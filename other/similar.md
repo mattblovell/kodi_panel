@@ -1,8 +1,8 @@
 # Similar Projects
 
 Prior to developing kodi_panel, I tried to create a survey of existing display-related projects for Kodi 
-other music players.  I kept an updated version of that summary on the CoreELEC forum for some time.  Here's
-what I found ...
+and other music players.  I kept an updated version of that summary on the CoreELEC forum for some time.  Here's
+what I found, at least in late 2020 ...
 
 ## Kodi-related
 
