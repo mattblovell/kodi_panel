@@ -81,7 +81,7 @@ USE_BACKLIGHT = true
 #
 USE_HW_PWM = true
 HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
-HW_PWM_LEVEL = 0.45
+HW_PWM_LEVEL = 0.42
 
 
 # --------------------------------------------------------------------
