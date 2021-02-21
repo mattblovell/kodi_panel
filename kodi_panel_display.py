@@ -53,7 +53,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.46"
+PANEL_VER = "v1.46a"
 
 #
 # Audio/Video codec lookup table
