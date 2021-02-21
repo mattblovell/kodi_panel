@@ -135,6 +135,7 @@ STATUS_LABELS = [
     "System.CPUTemperature",
     "System.CpuFrequency",
     "System.Date",
+    "System.Time",    
     "System.Time(hh:mm:ss)",
     "System.BuildVersion",
     "System.BuildDate",
