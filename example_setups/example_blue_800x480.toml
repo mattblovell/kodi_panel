@@ -842,7 +842,7 @@ color_bg = "color_gray"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "long_time_display"
 posx = 487
-posy = 28
+posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
 font = "font7S"
@@ -852,7 +852,7 @@ dynamic = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
 posx = 487
-posy = 28
+posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S"
@@ -863,14 +863,14 @@ dynamic = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.TrackNumber"
 posx = 732
-posy = 51
+posy = 53
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S_med"
 fill = "color_7S"
   # Label only appears if the InfoLabel specified is present and non-empty
   label = "Track"
   lposx = 732
-  lposy = 23
+  lposy = 25
   lfont = "font_tiny"
   lfill = "white"
 
@@ -878,14 +878,14 @@ fill = "color_7S"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec"   # internal callback
 posx = 487
-posy = 93
+posy = 98
 font = "font_tiny"
 fill = "white"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.Genre"
 posx = 590
-posy = 93
+posy = 98
 font = "font_tiny"
 fill = "white"
 wrap = 1
@@ -898,9 +898,9 @@ max_lines = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "thin_line"
 posx = 487
-posy = 125
+posy = 130
 endx = 785
-endy = 125
+endy = 130
 fill = "gray"
 # ------------------------------------------------------------------------
 
