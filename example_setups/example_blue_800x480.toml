@@ -353,7 +353,7 @@ SLAYOUT_INITIAL = "DEFAULT"
 #
 [COLORS]
  color_artist = '#ffcc00'    # artist name
- color_gray   = '#424242'    # progress bar background (used 'dimgrey' for a while)
+ color_gray   = '#676767'    # progress bar background (used 'dimgrey' for a while)
  color_7S     = '#3399ff'    # 7-Segment LED color, progress bar
 
 
