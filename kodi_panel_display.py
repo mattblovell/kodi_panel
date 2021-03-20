@@ -53,7 +53,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.47"
+PANEL_VER = "v1.48"
 
 #
 # Audio/Video codec lookup table
@@ -135,7 +135,7 @@ STATUS_LABELS = [
     "System.CPUTemperature",
     "System.CpuFrequency",
     "System.Date",
-    "System.Time",    
+    "System.Time",
     "System.Time(hh:mm:ss)",
     "System.BuildVersion",
     "System.BuildDate",
@@ -931,7 +931,22 @@ def element_audio_cover(image, draw, info, field, screen_mode, layout_name):
     else:
         image_path = info.get('MusicPlayer.Cover', "")
 
-    if image_path == "": return
+    if image_path == "": return ""
+
+    # Audio cover art is expected to be square, thus only a single
+    # dimension -- size -- is expected.  Permit for a little more
+    # flexibility though.
+    height = 0
+    width  = 0
+    if ("size" in field):
+        height = field["size"]
+        width  = field["size"]
+    elif ("width" in field and
+          "height" in field):
+        height = field["height"]
+        width  = field["width"]
+    else:
+        return ""
 
     # The following is somewhat redundate with code that
     # exists in audio_screen_static().
@@ -1566,17 +1581,17 @@ def get_artwork(cover_path, thumb_width, thumb_height, use_defaults=False, enlar
 
     if (image_set and resize_needed):
 
-        if (enlarge and (image.size[0] < thumb_width or
-                         image.size[1] < thumb_height)):
+        if (enlarge and (cover.size[0] < thumb_width or
+                         cover.size[1] < thumb_height)):
 
             # Figure out which dimension is the constraint
             # for maintenance of the aspect ratio
-            width_enlarge  = thumb_width / float(image.size[0])
-            height_enlarge = thumb_height / float(image.size[1])
+            width_enlarge  = thumb_width / float(cover.size[0])
+            height_enlarge = thumb_height / float(cover.size[1])
             ratio = min( width_enlarge, height_enlarge )
 
-            new_width  = int( image.size[0] * ratio )
-            new_height = int( image.size[1] * ratio )
+            new_width  = int( cover.size[0] * ratio )
+            new_height = int( cover.size[1] * ratio )
             cover = cover.resize((new_width, new_height))
 
         else:
@@ -2106,17 +2121,34 @@ def audio_screen_static(layout, info):
                                             ScreenMode.AUDIO,
                                             audio_dmode.name)
 
+    # Audio covers are expected to be square and thus have only a
+    # single dimension -- size -- specified in the layout element.
+    # Provide some flexibility, though.
+    width  = 0
+    height = 0
+
+    if ("size" in thumb_dict):
+        width  = thumb_dict["size"]
+        height = thumb_dict["size"]
+    elif ("width" in thumb_dict and
+          "height" in thumb_dict):
+        width  = thumb_dict["width"]
+        height = thumb_dict["height"]
+    else:
+        show_thumb = False
+
+
     # Conditionally retrieve cover image from Kodi, if it exists and
     # needs a refresh.  AirPlay cover art must be handled specially.
     if show_thumb:
 
         if _airtunes_re.match(info['MusicPlayer.Cover']):
             _last_thumb = get_airplay_art(info['MusicPlayer.Cover'], _last_thumb,
-                                          thumb_dict["size"], thumb_dict["size"],
+                                          width, height,
                                           enlarge=thumb_dict.get("enlarge", False))
         else:
             _last_thumb = get_artwork(info['MusicPlayer.Cover'],
-                                      thumb_dict["size"], thumb_dict["size"],
+                                      width, height,
                                       use_defaults=True,
                                       enlarge=thumb_dict.get("enlarge", False))
 
