@@ -1440,7 +1440,7 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height, enlarge=F
                     _last_image_time = new_image_time
                     _image_default = False
                 except BaseException:
-                    cover = Image.open(_default_audio_thumb)
+                    cover = Image.open(_default_airplay_thumb)
                     prev_image = cover
                     image_set = True
                     resize_needed = True
