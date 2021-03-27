@@ -1448,17 +1448,23 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height, enlarge=F
         else:
             image_set = True
 
-    # We proceed through this code when running local to Kodi.
+    # We proceed through this code only when running local to Kodi
     if not image_set:
         if _airtunes_re.match(cover_path):
             airplay_thumb = "/storage/.kodi/temp/" + \
                 _airtunes_re.match(cover_path).group(1)
             if os.path.isfile(airplay_thumb):
-                _image_default = False
-                resize_needed = True
+                _last_image_path = airplay_thumb
+                _image_default   = False
+                resize_needed    = True
             else:
-                _image_default = True
-                resize_needed = True
+                _last_image_path = _default_airplay_thumb
+                _image_default   = True
+                resize_needed    = True
+
+            cover = Image.open(_last_image_path)
+            prev_image = cover
+            image_set  = True
 
     # is resizing needed?
     if (image_set and resize_needed):
