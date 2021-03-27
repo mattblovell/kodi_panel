@@ -53,7 +53,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.48"
+PANEL_VER = "v1.49"
 
 #
 # Audio/Video codec lookup table
@@ -1462,17 +1462,17 @@ def get_airplay_art(cover_path, prev_image, thumb_width, thumb_height, enlarge=F
 
     # is resizing needed?
     if (image_set and resize_needed):
-        if (enlarge and (image.size[0] < thumb_width or
-                         image.size[1] < thumb_height)):
+        if (enlarge and (cover.size[0] < thumb_width or
+                         cover.size[1] < thumb_height)):
 
             # Figure out which dimension is the constraint
             # for maintenance of the aspect ratio
-            width_enlarge  = thumb_width / float(image.size[0])
-            height_enlarge = thumb_height / float(image.size[1])
+            width_enlarge  = thumb_width / float(cover.size[0])
+            height_enlarge = thumb_height / float(cover.size[1])
             ratio = min( width_enlarge, height_enlarge )
 
-            new_width  = int( image.size[0] * ratio )
-            new_height = int( image.size[1] * ratio )
+            new_width  = int( cover.size[0] * ratio )
+            new_height = int( cover.size[1] * ratio )
             cover = cover.resize((new_width, new_height))
 
         else:
