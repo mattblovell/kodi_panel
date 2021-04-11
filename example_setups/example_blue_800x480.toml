@@ -392,7 +392,7 @@ SLAYOUT_INITIAL = "DEFAULT"
   name = "font_med"
   path = "fonts/RobotoCondensed-Light.ttf"
 #  path = "fonts/ArchivoNarrow-Medium.ttf"
-  size = 48
+  size = 44
   encoding = 'unic'
 
 [[fonts]]
@@ -825,10 +825,10 @@ center_sm = 1
 
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
-posx = 487     # upper-left corner x-position
+posx = 489     # upper-left corner x-position
 posy = 9       # upper-left corner y-position
 height = 6
-short_len = 298
+short_len = 300
 color_fg = "color_7S"
 color_bg = "color_gray"
  circle = 6   # radius
@@ -841,7 +841,7 @@ color_bg = "color_gray"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "long_time_display"
-posx = 487
+posx = 489
 posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
@@ -851,7 +851,7 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
-posx = 487
+posx = 489
 posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
@@ -877,7 +877,7 @@ fill = "color_7S"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec"   # internal callback
-posx = 487
+posx = 489
 posy = 98
 font = "font_tiny"
 fill = "white"
@@ -897,9 +897,9 @@ max_lines = 1
 # ------------------------------------------------------------------------
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "thin_line"
-posx = 487
+posx = 489
 posy = 130
-endx = 785
+endx = 789
 endy = 130
 fill = "gray"
 # ------------------------------------------------------------------------
@@ -907,7 +907,7 @@ fill = "gray"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "artist"   # internal callback
-posx  = 487
+posx  = 489
 posy  = 150
 font  = "font_artist"
 fill  = "color_artist"
@@ -917,7 +917,7 @@ exclude = "Unknown"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Album"
-posx  = 487
+posx  = 489
 posy  = 195
 font  = "font_sm"
 fill  = "white"
@@ -927,7 +927,7 @@ max_lines = 2
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Title"
-posx  = 487
+posx  = 489
 posy  = 300
 font  = "font_med"
 fill  = "white"
