@@ -53,7 +53,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.49"
+PANEL_VER = "v1.50"
 
 #
 # Audio/Video codec lookup table
@@ -2276,6 +2276,7 @@ AUDIO_SELECT_FUNC = audio_select_default
 def audio_screens(image, draw, info):
     global _static_image, _static_video
     global _last_track_num, _last_track_title, _last_track_album, _last_track_time
+    global _last_thumb
     global audio_dmode
 
     # Permit audio content to drive selected layout
@@ -2299,6 +2300,7 @@ def audio_screens(image, draw, info):
             info["MusicPlayer.Duration"] == _last_track_time):
         pass
     else:
+        _last_thumb = None
         _static_image = audio_screen_static(layout, info)
         _static_video = False
         _last_track_num = info["MusicPlayer.TrackNumber"]
