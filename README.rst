@@ -15,7 +15,8 @@ display are configured via a
 The script is generally intended to run on the same SBC (single-board
 computer) on which Kodi itself is running.  That's not really
 necessary, though, provided one is willing to let the JSON-RPC calls
-occur over the network.
+occur over the network.  The display attachment interface, particularly
+if wanting to use HDMI, strongly affects possible setups.
 
 **Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
