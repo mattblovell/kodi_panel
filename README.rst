@@ -133,7 +133,7 @@ settling on the ili9341-based LCDs, I only ever tried using 3.3V for Vcc.  This
 avoided having to worry about `level shifters <https://www.adafruit.com/product/1875>`_.
 Be careful wiring up your SBC; if you're not familiar with them
 generally, see the warnings documented on the RPi
-`GPIO usage <https://www.raspberrypi.com/documentation/computers/os.html#gpio-and-the-40-pin-header/>`_ page.
+`GPIO usage <https://www.raspberrypi.com/documentation/computers/os.html#gpio-and-the-40-pin-header>`_ page.
 
 Of course, the GPIO pins aren't very interesting if you're using an HDMI-attached
 display (unless you would like to control the backlight for such a display).
