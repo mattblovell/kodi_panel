@@ -1833,6 +1833,12 @@ def draw_fields(image, draw, layout, info,
         if DEBUG_FIELDS:
             print("Examining field: ", field_dict)
 
+        if "anchor" in field_dict.keys():
+            anchor_pos = field_dict["anchor"]
+        else:
+            anchor_pos = "la"
+
+            
         # Skip over the fields that aren't desired for this
         # invocation, based on static vs dynamic.
         #
@@ -1954,7 +1960,8 @@ def draw_fields(image, draw, layout, info,
             draw.text((field_dict["posx"], field_dict["posy"]),
                       display_string,
                       fill=field_dict["fill"],
-                      font=field_dict["font"])
+                      font=field_dict["font"],
+                      anchor=anchor_pos)
 
 
 

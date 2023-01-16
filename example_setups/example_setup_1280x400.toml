@@ -1,0 +1,1295 @@
+# --------------------------------------------------------------------
+# Setup file for kodi_panel using 800x480 resolution
+#
+#   For documentation regarding TOML (Tom's Obvious Minimal Language),
+#   see references at https://toml.io/en/
+#
+#   TOML is context sensitive, so the order of the entries below
+#   (particularly the arrays of tables) DOES matter unfortunately.
+#
+# --------------------------------------------------------------------
+
+# Specify the Kodi instance to query.  Use localhost if running on
+# the same box as Kodi, otherwise specify a resolvable machine name or
+# IP address.
+BASE_URL = "http://10.0.0.188:8080"
+
+
+# --------------------------------------------------------------------
+#
+# GPIO setup, display options
+#
+
+# Specify the size of the display in pixels.  These values get stored
+# into a tuple within kodi_panel and MUST match how the display (or
+# framebuffer) is configured.
+DISPLAY_WIDTH  = 1280
+DISPLAY_HEIGHT = 400
+
+# GPIO assignment for screen's touch interrupt (T_IRQ), using RPi.GPIO
+# numbering.
+#
+# Assuming your display has a touchscreen with an active-low
+# interrupt, find a pin that's unused by luma.  The touchscreen chip
+# in my display has its own internal pullup resistor, so no GPIO
+# pullup is needed.
+#
+# I found the following pins to work on the two SBCs.
+#
+#   Odroid C4:  GPIO19 (physical Pin 35)
+#   RPi 3:      GPIO16 (physical Pin 36)
+#
+# Pin choices are fixed if using the header on the Waveshare displays
+# to connect directly to GPIO pins:
+#
+#   Waveshare 3.5" LCD (B):  GPIO17 (physical pin 11)
+#   Waveshare 4" HDMI (H):   GPIO25 (physical pin 22)
+#
+USE_TOUCH = true   # Set false to disable interrupt use
+TOUCH_INT = 25
+
+# On RPi Zero, the debounce time seems like it needs to be longer to
+# avoid a single screen press being interpreted as two events.
+# Other SBCs can leave this commented out.
+TOUCH_DEBOUNCE = 400  # milliseconds
+
+# The USE_BACKLIGHT boolean controls whether calls are made to
+# luma.lcd at all to change backlight state.  Users with OLED displays
+# (or using luma.core's linux_framebuffer) should set it to false.
+#
+# This variable should likely be set false if using the PWM control
+# through sysfs files (as presently implemented in kodi_panel_fb.py).
+#
+# Note that the framebuffer version (kodi_panel_fb.py) may ignore or
+# override this setting, in favor of the group below.
+#
+USE_BACKLIGHT = true
+
+# Hardware PWM is available on many SBCs.  For the Raspberry Pi
+# with new-ish kernels, one can add
+#
+#   dtoverlay=pwm_2chan
+#
+# to /boot/config.txt to get an appropriate kernel module loaded.
+#
+# The clock period below is expressed in nanoseconds (1e-9).  The
+# brightness level is a float between 0 and 1.  Using 0 would yield no
+# backlight, so that value isn't particularly useful.
+#
+# As of Dec 2020, only kodi_panel_fb.py examines these settings.
+# They are not used within kodi_panel_display itself
+#
+USE_HW_PWM = true
+HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
+HW_PWM_LEVEL = 0.42
+
+
+# --------------------------------------------------------------------
+#
+# Info screens, colors, & fonts
+#
+
+# Audio and video screens are enabled and disabled separately.
+#
+# Slideshow screens are also possible, controlled by yet another
+# layout (or layouts).
+#
+ENABLE_AUDIO_SCREENS = true
+ENABLE_VIDEO_SCREENS = true
+ENABLE_SLIDESHOW_SCREENS = false
+
+# Should the idle status screen always be shown?  That could be
+# desired if no touch interrupt is available.
+# ENABLE_IDLE_STATUS = true
+
+
+# The script has built-in lists of Kodi InfoLabels to retrieve for the
+# various screens that are possible, defined at the beginning of the
+# file.  Each list can be augmented, if needed, via the *_LABELS lists
+# below.
+#
+# To make use of this feature, uncomment the associated assignment and
+# add additional InfoLabels as strings.  Here is an example, although
+# both of the InfoLabels listed are part of the built-in set:
+#
+#    STATUS_LABELS = [
+#       "System.Date",
+#       "System.CPUTemperature"
+#     ]
+#
+#
+# See the Kodi wiki:
+#
+#    https://kodi.wiki/view/InfoLabels
+#
+# to see what InfoLabels are available; these can change from one
+# version of Kodi to another.
+#
+
+# List of additional InfoLabels to retrieve for status screen
+STATUS_LABELS = [
+   "System.OSVersionInfo"
+]
+
+# List of additional InfoLabels to retrieve for audio screen(s)
+# AUDIO_LABELS = []
+
+# List of additional InfoLabels to retrieve for video screen(s)
+# VIDEO_LABELS = []
+
+
+#
+# With v1.44, InfoBooleans can also be retrieved
+#
+#   https://kodi.wiki/view/List_of_boolean_conditions
+#
+# STATUS_BOOLEANS = []
+# AUDIO_BOOLEANS = []
+# VIDEO_BOOLEANS = []
+# SLIDESHOW_BOOLEANS = []
+
+
+# Paths to default thumbnails for audio and status screen.  These now
+# get resized, to whatever is specified for the audio screen used.
+KODI_THUMB      = "images/kodi_thumb.jpg"       # Kodi icon
+DEFAULT_AUDIO   = "images/music_icon2_lg.png"   # standard music file w/o artwork
+DEFAULT_AIRPLAY = "images/airplay_thumb.png"    # Airplay file w/o artwork
+
+
+# Audio Layout Names
+# ------------------
+#
+#   Specify the names of layouts that are available when playing an
+#   audio file.  The strings used must correspond to those used within
+#   the ALAYOUT dictionary defined below.
+#
+ALAYOUT_NAMES = [
+	"A_DEFAULT",      # artwork, elapsed time, track info
+	"A_FULLSCREEN",   # fullscreen cover only
+	"A_FULL_PROG",    # fullscreen cover with vertical progress bar
+	"FULL_ALTERNATE"  # fullscreen cover but including track info
+	#"A_NOTIME",      # similar to default, but dropping elapsed time
+]
+
+# Initial mode to use upon startup
+ALAYOUT_INITIAL = "FULL_ALTERNATE"
+
+
+# Video Layout Names
+# ------------------
+#
+#   Similar to audio screen modes above, except for the
+#   following tidbit ...
+#
+#   Should the layout for video screens be auto-selected (within the
+#   video_screens() function) based upon content of InfoLabel fields
+#   or InfoBooleans?  If so, then set VLAYOUT_AUTOSELECT to true.
+#
+#   If that flag is set to true, then VLAYOUT_NAMES should be
+#   populated with entries that match the heuristic if-then that is
+#   used by video_screens().
+#
+#   If that variable is to false or left undeclared, then video modes
+#   just form a cycle that gets advanced via the touch interrupt, as
+#   happens for the audio screens.
+#
+# VLAYOUT_AUTOSELECT = false
+
+
+VLAYOUT_NAMES = [
+	"V_DEFAULT",       # movie poster, movie name, elapsed time
+	"V_FULLSCREEN"     # movie poster
+]
+
+# Initial mode to use upon startup
+VLAYOUT_INITIAL = "V_DEFAULT"
+
+
+
+# Slideshow Layout Names
+# ----------------------
+#
+#   Similar to audio screen modes and video screen modes
+#
+
+SLAYOUT_AUTOSELECT = false
+SLAYOUT_NAMES = [ "DEFAULT" ]
+SLAYOUT_INITIAL = "DEFAULT"
+
+
+# Status/Info Layout Names
+# ------------------------
+#
+#   This section is entirely optional and thus can be left commented
+#   out unless multiple status/info screens are desired.  If one is
+#   content with just a single layout (shown either upon a touch
+#   interrupt or enabled whenever Kodi is idle), then a single-level
+#   layout table further below suffices.  (This becomes a single-level
+#   dictionary in Python.)
+#
+#   An example single-level status layout consists of entries such as
+#
+#    [STATUS_LAYOUT.thumb]
+#      posx = 5
+#      posy = 5
+#      size = 128
+#
+#    [[STATUS_LAYOUT.fields]]
+#      name = "version"
+#      posx = 145
+#      posy = 8
+#      font = "font_main"
+#      fill = "color_artist"
+#
+#
+#   If multiple status/info layouts are desired, then one MUST
+#   define both of the following variables:
+#
+#      STATUS_NAMES     array of strings specifying the name of
+#                       each status/info screen layout
+#
+#      STATUS_INITIAL   string specifying default layout
+#
+#   Additionally, one's startup script MUST then define an
+#   auto-selection function that decides which layout to use, given
+#   the results of retrieving STATUS_LABELS and STATUS_BOOLEANS from
+#   Kodi.
+#
+#   The auto-selection function would be similar in structure to
+#   video_select_default() in kodi_panel_display.py.  (One must make
+#   use of the kodi_panel_display namespace when making type or
+#   variable references, but the structure of the code itself is
+#   similar to that example function.)
+#
+#   The user would define the appropriate functionality in whatever
+#   startup script is used (e.g., kodi_panel_ili9341 or kodi_panel_fb)
+#   and point to it by overriding
+#
+#     kodi_panel_display.STATUS_SELECT_FUNC
+#
+#   Finally, the layout tables defined below for STATUS_LAYOUT must
+#   define the elements desired for each of the names given in the
+#   STATUS_NAMES array.  So, if that array of names is specified
+#   as "my_layoutA" and "my_layoutB", then the tables below will
+#   end up elements such as
+#
+#     [STATUS_LAYOUT.my_layoutA.thumb]  and
+#     [[STATUS_LAYOUT.my_layoutA.fields]]
+#
+#   and
+#
+#     [STATUS_LAYOUT.my_layoutB.thumb]  and
+#     [[STATUS_LAYOUT.my_layoutB.fields]]
+#
+# --------------------------------------------------------------------
+# STATUS_NAMES = []
+# STATUS_INITIAL = ""
+# STATUS_LAYOUT_AUTOSELECT = true
+
+
+# Codec Lookup
+#
+#   The codec_name lookup table can be augmented, or existing entries
+#   changed.  The style of entries is identical to what is done for
+#   the COLORS table below.
+#
+#[CODECS]
+
+
+
+# Colors
+#
+#   Specify color names to use elsewhere.  To know whether this
+#   dictionary needs to be consulted, all names MUST begin with
+#   "color_".  Color references without those initial characters just
+#   get passed through, without a lookup in this dictionary.
+#
+#   Color choices can be explored online at https://www.color-hex.com/
+#
+#   Time display / progress bar
+#   ---------------------------
+#   Used 'SpringGreen' for time color and progress bar for a while.
+#   Other colors tried:
+#
+#    SpringGreen
+#    #00FF7A        green brightened with blue, somewhat LED-ish
+#    #00A3CC        light-ish blue
+#    #00A0E3        blue, close to an LED
+#    #3399ff        skyblue
+#    #38bde8        Kodi logo's blue
+#
+#   Artist
+#   ------
+#    yellow
+#    sandybrown
+#    tan
+#    #d6bb97        one tint brighter than "tan"
+#    #e7d0b5        several tints brigher than "tan"
+#    #db9356        one tint darker than "sandybrown"
+#    #c7a579        one tint darker than "burlywood"
+#
+#    #e5d47d        one tint darker than lightgoldenrod
+#    #ccbc6f        two tints darker than lightgoldenrod
+#
+#    #ffd1a3
+#
+#
+#  Searching around for information regarding the colors of old
+#  monochrome monitors, I also came across an image that claimed
+#  the following hex values were representative:
+#
+#   Amber          #FFB000   (600 nm)
+#   Light Amber    #FFCC00   (593 nm)
+#
+#   Green 1        #33FF00   (524 nm)
+#   Apple ][       #33FF33
+#   Green 2        #00FF33   (506 nm)
+#   Apple IIc      #66FF66
+#   Green 3        #00FF66   (502 nm)
+#
+#
+#  After lots o'indecision, I decided to go with the light amber!
+#
+#
+[COLORS]
+ color_artist = '#ffcc00'    # artist name
+ color_gray   = '#676767'    # progress bar background (used 'dimgrey' for a while)
+ color_7S     = '#3399ff'    # 7-Segment LED color, progress bar
+
+
+
+
+# Font list
+#
+#   These entries create an array that kodi_panel processes at startup
+#   time, pulling the fonts into Pillow.  The font name that is
+#   assigned must match those that get used further below in the
+#   layouts.
+#
+#   A "font_main" MUST be defined and successfully loaded!
+#
+
+# Standard fonts
+[[fonts]]
+  name = "font_main"
+  path = "fonts/Roboto-Light.ttf"
+  size = 28
+  encoding = 'unic'
+
+# The "font_lg" below is what the layouts below all use for the
+# track title.  I am still trying to find a font that has good
+# readability at a distance while also being narrow (so as to display
+# a decent number of characters).
+
+[[fonts]]
+  name = "font_lg"
+  path = "fonts/RobotoCondensed-Light.ttf"
+#  path = "fonts/ArchivoNarrow-Medium.ttf"
+  size = 52
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_med"
+  path = "fonts/RobotoCondensed-Light.ttf"
+#  path = "fonts/ArchivoNarrow-Medium.ttf"
+  size = 48
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_sm"
+  path = "fonts/Roboto-Light.ttf"
+  size = 30
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_artist"
+  path = "fonts/Roboto-Medium.ttf"
+  size = 30
+  encoding = 'unic'
+
+[[fonts]]
+  name = "font_tiny"
+  path = "fonts/Roboto-Light.ttf"
+  size = 22
+  encoding = 'unic'
+
+# 7-segment font used for elapsed time and track number
+[[fonts]]
+  name = "font7S"
+  path = "fonts/DSEG7Classic-Regular.ttf"
+  size = 58
+
+[[fonts]]
+  name = "font7S_med"
+  path = "fonts/DSEG7Classic-Regular.ttf"
+  size = 36
+
+[[fonts]]
+  name = "font7S_sm"
+  path = "fonts/DSEG14Classic-Regular.ttf"
+  size = 22
+
+
+# --------------------------------------------------------------------
+# Shared Elements
+#
+#   The intent of the shared_element table (which becomes a dictionary
+#   in Python) is to define display elements that can be used by
+#   multiple layouts.
+#
+#   The details of each entry must correspond to what one would
+#   normally populate within a layout (e.g., a textfield needs a name,
+#   posx, posy, font, fill, etc).
+#
+#   With any layout that desired to use such an element, one
+#   references it by the name (key) given to it within the
+#   shared_element table.  For instance, defining a shared progress
+#   bar and elapsed time display could be done as follows:
+#
+#     [shared_element.elapsed_time]
+#      name = "MusicPlayer.Time"
+#      posx = 420
+#      posy = 36
+#      font = "font7S"
+#      fill = "color_7S"
+#      dynamic = 1
+#
+#     [shared_element.progress_bar]
+#      posx   = 420
+#      posy   = 8
+#      height = 12
+#      short_len = 196
+#      long_len  = 300
+#      color_fg = "color_7S"
+#      color_bg = "color_gray"
+#
+#   Given the above definitions, a layout can then include a shared
+#   element by refering to it by name (with no other keys listed).
+#   Here is an example, which includes one normal directly-specified
+#   element.
+#
+#     [A_LAYOUT.A_FULLSCREEN.thumb]
+#     center = 1
+#     size = 480
+#
+#     [A_LAYOUT.A_FULLSCREEN.prog]
+#      shared_element = "progress_bar"
+#
+#     [[A_LAYOUT.A_FULLSCREEN.fields]]
+#      shared_element = "elapsed_time"
+#
+#
+# [shared_element.replace_name]
+#
+
+
+
+# --------------------------------------------------------------------
+# Audio Screens
+#
+#   This data structure gets used by audio_screens() to control the
+#   layout and contents of any audio information screens.  Content can
+#   be omitted from a screen just by commenting it out here, particular
+#   for text fields.
+#
+#   Entries within the "fields" array generally correspond to text
+#   fields, but the introduction of the ELEMENT_CB lookup table (if
+#   customized) does permit for additional graphical elements.  Such
+#   customization does require a bit of Python programming.
+#
+#   Note that the available InfoLabels can be augmented via use of
+#   the AUDIO_LABELS list (see earlier in this file).  The same
+#   is true for InfoBooleans.
+#
+#   All entries in the "fields" array" MUST have a name (either
+#   specified explicitly or inherited from a shared element
+#   reference).  The 'name' key corresponds to ONE of the following:
+#
+#     - An exact match for one of the InfoLabels or Booleans retrieved
+#       from Kodi.  The entry is only rendered if the corresponding
+#       InfoLabel is non-empty.
+#
+#     - An exact match for one of the callback functions named in the
+#       ELEMENT_CB table or the STRING_CB table.  That match triggers
+#       execution of the corresponding callback function.
+#
+#     - An arbitrary string (not matching an InfoLabel or Boolean or
+#       any callback function names), provided that the entry ALSO
+#       specifies a 'format_str' key.  The interpolated format_str
+#       always gets rendered.
+#
+#   The execution path followed by any of the above naming choices is
+#   typically expected to yield a text string to display.  Remaining
+#   keys that control the rendering of that text are as follows:
+#
+#      posx     X-coordinate for field (horizontal position)
+#      posy     Y-coordinate for field (vertical position)
+#      font     Font to use for rendering
+#      fill     Text color
+#
+#      dynamic  A boolean flag to true/1 to indicate that the
+#               field should be considered dynamic, re-drawn
+#               upon every update loop.
+#
+#      prefix   Optional string ahead of InfoLabel text
+#      suffix   Optional string following InfoLabel text
+#
+#      format_str Alternatively, rather than using prefix and suffix,
+#                 and if one is NOT triggering a callback function, a
+#                 formatting string can be specified.  The string
+#                 should contain one or more InfoLabels to substitute,
+#                 enclosed within curly braces.  See the status layout
+#                 screen text fields for examples.
+#
+#                 Terms to be substituted can also make use of any
+#                 entries defined within the string-manipulation
+#                 callback table (see the STRING_CB dictionary in
+#                 kodi_panel_display.py)
+#
+#      trunc    Flag indicating that single line string should
+#               truncated at the right-hand edge of the display
+#
+#      wrap     Flag indication that the string should be wrapped.
+#               When wrapping, further information is needed...
+#
+#      max_width  Maximum horizontal width string can occupy
+#      max_lines  Maximum number of lines to occupy; additional
+#                 text gets truncated on the final line
+#
+#      label    Separate text to display, with an independent
+#               font and independent fill color, when the InfoLabel
+#               is non-empty.  Labels require several additional
+#               keys, all of which start with "l".  These are
+#               still keys at the same level in the field's
+#               dictionary.
+#
+#      lposx    Horizontal position for label string
+#      lpoxy    Vertical position for label string
+#      lfont    Font for label string
+#      lfill    Font fill color for label string
+#
+#      exclude  A string or an array strings that, if the text to be
+#               displayed exactly matches, causes the element to not
+#               be drawn.
+#
+#      display_if / display_ifnot
+#               An alternative mechanism for controlling element
+#               display.  The value must be a two-element list
+#               providing two strings.
+#
+#               The first string must be either an InfoLabel or a
+#               string callback function (entry in STRING_CB).
+#
+#               The second string is then compared for equality (or
+#               inequality, when using ifnot) against the string
+#               resulting from "evaluating" the InfoLabel or callback
+#               function.
+#
+#               Examples:
+#
+#                 display_if = [ "MusicPlayer.TrackNumber", "02" ]
+#                 display_if = [ "Player.Paused", "true" ]
+#
+#
+#   Internal callbacks are used for the 'codec' and 'artist' text
+#   fields.  End-user scripts are free to augment or modify the
+#   callback tables (look for ELEMENT_CB and STRING_CB).
+#
+# --------------------------------------------------------------------
+#
+# Background
+#
+#   Every layout, including the status screens, can optional specify a
+#   background entry at the top-level.  A few examples are as follows:
+#
+#     [A_LAYOUT.A_FULLSCREEN.background]
+#      fill = "navy"        # uniform fill color
+#
+#   or
+#
+#     [A_LAYOUT.A_FULLSCREEN.background]
+#      rectangle = 1        # rectangle with frame/border
+#      fill = "navy"
+#      outline = "yellow"
+#      width = 3
+#
+#   or
+#
+#     [STATUS_LAYOUT.background]
+#      image = "images/mickey-sprite.png"   # assumed sized correctly
+#
+#
+#   As shown, the entry must be named "background".
+#
+# --------------------------------------------------------------------
+
+
+#
+# Default audio info screen
+#
+
+# Note that one can optionally specify a display_if or display_ifnot
+# expression for the cover art thumbnail (thumb)
+[A_LAYOUT.A_DEFAULT.thumb]
+  posx = 3
+  posy = 4
+  size = 405
+
+  # If artwork is smaller than the above size, should it be centered
+  # where the fullsize artwork would have been placed?
+  center_sm = 1
+
+  # Normally, artwork only gets reduced in size.  Setting this flag
+  # enables upsizing to occur.  Note that the result may be blocky or
+  # blurry in appearance.
+  # enlarge = 1
+
+# Note that one can optionally specify a display_if or display_ifnot
+# expression for the progress bar (prog)
+[A_LAYOUT.A_DEFAULT.prog]
+posx   = 420     # upper-left corner x position
+posy   = 8       # upper-left corner y position
+height = 12      # pixel height
+short_len = 196  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+color_fg = "color_7S"
+color_bg = "color_gray"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Time"
+posx = 420
+posy = 36
+font = "font7S"
+fill = "color_7S"
+dynamic = 1
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 420
+posy = 132
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 420
+  lposy = 104
+  lfont = "font_tiny"
+  lfill = "white"
+
+
+#
+# This group of fields all appear to the right of the cover art
+# and track number, in a small font.
+#
+
+# The duration NEVER has decending characters, so it can be somewhat
+# closer to the next row
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Duration"
+posx = 580
+posy = 104
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "codec"   # internal callback
+posx = 580
+posy = 132
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Genre"
+posx = 580
+posy = 160
+font = "font_tiny"
+fill = "white"
+trunc = 1
+
+# NOTE: For UPnP/DLNA playback, Kodi Leia doesn't seem to capture
+#   dc:date.  Fortunately, the InfoLabel is left blank, unlike what
+#   happens for videos.
+[[A_LAYOUT.A_DEFAULT.fields]]
+name = "MusicPlayer.Year"
+posx = 580
+posy = 188
+font = "font_tiny"
+fill = "white"
+
+
+#
+# Finally, the track title in this layout appears below the cover art...
+#
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "MusicPlayer.Title"
+posx  = 4
+posy  = 408
+font  = "font_lg"
+fill  = "white"
+trunc = 1
+
+
+#
+# ... while the album title and artist are moved over to the right of
+# the cover.
+#
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "artist"   # internal callback
+posx  = 420
+posy  = 240
+font  = "font_artist"
+fill  = "color_artist"
+trunc = 1
+# Drop artist display if "Unknown"
+exclude = "Unknown"
+
+[[A_LAYOUT.A_DEFAULT.fields]]
+name  = "MusicPlayer.Album"
+posx  = 420
+posy  = 280
+font  = "font_sm"
+fill  = "white"
+wrap  = 1
+max_width = 375
+max_lines = 3
+
+
+
+# --------------------------------------------------------------------
+#
+# Fullscreen artwork (by itself)
+#
+
+[A_LAYOUT.A_FULLSCREEN.thumb]
+center = 1
+size = 400
+
+
+# --------------------------------------------------------------------
+#
+# Fullscreen artwork with progress bar and (a late addition) track num
+#
+[A_LAYOUT.A_FULL_PROG.thumb]
+center = 1
+size = 400
+
+[A_LAYOUT.A_FULL_PROG.prog]
+vertical = 1
+posx = 786    # upper-left corner x-position
+posy = 1      # upper-left corner y-position
+len  = 14     # pixel width for a vertical bar
+height = 478  # total height for the vertical bar
+color_fg = "color_7S"
+color_bg = "color_gray"
+
+[[A_LAYOUT.A_FULL_PROG.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 4
+posy = 32
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 4
+  lposy = 4
+  lfont = "font_tiny"
+  lfill = "white"
+
+
+# --------------------------------------------------------------------
+#
+# Fullscreen artwork with all other info as well
+#
+
+[A_LAYOUT.FULL_ALTERNATE.thumb]
+posx = 0
+posy = 0
+size = 400
+center_sm = 1
+
+# Vertical progress bar
+#
+#    Wrap width for text fields would have to be modified
+#    to ensure they don't collide with a vertical bar
+#
+# [A_LAYOUT.FULL_ALTERNATE.prog]
+# vertical = 1
+# posx = 786    # upper-left corner x-position
+# posy = 1      # upper-left corner y-position
+# len  = 14     # pixel width for a vertical bar
+# height = 478  # total height for the vertical bar
+# color_fg = "color_7S"
+# color_bg = "color_gray"
+# Horizontal progress bar
+[A_LAYOUT.FULL_ALTERNATE.prog]
+posx = 410     # upper-left corner x-position
+posy = 9       # upper-left corner y-position
+height = 6
+short_len = 300
+color_fg = "color_7S"
+color_bg = "color_gray"
+ circle = 6   # radius
+ circle_fill = "white"
+ circle_outline = "white"
+
+#
+# Track Elapsed Time
+#
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "long_time_display"
+posx = 410
+posy = 30
+format_str = "{MusicPlayer.Time}"
+display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
+font = "font7S"
+fill = "color_7S"
+dynamic = 1
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "short_time_display"
+posx = 410
+posy = 30
+format_str = "{MusicPlayer.Time}"
+display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
+font = "font7S"
+fill = "color_7S"
+dynamic = 1
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 653
+posy = 53
+display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
+font = "font7S_med"
+fill = "color_7S"
+  # Label only appears if the InfoLabel specified is present and non-empty
+  label = "Track"
+  lposx = 653
+  lposy = 25
+  lfont = "font_tiny"
+  lfill = "white"
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "codec"   # internal callback
+posx = 410
+posy = 98
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "codec_details"
+format_str = "{MusicPlayer.SampleRate}/{MusicPlayer.BitsPerSample}"
+posx = 710
+posy = 98
+font = "font_tiny"
+fill = "white"
+anchor = "ra"
+max_width = 120
+max_lines = 1
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "MusicPlayer.Genre"
+posx = 730  # was 590
+posy = 98
+font = "font_tiny"
+fill = "white"
+wrap = 1
+anchor = "ra"
+max_width = 600
+max_lines = 1
+
+
+# Draw a line
+# ------------------------------------------------------------------------
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name = "thin_line"
+posx = 410
+posy = 130
+endx = 710
+endy = 130
+fill = "gray"
+# ------------------------------------------------------------------------
+
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "artist"   # internal callback
+posx  = 730
+posy  = 5  # was 150
+font  = "font_artist"
+fill  = "color_artist"
+trunc = 1
+# Drop artist display if "Unknown"
+exclude = "Unknown"
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "MusicPlayer.Album"
+posx  = 730
+posy  = 50 # was 195
+font  = "font_sm"
+fill  = "white"
+wrap  = 1
+max_width = 550
+max_lines = 1
+
+[[A_LAYOUT.FULL_ALTERNATE.fields]]
+name  = "MusicPlayer.Title"
+posx  = 410
+posy  = 145
+font  = "font_med"
+fill  = "white"
+wrap  = 1
+max_width = 860
+max_lines = 4
+
+
+# --------------------------------------------------------------------
+#
+# The A_NOTIME screen serves primarily as an example, It is similar
+# to the default (audio) info screen, but without the elapsed time
+# display.
+#
+
+[A_LAYOUT.A_NOTIME.thumb]   # Artwork
+posx = 3
+posy = 4
+size = 405
+center_sm = 1
+
+[A_LAYOUT.A_NOTIME.prog]    # Progress Bar
+posx   = 420     # upper-left corner x position
+posy   = 8       # upper-left corner y position
+height = 12      # pixel height
+short_len = 300  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+color_fg = "color_7S"
+color_bg = "color_gray"
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name = "MusicPlayer.TrackNumber"
+posx = 420
+posy = 62
+font = "font7S"
+fill = "color_7S"
+  # Label only appears if the field is present and non-empty
+  label = "Track"
+  lposx = 420
+  lposy = 34
+  lfont = "font_tiny"
+  lfill = "white"
+
+#
+# This group of fields all appear to the right of the cover art
+# and track number, in a small font.
+#
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name = "MusicPlayer.Duration"
+posx = 580
+posy = 34
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name = "codec"   # internal callback
+posx = 580
+posy = 62
+font = "font_tiny"
+fill = "white"
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name = "MusicPlayer.Genre"
+posx = 580
+posy = 90
+font = "font_tiny"
+fill = "white"
+trunc = 1
+
+# NOTE: For UPnP/DLNA playback, Kodi Leia doesn't seem to capture
+#   dc:date.  Fortunately, the InfoLabel is left blank, unlike what
+#   happens for videos.
+[[A_LAYOUT.A_NOTIME.fields]]
+name = "MusicPlayer.Year"
+posx = 580
+posy = 118
+font = "font_tiny"
+fill = "white"
+
+
+#
+# Finally, the track title in this layout appears below the cover art...
+#
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name  = "MusicPlayer.Title"
+posx  = 4
+posy  = 408
+font  = "font_lg"
+fill  = "white"
+trunc = 1
+
+
+#
+# ... while the album title and artist are moved over to the right of
+# the cover.
+#
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name  = "artist"   # internal callback
+posx  = 420
+posy  = 240
+font  = "font_artist"
+fill  = "color_artist"
+trunc = 1
+
+
+[[A_LAYOUT.A_NOTIME.fields]]
+name  = "MusicPlayer.Album"
+posx  = 420
+posy  = 280
+font  = "font_sm"
+fill  = "white"
+wrap  = 1
+max_width = 375
+max_lines = 4
+
+
+# --------------------------------------------------------------------
+# Video Screens
+#
+#   This data structure gets used by video_screens() to control the
+#   layout and contents of any audio information screens.  Content can
+#   be omitted from a screen just by commenting it out here, particular
+#   for text fields.
+#
+#   Top-level entries within this V_LAYOUT table MUST have names that
+#   correspond to the VLAYOUT_NAMES list specified earlier in this
+#   file.
+#
+#   If a completely new InfoLabel is desired, then one must also
+#   augment the VIDEO_LABELS list (see earlier in this file).
+#
+# --------------------------------------------------------------------
+
+#
+# Default video info
+#
+
+[V_LAYOUT.V_DEFAULT.thumb]   # artwork / movie poster
+posx = 0
+posy = 0
+width  = 320
+height = 400
+center_sm = 1
+
+
+[V_LAYOUT.V_DEFAULT.prog]    # Progress Bar
+posx   = 340     # upper-left corner x position
+posy   = 7       # upper-left corner y position
+height = 8       # pixel height
+short_len = 194  # length when elapsed time matches 00:00 (min, seconds)
+long_len  = 300  # length when elapsed time matches 00:00:00 (hrs, mins, seconds)
+color_fg = "color_7S"
+color_bg = "color_gray"
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name = "VideoPlayer.Time"
+posx = 340
+posy = 31
+font = "font7S"
+fill = "color_7S"
+dynamic = 1
+
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Title"
+posx  = 340
+posy  = 100
+font  = "font_lg"
+fill  = "white"
+wrap  = 1
+max_width = 445
+max_lines = 3
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Genre"
+posx  = 340
+posy  = 390
+font  = "font_sm"
+fill  = "white"
+trunc = 1
+
+# NOTE:
+#
+#  When playing a movie via UPnP/DLNA, Kodi Leia doesn't seem to get
+#  the release year parsed correctly.  All movies just show a Year of
+#  1969!  If that is your primary path of playing video, perhaps this
+#  field should just be commented out.  That's effectively what the
+#  display_ifnot test below accomplishes.
+#
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Year"
+posx  = 340
+posy  = 430
+font  = "font_sm"
+fill  = "white"
+display_ifnot = [ "upnp_playback", "1" ]
+
+[[V_LAYOUT.V_DEFAULT.fields]]
+name  = "VideoPlayer.Rating"
+posx  = 480
+posy  = 430
+font  = "font_sm"
+fill  = "white"
+
+
+#
+# Fullscreen movie poster only
+#
+
+[V_LAYOUT.V_FULLSCREEN.thumb]   # artwork / movie poster
+width  = 320
+height = 480
+center = 1
+
+
+
+# --------------------------------------------------------------------
+# Status Screen Content
+#
+#   Similar to audio layout above, but used for the status screen
+#   that appears following a screen touch when idle.  The screen
+#   gets drawn by status_screen().
+#
+#   Note that the dynamic flag for entries below (if present) is
+#   just ignored for the status screen.  Everything is redrawn
+#   on each update loop.
+#
+#   Internal callbacks are used for several fields.
+#
+
+[STATUS_LAYOUT.thumb]   # Kodi logo
+posx = 5
+posy = 5
+size = 128
+
+[[STATUS_LAYOUT.fields]]
+name = "version"        # internal callback
+posx = 145
+posy = 8
+font = "font_main"
+fill = "yellow"
+
+
+[[STATUS_LAYOUT.fields]]
+name = "summary"
+posx = 145
+posy = 40
+font = "font_main"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "time_hrmin"     # internal callback
+posx = 145
+posy = 90
+font = "font7S"
+fill = "#00FF78"
+smfont = "font7S_sm"    # used for AM / PM
+
+# The remaining fields all get populated via a special JSON-RPC query
+# to Kodi specifically for the status screen.  See STATUS_LABELS above.
+
+[[STATUS_LAYOUT.fields]]
+name = "System.Date"
+posx = 5
+posy = 170
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.Uptime"
+posx = 5
+posy = 212
+format_str = "Up: {System.Uptime}"
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.CPUTemperature"
+posx = 5
+posy = 254
+format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "kodi_version"  # internal callback
+posx = 5
+posy = 296
+font = "font_sm"
+fill = "white"
+
+[[STATUS_LAYOUT.fields]]
+name = "System.OSVersionInfo"
+posx = 5
+posy = 338
+font = "font_sm"
+fill = "white"
+
+
+# --------------------------------------------------------------------
+# Slideshow Screen Content
+#
+#   Similar to audio layout above, but used when a photo slideshow
+#   is in progress.
+#
+
+[S_LAYOUT.DEFAULT.background]
+fill = "navy"
+
+# This example shows the use of an arbitrary `name` when
+# specifying a `format_str`
+[[S_LAYOUT.DEFAULT.fields]]
+name = "greeting"
+posx = 5
+posy = 0
+format_str = "Slideshow"
+font = "font_lg"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.CameraModel"
+posx = 5
+posy = 130
+prefix = "Camera: "
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.Aperture"
+posx = 5
+posy = 170
+prefix = "Aperture: "
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.ExposureTime"
+posx = 5
+posy = 210
+prefix = "Exposure: "
+font = "font_sm"
+fill = "white"
+
+[[S_LAYOUT.DEFAULT.fields]]
+name = "Slideshow.Resolution"
+posx = 5
+posy = 250
+prefix = "Resolution: "
+font = "font_sm"
+fill = "white"
