@@ -53,7 +53,7 @@ import traceback
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.50"
+PANEL_VER = "v1.51"
 
 #
 # Audio/Video codec lookup table
@@ -660,11 +660,6 @@ USE_TOUCH = config.settings.get("USE_TOUCH", False)
 TOUCH_INT = config.settings.get("TOUCH_INT", 0)
 TOUCH_PULLUP   = config.settings.get("TOUCH_PULLUP", False)
 TOUCH_DEBOUNCE = config.settings.get("TOUCH_DEBOUNCE", 700)  # milliseconds
-
-# Should the touch_callback() ISR attempt to invoke update_display()
-# directly?  Having the ISR take too long to execute is problematic on
-# the RPi Zero.
-TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE", False)
 
 # Internal state variables used to manage screen presses
 _kodi_connected = False
@@ -3004,11 +2999,7 @@ def touch_callback(channel):
     global _screen_press, _kodi_connected
     print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
-        if TOUCH_CALL_UPDATE:
-            update_display()
-        else:
-            if _kodi_connected:
-                _screen_press.set()
+        _screen_press.set()
     return
 
 
