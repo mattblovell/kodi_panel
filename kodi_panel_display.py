@@ -50,6 +50,10 @@ import threading
 import warnings
 import traceback
 
+# asyncio and evdev modules for USB touchscreen support
+import asyncio
+from evdev import InputDevice, categorize, ecodes
+
 # kodi_panel settings
 import config
 
@@ -3022,9 +3026,9 @@ def main(device_handle):
     logging.basicConfig()
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    # setup T_IRQ as a GPIO interrupt, if enabled
+    # setup T_IRQ as a GPIO interrupt, if enabled, for resistive touchscreen
     if (USE_TOUCH and not DEMO_MODE):
-        print(datetime.now(), "Setting up touchscreen interrupt")
+        print(datetime.now(), "Setting up GPIO pin for touchscreen interrupt")
         GPIO.setmode(GPIO.BCM)
         if (TOUCH_PULLUP):
             GPIO.setup(TOUCH_INT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -3130,5 +3134,8 @@ def shutdown():
         print(datetime.now(), "Removing touchscreen interrupt")
         GPIO.remove_event_detect(TOUCH_INT)
         GPIO.cleanup()
-    print(datetime.now(), "Stopping")
-    exit(0)
+    # Clear screen
+    draw.rectangle(
+        [(0, 0), (_frame_size[0], _frame_size[1])], 'black', 'black')
+    device.display(image)
+    print(datetime.now(), "Stopping kodi_panel")
