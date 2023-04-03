@@ -2707,7 +2707,7 @@ def screen_off():
 # The argument provides a mechanism for touch_int() to force
 # a direct update.
 #
-def update_display(touched=False):
+def update_display():
     global _kodi_playing
     global _last_thumb, _static_image
     global _screen_press, _screen_active, _screen_offtime
@@ -2779,7 +2779,7 @@ def update_display(touched=False):
         _last_thumb = None
         _static_image = None
 
-        if _screen_press.is_set() or touched:
+        if _screen_press.is_set():
             _screen_press.clear()
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
@@ -2836,7 +2836,7 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press.is_set() or touched:
+        if _screen_press.is_set():
             _screen_press.clear()
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
@@ -2889,7 +2889,7 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press.is_set() or touched:
+        if _screen_press.is_set():
             _screen_press.clear()
             if not AUDIO_LAYOUT_AUTOSELECT:
                 audio_dmode = audio_dmode.next()
@@ -2947,7 +2947,7 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press.is_set() or touched:
+        if _screen_press.is_set():
             _screen_press.clear()
             if not SLIDESHOW_LAYOUT_AUTOSELECT:
                 slide_dmode = slide_dmode.next()
@@ -3005,7 +3005,7 @@ def touch_callback(channel):
     print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
         if TOUCH_CALL_UPDATE:
-            update_display(touched=True)
+            update_display()
         else:
             if _kodi_connected:
                 _screen_press.set()
