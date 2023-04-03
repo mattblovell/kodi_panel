@@ -45,8 +45,13 @@ DISPLAY_HEIGHT = 400
 #   Waveshare 3.5" LCD (B):  GPIO17 (physical pin 11)
 #   Waveshare 4" HDMI (H):   GPIO25 (physical pin 22)
 #
-USE_TOUCH = true   # Set false to disable interrupt use
-TOUCH_INT = 25
+USE_TOUCH = false   # Set false to disable interrupt use
+#TOUCH_INT = 25
+
+# Use ayncio and evdev to capture touch events from a
+# USB touchscreen.
+USE_EVDEV_TOUCH = true  
+
 
 # On RPi Zero, the debounce time seems like it needs to be longer to
 # avoid a single screen press being interpreted as two events.
@@ -777,10 +782,10 @@ size = 400
 
 [A_LAYOUT.A_FULL_PROG.prog]
 vertical = 1
-posx = 786    # upper-left corner x-position
+posx = 1266   # upper-left corner x-position
 posy = 1      # upper-left corner y-position
 len  = 14     # pixel width for a vertical bar
-height = 478  # total height for the vertical bar
+height = 400  # total height for the vertical bar
 color_fg = "color_7S"
 color_bg = "color_gray"
 
