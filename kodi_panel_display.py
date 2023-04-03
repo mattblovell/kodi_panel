@@ -669,8 +669,10 @@ TOUCH_CALL_UPDATE = config.settings.get("TOUCH_CALL_UPDATE", False)
 # Internal state variables used to manage screen presses
 _kodi_connected = False
 _kodi_playing   = False
-_screen_press   = False
 _screen_active  = False
+
+# Touchscreen state
+_screen_press = threading.Event()
 
 # status screen waketime, in seconds
 _screen_wake = config.settings.get("SCREEN_WAKE_TIME", 25)
@@ -1838,7 +1840,7 @@ def draw_fields(image, draw, layout, info,
         else:
             anchor_pos = "la"
 
-            
+
         # Skip over the fields that aren't desired for this
         # invocation, based on static vs dynamic.
         #
@@ -2777,8 +2779,8 @@ def update_display(touched=False):
         _last_thumb = None
         _static_image = None
 
-        if _screen_press or touched:
-            _screen_press = False
+        if _screen_press.is_set() or touched:
+            _screen_press.clear()
             _screen_active = True
             _screen_offtime = datetime.now() + timedelta(seconds=_screen_wake)
 
@@ -2834,8 +2836,8 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press or touched:
-            _screen_press = False
+        if _screen_press.is_set() or touched:
+            _screen_press.clear()
             if not VIDEO_LAYOUT_AUTOSELECT:
                 video_dmode = video_dmode.next()
                 print(datetime.now(), "video display mode now", video_dmode.name)
@@ -2887,8 +2889,8 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press or touched:
-            _screen_press = False
+        if _screen_press.is_set() or touched:
+            _screen_press.clear()
             if not AUDIO_LAYOUT_AUTOSELECT:
                 audio_dmode = audio_dmode.next()
                 print(datetime.now(), "audio display mode now", audio_dmode.name)
@@ -2945,8 +2947,8 @@ def update_display(touched=False):
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
-        if _screen_press or touched:
-            _screen_press = False
+        if _screen_press.is_set() or touched:
+            _screen_press.clear()
             if not SLIDESHOW_LAYOUT_AUTOSELECT:
                 slide_dmode = slide_dmode.next()
                 print(datetime.now(), "slideshow display mode now", slide_dmode.name)
@@ -3000,12 +3002,13 @@ def update_display(touched=False):
 #
 def touch_callback(channel):
     global _screen_press, _kodi_connected
-    # print(datetime.now(), "Touchscreen pressed")
+    print(datetime.now(), "Touchscreen pressed")
     if _kodi_connected:
         if TOUCH_CALL_UPDATE:
             update_display(touched=True)
         else:
-            _screen_press = _kodi_connected
+            if _kodi_connected:
+                _screen_press.set()
     return
 
 
@@ -3084,14 +3087,17 @@ def main(device_handle):
 
         # Loop until Kodi goes away
         _kodi_connected = True
-        _screen_press = False
+        _screen_press.clear()
         while True:
             start_time = time.time()
             if DEMO_MODE:
                 keys = device._pygame.key.get_pressed()
                 if keys[device._pygame.K_SPACE]:
-                    _screen_press = True
+                    _screen_press.set()
                     print(datetime.now(), "Touchscreen pressed (emulated)")
+
+            if _screen_press.is_set():
+                print(datetime.now(), "Top-of-loop, screen was pressed")
 
             try:
                 update_display()
@@ -3100,7 +3106,7 @@ def main(device_handle):
                 print(datetime.now(), "Communication disrupted!")
                 _kodi_connected = False
                 _kodi_playing = False
-                _screen_press = False
+                _screen_press.clear()
                 if _lock.locked():  _lock.release()
                 break
             except (SystemExit, KeyboardInterrupt):
@@ -3123,9 +3129,9 @@ def main(device_handle):
 
             elapsed = time.time() - start_time
             if elapsed < 0.985:
-                time.sleep(0.985 - elapsed)
+                _screen_press.wait(0.985 - elapsed)
             else:
-                time.sleep(1.0)
+                _screen_press.wait(1.0)
 
 
 def shutdown():
