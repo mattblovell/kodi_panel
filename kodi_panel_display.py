@@ -57,7 +57,7 @@ from evdev import InputDevice, categorize, ecodes
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.51"
+PANEL_VER = "v1.52"
 
 #
 # Audio/Video codec lookup table
@@ -1988,6 +1988,7 @@ def draw_fields(image, draw, layout, info,
 STATUS_SELECT_FUNC = None
 
 
+
 # Idle status/info screen (often shown upon a screen press)
 #
 #   First two arguments are Pillow Image and ImageDraw objects.
@@ -2832,6 +2833,9 @@ def update_display():
         # Video is playing
         _kodi_playing = True
 
+        # Should playing stop, do NOT go back to the status screen accidentally
+        _screen_offtime = datetime.now()
+
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
         # mode-specific.
@@ -2884,6 +2888,9 @@ def update_display():
     elif (response['result'][0]['type'] == 'audio' and AUDIO_ENABLED):
         # Audio is playing!
         _kodi_playing = True
+
+        # Should playing stop, do NOT go back to the status screen accidentally
+        _screen_offtime = datetime.now()
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
@@ -2942,6 +2949,9 @@ def update_display():
     elif (response['result'][0]['type'] == 'picture' and SLIDESHOW_ENABLED):
         # Photo slideshow is in-progress!
         _kodi_playing = True
+
+        # Should playing stop, do NOT go back to the status screen accidentally
+        _screen_offtime = datetime.now()
 
         # Change display modes upon any screen press, forcing a
         # re-fetch of any artwork.  Clear other state that may also be
