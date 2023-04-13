@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------
-# Setup file for kodi_panel using 800x480 resolution
+# Setup file for kodi_panel using 1280x400 resolution
 #
 #   For documentation regarding TOML (Tom's Obvious Minimal Language),
 #   see references at https://toml.io/en/
@@ -156,7 +156,7 @@ STATUS_LABELS = [
 
 # Paths to default thumbnails for audio and status screen.  These now
 # get resized, to whatever is specified for the audio screen used.
-KODI_THUMB      = "images/kodi_thumb.jpg"       # Kodi icon
+KODI_THUMB      = "images/kodi_large_blk.png"       # Kodi icon
 DEFAULT_AUDIO   = "images/music_icon2_lg.png"   # standard music file w/o artwork
 DEFAULT_AIRPLAY = "images/airplay_thumb.png"    # Airplay file w/o artwork
 
@@ -636,9 +636,9 @@ SLAYOUT_INITIAL = "DEFAULT"
 # Note that one can optionally specify a display_if or display_ifnot
 # expression for the cover art thumbnail (thumb)
 [A_LAYOUT.A_DEFAULT.thumb]
-  posx = 3
-  posy = 4
-  size = 405
+  posx = 0
+  posy = 0
+  size = 400
 
   # If artwork is smaller than the above size, should it be centered
   # where the fullsize artwork would have been placed?
@@ -1158,8 +1158,8 @@ fill  = "white"
 #
 
 [V_LAYOUT.V_FULLSCREEN.thumb]   # artwork / movie poster
-width  = 320
-height = 480
+width  = 400
+height = 400
 center = 1
 
 
@@ -1179,13 +1179,14 @@ center = 1
 #
 
 [STATUS_LAYOUT.thumb]   # Kodi logo
-posx = 5
-posy = 5
-size = 128
+posx = 0
+posy = 0
+size = 400
+enlarge = 1
 
 [[STATUS_LAYOUT.fields]]
 name = "version"        # internal callback
-posx = 145
+posx = 420
 posy = 8
 font = "font_main"
 fill = "yellow"
@@ -1193,14 +1194,14 @@ fill = "yellow"
 
 [[STATUS_LAYOUT.fields]]
 name = "summary"
-posx = 145
+posx = 420
 posy = 40
 font = "font_main"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "time_hrmin"     # internal callback
-posx = 145
+posx = 450
 posy = 90
 font = "font7S"
 fill = "#00FF78"
@@ -1211,14 +1212,14 @@ smfont = "font7S_sm"    # used for AM / PM
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Date"
-posx = 5
+posx = 420
 posy = 170
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.Uptime"
-posx = 5
+posx = 420
 posy = 212
 format_str = "Up: {System.Uptime}"
 font = "font_sm"
@@ -1226,7 +1227,7 @@ fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.CPUTemperature"
-posx = 5
+posx = 420
 posy = 254
 format_str = "CPU: {System.CPUTemperature}, {System.CpuFrequency}"
 font = "font_sm"
@@ -1234,14 +1235,14 @@ fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "kodi_version"  # internal callback
-posx = 5
+posx = 420
 posy = 296
 font = "font_sm"
 fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "System.OSVersionInfo"
-posx = 5
+posx = 420
 posy = 338
 font = "font_sm"
 fill = "white"
