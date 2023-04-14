@@ -397,19 +397,19 @@ SLAYOUT_INITIAL = "DEFAULT"
   name = "font_med"
   path = "fonts/RobotoCondensed-Light.ttf"
 #  path = "fonts/ArchivoNarrow-Medium.ttf"
-  size = 48
+  size = 52
   encoding = 'unic'
 
 [[fonts]]
   name = "font_sm"
   path = "fonts/Roboto-Light.ttf"
-  size = 30
+  size = 32
   encoding = 'unic'
 
 [[fonts]]
   name = "font_artist"
-  path = "fonts/Roboto-Medium.ttf"
-  size = 30
+  path = "fonts/Roboto-Light.ttf" #"fonts/Roboto-Medium.ttf"
+  size = 40
   encoding = 'unic'
 
 [[fonts]]
@@ -829,7 +829,7 @@ center_sm = 1
 # color_bg = "color_gray"
 # Horizontal progress bar
 [A_LAYOUT.FULL_ALTERNATE.prog]
-posx = 410     # upper-left corner x-position
+posx = 412     # upper-left corner x-position
 posy = 9       # upper-left corner y-position
 height = 6
 short_len = 300
@@ -845,7 +845,7 @@ color_bg = "color_gray"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "long_time_display"
-posx = 410
+posx = 412
 posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "2" ]  # test MusicPlayer.Duration
@@ -855,7 +855,7 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
-posx = 410
+posx = 412
 posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
@@ -881,7 +881,7 @@ fill = "color_7S"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec"   # internal callback
-posx = 410
+posx = 412
 posy = 98
 font = "font_tiny"
 fill = "white"
@@ -901,9 +901,9 @@ max_lines = 1
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.Genre"
 posx = 730  # was 590
-posy = 98
+posy = 9 # was 98
 font = "font_tiny"
-fill = "white"
+fill = "#aaaaaa"
 wrap = 1
 anchor = "ra"
 max_width = 600
@@ -914,7 +914,7 @@ max_lines = 1
 # ------------------------------------------------------------------------
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "thin_line"
-posx = 410
+posx = 412
 posy = 130
 endx = 710
 endy = 130
@@ -925,32 +925,34 @@ fill = "gray"
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "artist"   # internal callback
 posx  = 730
-posy  = 5  # was 150
+posy  = 39  # was 5
 font  = "font_artist"
 fill  = "color_artist"
-trunc = 1
+wrap  = 1
+max_width = 530
+max_lines = 2
 # Drop artist display if "Unknown"
 exclude = "Unknown"
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Album"
-posx  = 730
-posy  = 50 # was 195
+posx  = 412
+posy  = 150
 font  = "font_sm"
 fill  = "white"
 wrap  = 1
-max_width = 550
+max_width = 860
 max_lines = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name  = "MusicPlayer.Title"
-posx  = 410
-posy  = 145
+posx  = 412
+posy  = 200
 font  = "font_med"
 fill  = "white"
 wrap  = 1
-max_width = 860
-max_lines = 4
+max_width = 855
+max_lines = 3
 
 
 # --------------------------------------------------------------------
