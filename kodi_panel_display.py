@@ -57,7 +57,7 @@ from evdev import InputDevice, categorize, ecodes
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.52"
+PANEL_VER = "v1.53"
 
 #
 # Audio/Video codec lookup table
@@ -2926,6 +2926,13 @@ def update_display():
             track_info = response[0]['result']
             if len(AUDIO_BOOLEANS):
                 track_info.update(response[1]['result'])
+
+            # JRiver uses semicolons to separate lists such as Artists.
+            # Let's insert a trailing space such that word wrapping can
+            # function better.
+            for key, value in track_info.items():
+                if type(value) == str and ";" in value:
+                    track_info[key] = re.sub(';','; ', value)
 
             if ((# There seems to be a hiccup in DLNA/UPnP playback in
                 # which a track change (or stopping playback) causes a

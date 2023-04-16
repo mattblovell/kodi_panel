@@ -1203,7 +1203,7 @@ fill = "white"
 
 [[STATUS_LAYOUT.fields]]
 name = "time_hrmin"     # internal callback
-posx = 450
+posx = 470
 posy = 90
 font = "font7S"
 fill = "#00FF78"
