@@ -84,9 +84,15 @@ USE_BACKLIGHT = true
 # As of Dec 2020, only kodi_panel_fb.py examines these settings.
 # They are not used within kodi_panel_display itself
 #
-USE_HW_PWM = true
-HW_PWM_FREQ  = 1000000 # results in clock frequency of 1 kHz
-HW_PWM_LEVEL = 0.42
+#USE_HW_PWM = true
+#HW_PWM_INVERSE = true
+#HW_PWM_FREQ  = 9500000
+#HW_PWM_LEVEL = 0.40
+
+USE_PERI_PWM = true
+PERI_PWM_INVERSE = true
+PERI_PWM_FREQ = 900
+PERI_PWM_DUTY = 0.35
 
 
 # --------------------------------------------------------------------

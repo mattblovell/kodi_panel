@@ -33,6 +33,9 @@ from datetime import datetime
 from ws_multitouch import Touchscreen, TS_PRESS, TS_RELEASE, TS_MOVE
 import threading
 
+# python-periphery for PWM
+from kodi_panel_pwm import PWM
+
 # kodi_panel modules
 import config
 import kodi_panel_display
@@ -53,17 +56,20 @@ kodi_panel_display.USE_BACKLIGHT = False
 # This is a (hopefully) temporary form for this code.
 
 screen_state = 0
+pwm = None
 
 def screen_on_pwm():
     global screen_state
+    global pwm
     if screen_state == 0:
-        result = os.system("echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable")
+        pwm.enable()
         screen_state = 1
 
 def screen_off_pwm():
     global screen_state
+    global pwm
     if screen_state == 1:
-        result = os.system("echo 0 > /sys/class/pwm/pwmchip0/pwm0/enable")
+        pwm.disable()
         screen_state = 0
 
 
@@ -90,15 +96,21 @@ ts.run()
         
 
 if __name__ == "__main__":
-    # Setup PWM
-    if config.settings["USE_HW_PWM"]:
-        os.system("echo 0 > /sys/class/pwm/pwmchip0/export")
-        sleep(0.150)
-        freq_cmd   = "echo " + str(config.settings["HW_PWM_FREQ"]) + " > /sys/class/pwm/pwmchip0/pwm0/period"
-        period_cmd = "echo " + str(int(config.settings["HW_PWM_FREQ"] *
-                                       config.settings["HW_PWM_LEVEL"])) + " > /sys/class/pwm/pwmchip0/pwm0/duty_cycle"
-        os.system(freq_cmd)
-        os.system(period_cmd)
+    # Setup PWM as first act
+    if config.settings["USE_PERI_PWM"]:
+        print("Setting up PWM using python-periphery")
+        pwm = PWM(0,0)
+        my_freq = int(config.settings["PERI_PWM_FREQ"])
+        my_period = 1.0 / my_freq
+        my_period_ns = int(my_period * 1e9)
+        print("Attempting to set PWM period_ns of ", my_period_ns, "")
+        pwm.frequency = int(config.settings["PERI_PWM_FREQ"])
+        pwm.duty_cycle = config.settings["PERI_PWM_DUTY"]
+
+        if config.settings["PERI_PWM_INVERSE"]:
+            pwm.disable()
+            pwm.polarity = "inversed"
+
         screen_on_pwm()
         kodi_panel_display.screen_on  = screen_on_pwm
         kodi_panel_display.screen_off = screen_off_pwm
@@ -110,5 +122,5 @@ if __name__ == "__main__":
         screen_on_pwm()
         print(datetime.now(), "Stopping touchscreen thread")
         ts.stop()
-        if config.settings["USE_HW_PWM"]:
-            os.system("echo 0 > /sys/class/pwm/pwmchip0/unexport")
+        if config.settings["USE_PERI_PWM"]:
+            pwm.close()
