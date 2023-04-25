@@ -91,8 +91,8 @@ USE_BACKLIGHT = true
 
 USE_PERI_PWM = true
 PERI_PWM_INVERSE = true
-PERI_PWM_FREQ = 900
-PERI_PWM_DUTY = 0.35
+PERI_PWM_FREQ = 880
+PERI_PWM_DUTY = 0.32
 
 
 # --------------------------------------------------------------------
@@ -892,9 +892,16 @@ posy = 98
 font = "font_tiny"
 fill = "white"
 
+# Unfortunately, it appears that MusicPlayer.BitsPerSample is not
+# available for all audio file formats!
+#
+# At least, that is my impression reading through
+#
+#   https://forum.kodi.tv/showthread.php?pid=3050779
+#
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "codec_details"
-format_str = "{MusicPlayer.SampleRate}/{MusicPlayer.BitsPerSample}"
+format_str = "{MusicPlayer.SampleRate}"
 posx = 710
 posy = 98
 font = "font_tiny"
