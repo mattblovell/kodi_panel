@@ -57,7 +57,7 @@ from evdev import InputDevice, categorize, ecodes
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.54"
+PANEL_VER = "v1.55"
 
 #
 # Audio/Video codec lookup table
