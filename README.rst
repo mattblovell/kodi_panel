@@ -567,7 +567,7 @@ was still needed to get PWM control over the backlight, and the polarity of cont
 WaveShare's other displays.
 
 I am still just using the screen to detect a single touch, but I am pondering adding some GUI-like 
-funtionality in the future.
+funtionality in the future (e.g., a Play/Pause button, or dynamic control over display brightness).
 
 For the moment, though, here is the result:
 
