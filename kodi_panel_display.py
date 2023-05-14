@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2020-21  Matthew Lovell and contributors
+# Copyright (c) 2020-23  Matthew Lovell and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -50,14 +50,12 @@ import threading
 import warnings
 import traceback
 
-# asyncio and evdev modules for USB touchscreen support
-import asyncio
-from evdev import InputDevice, categorize, ecodes
+# Touch screen support is via separate module
 
 # kodi_panel settings
 import config
 
-PANEL_VER = "v1.55"
+PANEL_VER = "v1.56"
 
 #
 # Audio/Video codec lookup table
@@ -87,7 +85,7 @@ codec_name = {
     "pcm_u8": "PCM",
     "BXA": "AirPlay",    # used with AirPlay
     "dsd_lsbf_planar": "DSD",
-    "h264": "x264"
+    "h264": "x264",
 }
 
 
