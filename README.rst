@@ -385,9 +385,7 @@ wait (up to the sleep time in ``main``) for a reaction.
 
 (It looks like the RPi.GPIO package makes of use ``pthreads`` to provide
 for the asynchronous behavior one would expect of an external interrupt.
-Exactly how that works given Python's `GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_
-is beyond my current understanding.  If anyone wants to enlighten me, have
-it at.  I nevertheless tried to code everything in a thread-safe fashion.)
+An Event object from the ``threading`` package is used for communication.)
 
 Doing more with the touchscreen than just taking an interrupt would
 require connecting several additional signals.  The XPT2046 controller
@@ -553,11 +551,36 @@ least one layout, defining ``SLAYOUT_NAMES`` and an ``S_LAYOUT`` dictionary.
 
 
 
+Wide Aspect Ratio & Multi-touch
+*******************************
+
+If displaying (generally square) album cover art at the maximum size possible, the aspect ratio
+of many displays does not leave much room remaining for accompanying text.  With classical
+music in particular, this often mean that the track title gets cut off.
+
+I was thus excited to see 
+`WaveShare's 7.9-inch 400x1280 HDMI multi-touch display <https://www.waveshare.com/7.9inch-hdmi-lcd.htm>`_.  
+The multi-touch capacitive screen for this display is connected via USB, so it 
+took some research to figure out how to make use of it in a Python-only environment.  I did
+end up finding something that works nicely, though (in the ``ws_multitouch.py`` file).  Minor rework
+was still needed to get PWM control over the backlight, and the polarity of control was opposite
+WaveShare's other displays.
+
+I am still just using the screen to detect a single touch, but I am pondering adding some GUI-like 
+funtionality in the future.
+
+For the moment, though, here is the result:
+
+.. image:: https://raw.github.com/mattblovell/kodi_panel/master/extras/wide_display.jpg
+  :width: 800
+
+
+
 License
 -------
 The MIT License (MIT)
 
-Copyright (c) 2020-21 Matthew Lovell and contributors
+Copyright (c) 2020-23 Matthew Lovell and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
