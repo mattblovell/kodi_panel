@@ -562,8 +562,11 @@ I was thus excited to see
 `WaveShare's 7.9-inch 400x1280 HDMI multi-touch display <https://www.waveshare.com/7.9inch-hdmi-lcd.htm>`_.  
 The multi-touch capacitive screen for this display is connected via USB, so it 
 took some research to figure out how to make use of it in a Python-only environment.  I did
-end up finding something that works nicely, though (in the ``ws_multitouch.py`` file).  I am 
-still just using it to detect a single touch, but I am pondering adding some GUI-like 
+end up finding something that works nicely, though (in the ``ws_multitouch.py`` file).  Minor rework
+was still needed to get PWM control over the backlight, and the polarity of control was opposite
+WaveShare's other displays.
+
+I am still just using the screen to detect a single touch, but I am pondering adding some GUI-like 
 funtionality in the future.
 
 For the moment, though, here is the result:
