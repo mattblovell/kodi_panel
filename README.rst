@@ -13,10 +13,10 @@ display are configured via a
 `TOML <https://toml.io/en/>`_ setup file, intended to be easily customized.
 
 The script is generally intended to run on the same SBC (single-board
-computer) on which Kodi itself is running.  That's not really
-necessary, though, provided one is willing to let the JSON-RPC calls
-occur over the network.  The display attachment interface, particularly
-if wanting to use HDMI, strongly affects possible setups.
+computer) on which Kodi itself is running, *if* using a non-HDMI display.
+A completely independent display is possible, though, provided one is
+willing to let the JSON-RPC calls occur over the network.  This approach
+is unfortunately mandatory if using an HDMI-attached display.
 
 **Disclaimer:** This project is *not* directly associated with either
 `Kodi <https://kodi.tv/>`_ or
