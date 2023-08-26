@@ -861,7 +861,7 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "short_time_display"
-posx = 412
+posx = 518
 posy = 30
 format_str = "{MusicPlayer.Time}"
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
@@ -872,17 +872,17 @@ dynamic = 1
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
 name = "MusicPlayer.TrackNumber"
-posx = 653
+posx = 412
 posy = 53
 display_if = [ "audio_duration", "1" ]  # test MusicPlayer.Duration
 font = "font7S_med"
 fill = "color_7S"
   # Label only appears if the InfoLabel specified is present and non-empty
   label = "Track"
-  lposx = 653
+  lposx = 412
   lposy = 25
   lfont = "font_tiny"
-  lfill = "white"
+  lfill = "#aaaaaa"
 
 
 [[A_LAYOUT.FULL_ALTERNATE.fields]]
